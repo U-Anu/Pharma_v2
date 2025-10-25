@@ -1,0 +1,100 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+<div class="container mt-4">
+    <h3 class="text-primary">
+        Set Product Markup for Category: <strong>{{ category.name }}</strong>
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+
+        {% for form in formset %}
+            <div class="border p-3 mb-3 rounded shadow-sm product-markup-block">
+                <div class="row">
+                    {{ form.product }}
+
+                    <div class="col-md-3">
+                        <label class="form-label">Product Name</label>
+                        <input type="text" class="form-control bg-light" value="{{ form.instance.product.name }}" readonly>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Buy Price</label>
+                        <input type="text" class="form-control bg-light buy-price" 
+                               value="{{ form.instance.product.price }}" 
+                               readonly 
+                               data-product-id="{{ forloop.counter0 }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        {{ form.owner_margin.label_tag }}
+                        {{ form.owner_margin }}
+                        {% if form.owner_margin.errors %}
+                            <div class="text-danger small">{{ form.owner_margin.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Owner Selling Price</label>
+                        <input type="text" class="form-control bg-light owner-selling-price" 
+                               name="owner_selling_price_{{ forloop.counter0 }}" readonly>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">MRP</label>
+                        <input type="text" class="form-control bg-light mrp" 
+                               value="{{ form.instance.product.MRP }}" 
+                               readonly>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Retailer Margin</label>
+                        <input type="text" class="form-control bg-light retailer-margin" 
+                               name="retailer_margin_{{ forloop.counter0 }}" readonly>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-success">
+            <i class="fa fa-save"></i> Save Markups
+        </button>
+
+        <a href="{% url 'user_category_markup_list' %}" class="btn btn-secondary">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const markupBlocks = document.querySelectorAll('.product-markup-block');
+
+        markupBlocks.forEach((block) => {
+            const buyPriceField = block.querySelector('.buy-price');
+            const ownerMarginInput = block.querySelector('[name$="owner_margin"]');
+            const ownerSellingPriceField = block.querySelector('.owner-selling-price');
+            const mrpField = block.querySelector('.mrp');
+            const retailerMarginField = block.querySelector('.retailer-margin');
+
+            function calculateMargins() {
+                const buyPrice = parseFloat(buyPriceField.value) || 0;
+                const ownerMargin = parseFloat(ownerMarginInput.value) || 0;
+                const mrp = parseFloat(mrpField.value) || 0;
+
+                const ownerSellingPrice = buyPrice + (buyPrice * ownerMargin / 100);
+                const retailerMargin = mrp - ownerSellingPrice;
+
+                ownerSellingPriceField.value = ownerSellingPrice.toFixed(2);
+                retailerMarginField.value = retailerMargin.toFixed(2);
+            }
+
+            // Trigger calculation on page load and when owner margin changes
+            calculateMargins();
+
+            ownerMarginInput.addEventListener('input', calculateMargins);
+        });
+    });
+</script>
+{% endblock %}

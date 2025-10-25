@@ -1,0 +1,35 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons (make sure it's included in your base template) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<div class="container mt-4">
+  <h3>Product: {{ product.name }}</h3>
+  <p><strong>Base Price:</strong> ₹{{ product.price }}</p>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>S.No</th>
+        <th>User Category</th>
+        <th>Markup %</th>
+        <th>Final Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in category_prices %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ item.category.name }}</td>
+        <td>{{ item.markup }}%</td>
+        <td>₹{{ item.final_price }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'product_list' %}" class="btn btn-secondary">Back to Product List</a>
+</div>
+
+
+
+{% endblock %}

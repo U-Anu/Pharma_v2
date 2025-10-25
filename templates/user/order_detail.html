@@ -1,0 +1,47 @@
+{% extends 'user/user_base.html' %}
+{% block body_block %}
+<h2 class="text-primary">Order #{{ order.id }} Details</h2>
+
+<table class="table table-striped">
+    <tr>
+        <th>Order ID</th>
+        <td>{{ order.id }}</td>
+    </tr>
+    <tr>
+        <th>Date</th>
+        <td>{{ order.created_at }}</td>
+    </tr>
+    <tr>
+        <th>Total Quantity</th>
+        <td>{{ order.total_quantity }}</td>
+    </tr>
+    <tr>
+        <th>Total Price</th>
+        <td>{{ order.total_price }}</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>{{ order.status }}</td>
+    </tr>
+</table>
+
+<h3>Items:</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in order.items.all %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.total_price }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

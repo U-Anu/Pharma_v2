@@ -1,0 +1,136 @@
+{% extends 'user/user_base.html' %}
+{% load static %}
+
+{% block body_block %}
+<h2>{% if form.instance.pk %}Edit Customer Order{% else %}New{% endif %}</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="form-group">
+        <label for="{{ form.customer_name.id_for_label }}">Customer Name:</label>
+        {{ form.customer_name }}
+    </div>
+
+    <div class="form-group">
+        <label for="{{ form.number.id_for_label }}">Number:</label>
+        {{ form.number }}
+    </div>
+
+    <h4>Order Items</h4>
+    <div id="formset-area">
+        {{ formset.management_form }}
+        {% for form in formset %}
+            {% if forloop.first %}
+            <div class="formset-row border p-3 mb-2">
+                <div class="row">
+                    <div class="col">
+                        <label>Product Name</label>
+                        {{ form.product_name }}
+                    </div>
+                    <div class="col">
+                        <label>Generic</label>
+                        {{ form.generic }}
+                    </div>
+                    <div class="col">
+                        <label>Same Brand</label>
+                        {{ form.same_brand }}
+                    </div>
+                    <div class="col">
+                        <label>Quantity</label>
+                        {{ form.quantity }}
+                    </div>
+                    <div class="col">
+                        <label>Notes</label>
+                        {{ form.notes }}
+                    </div>
+                    <div class="col">
+                        <label>Delete</label><br>
+                        <button type="button" class="btn btn-danger remove-form-row" disabled>−</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Empty form template (hidden) -->
+    <div class="d-none" id="empty-form-template">
+        <div class="formset-row border p-3 mb-2">
+            <div class="row">
+                <div class="col">
+                    <label>Product Name</label>
+                    {{ formset.empty_form.product_name }}
+                </div>
+                <div class="col">
+                    <label>Generic</label>
+                    {{ formset.empty_form.generic }}
+                </div>
+                <div class="col">
+                    <label>Same Brand</label>
+                    {{ formset.empty_form.same_brand }}
+                </div>
+                <div class="col">
+                    <label>Quantity</label>
+                    {{ formset.empty_form.quantity }}
+                </div>
+                <div class="col">
+                    <label>Notes</label>
+                    {{ formset.empty_form.notes }}
+                </div>
+                <div class="col">
+                    <label>Delete</label><br>
+                    <button type="button" class="btn btn-danger remove-form-row">−</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-secondary mb-3" id="add-more">+ Add More</button>
+    <br>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'customer_order_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    const formsetArea = $("#formset-area");
+    const totalForms = $("#id_form-TOTAL_FORMS");
+
+    function updateDeleteButtons() {
+        $(".remove-form-row").prop("disabled", false);
+        $(".formset-row").first().find(".remove-form-row").prop("disabled", true);
+    }
+
+    $("#add-more").click(function () {
+        const formCount = parseInt(totalForms.val());
+        const newFormHtml = $("#empty-form-template").html().replace(/__prefix__/g, formCount);
+        formsetArea.append(newFormHtml);
+        totalForms.val(formCount + 1);
+        updateDeleteButtons();
+    });
+
+    $(document).on("click", ".remove-form-row", function () {
+        if (!$(this).prop("disabled")) {
+            $(this).closest(".formset-row").remove();
+            const visibleRows = $(".formset-row").length;
+            totalForms.val(visibleRows);
+            updateDeleteButtons();
+        }
+    });
+
+    $(document).ready(function () {
+        updateDeleteButtons();
+    });
+</script>
+
+<style>
+    .formset-row {
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 8px;
+    }
+</style>
+
+{% endblock %}

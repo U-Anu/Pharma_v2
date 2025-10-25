@@ -1,0 +1,126 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block body_block %}
+<div class="container">
+    <h2 class="text-center text-primary">Create New Order</h2>
+    
+    <!-- Order Form -->
+    <form id="orderForm" method="post">
+        {% csrf_token %}
+        <div class="row mb-4 mt-5">
+            <div class="col-md-4">
+                {{ order_form.customer_name.label_tag }}
+                {{ order_form.customer_name }}
+            </div>
+            <div class="col-md-4">
+                {{ order_form.number.label_tag }}
+                {{ order_form.number }}
+            </div>
+        </div>
+        
+        <!-- Add Item Form -->
+        <div class="card mb-4">
+            <h4 class=" text-primary mt-4 text-center">Add Product</h4>
+            <div class="card-body">
+                <div id="itemForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        
+                        <div class="col-md-2">
+                            {{ item_form.product_name.label_tag }}
+                            {{ item_form.product_name }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ item_form.product_type.label_tag }}
+                            {{ item_form.product_type }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ item_form.quantity.label_tag }}
+                            {{ item_form.quantity }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ item_form.notes.label_tag }}
+                            {{ item_form.notes }}
+                        </div>
+                        <div class="col-md-2">
+                              <button type="button" id="addItemBtn" class="btn btn-primary mt-3">Add Item</button>
+                        </div>
+                    </div>
+              
+                </div>
+            </div>
+        </div>
+        
+        <!-- Temporary Items List -->
+        <div class="card mb-4">
+            <h3 class="text-center text-primary mt-3">Order Items</h3>
+            <div class="card-body">
+                <table class="table" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white">Product</th>
+                            <th class="bg-primary text-white">Type</th>
+                            <th class="bg-primary text-white">Qty</th>
+                            <th class="bg-primary text-white">Notes</th>
+                            <th class="bg-primary text-white">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in temp_items %}
+                        <tr>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.get_product_type_display }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.notes|default:"-" }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger remove-item" data-id="{{ item.id }}">Remove</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Save Order</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Add item to temp table
+    $('#addItemBtn').click(function() {
+        $.ajax({
+            url: "{% url 'add_to_temp' %}",
+            type: "POST",
+            data: $('#itemForm').find('input, select, textarea').serialize(),
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Refresh to show new item
+                } else {
+                    alert('Error: ' + JSON.stringify(response.errors));
+                }
+            }
+        });
+    });
+
+    // Remove item from temp table
+    $('.remove-item').click(function() {
+        var itemId = $(this).data('id');
+        $.ajax({
+            url: "{% url 'remove_temp_item' %}",
+            type: "POST",
+            data: {
+                'item_id': itemId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function() {
+                location.reload();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

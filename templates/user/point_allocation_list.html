@@ -1,0 +1,47 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons (make sure it's included in your base template) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+  
+  <!-- Top Section with Create Button -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <center><h2 class="text-primary">Points List</h2></center>
+    <a href="{% url 'point_allocation_create' %}" class="btn btn-primary">
+      <i class="fa fa-plus"></i> Create Points
+    </a>
+  </div>
+
+  <div class="users-table table-wrapper mt-4">
+    <table class="posts-table table table-striped table-bordered">
+      <thead>
+        <tr class="users-table-info text-center">
+            <th class="bg-primary text-white">Minimum Amount</th>
+            <th class="bg-primary text-white">Maximum Amount</th>
+            <th class="bg-primary text-white">Points</th>
+            <th class="bg-primary text-white"> Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for allocation in allocations %}
+<tr>
+    <td>{{ allocation.min_amount }}</td>
+    <td>{{ allocation.max_amount }}</td>
+    <td>{{ allocation.points }}</td>
+    <td>
+        <a href="{% url 'point_allocation_update' allocation.id %}" class="btn btn-primary btn-sm">
+            <i class="fa fa-edit"></i> Update
+        </a>
+        <a href="{% url 'point_allocation_delete' allocation.id %}" class="btn btn-danger btn-sm">
+            <i class="fa fa-trash"></i> Delete
+        </a>
+    </td>
+</tr>
+{% endfor %}
+
+    </tbody>
+</table>
+{% endblock %}

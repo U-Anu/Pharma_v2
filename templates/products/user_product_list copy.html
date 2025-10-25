@@ -1,0 +1,89 @@
+{% extends 'user/user_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container mt-4">
+  <!-- Top Section with Create & Upload Buttons -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center">
+    <h2 class="text-primary text-center w-100 mb-3">Product List</h2>
+
+    {% comment %} <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'update_all_products' %}" class="btn btn-primary">
+        <i class="fa fa-upload"></i> Upload Products
+      </a>
+
+      <a href="{% url 'product_create' %}" class="btn btn-success">
+        <i class="fa fa-plus"></i> Create Product
+      </a>
+    </div> {% endcomment %}
+  </div>
+
+  <!-- Responsive Table Wrapper -->
+  <div class="table-responsive mt-4">
+    <table class="table table-striped table-bordered text-center">
+      <thead class="thead-dark">
+        <tr>
+          <th>S.No</th>
+          <th>Product Name</th>
+          <th>Form</th>
+          <th>Composition Name</th>
+          <th> price</th>
+
+
+          {% comment %} <th>Company</th>
+          <th>Batch</th>
+          <th>Product Type</th>
+          <th>Composition Name</th>
+          <th>Expiry Date</th>
+          <th>MRP</th>
+          <th>Price</th>
+          <th>Quantity</th> {% endcomment %}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ product.name }}</td>
+          <td>{{ product.form }}</td>
+          <td style="white-space: normal; word-wrap: break-word;">{{ product.composition_name }}</td>
+          {% comment %} <td>
+            {% for markup in user.productproductmarkup_set.all %}
+                {% if markup.product_type == product.product_type %}
+                    {{ markup.markup_percentage }}%
+                {% endif %}
+            {% endfor %}
+        </td> {% endcomment %}
+        <td>₹{{ product.user_price }}</td>
+          {% comment %} <td>{{ product.company }}</td>
+          <td>{{ product.batch }}</td>
+          <td>{{ product.product_type }}</td>
+          <td>{{ product.composition_name }}</td>
+          <td>{{ product.expiry_date }}</td>
+          <td>{{ product.MRP }}</td>
+          <td>{{ product.price }}</td>
+          <td>{{ product.quantity }}</td> {% endcomment %}
+          {% comment %} <td>
+            <a href="{% url 'product_update' product.id %}" class="btn btn-sm btn-primary">
+              <i class="fa fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'product_delete' product.id %}" class="btn btn-sm btn-danger">
+              <i class="fa fa-trash"></i> Delete
+            </a>
+          </td> {% endcomment %}
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="12" class="text-center">No products found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends 'user/user_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+/* ---------- CART DESIGN ---------- */
+.cart-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.cart-header {
+    background:#b66dff;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.25rem;
+    padding: 12px 16px;
+}
+.cart-body {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 12px 16px;
+}
+.cart-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background 0.2s;
+}
+.cart-item:last-child { border-bottom: none; }
+.cart-item:hover { background: #f1faff; }
+.cart-item .name { font-weight: 500; color: #212529; font-size: 0.95rem; }
+.cart-item .qty-controls {
+    display: flex; justify-content: center; align-items: center; gap: 5px;
+}
+.cart-item .qty-controls button {
+    width: 28px; height: 28px; padding: 0; font-weight: bold;
+    font-size: 1rem; border-radius: 6px;
+}
+.cart-item .qty { min-width: 28px; text-align: center; font-weight: 500; color: #b66dff; }
+.cart-item .price { font-weight: 600; color: #198754; text-align: right; }
+.cart-footer {
+    background: #f8f9fa; padding: 12px 16px; font-weight: 600;
+    font-size: 1.1rem; text-align: right;
+}
+
+/* ---------- QUERY ITEM ---------- */
+.query-item {
+    background: #fff3cd; border-radius: 10px; padding: 12px;
+    margin-bottom: 10px; position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.query-item .btn-close { position: absolute; top: 8px; right: 8px; }
+
+/* ---------- BUTTON HOVER ---------- */
+.add-to-cart-btn:hover, #checkout:hover, #add-query-item:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s;
+}
+
+/* ---------- PRODUCT TABLE STYLE ---------- */
+#productTable { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 0.95rem; }
+#productTable thead tr th {
+    background-color: #b66dff !important; color: white !important; font-weight: 600; padding:15px;
+}
+#productTable tbody tr:hover { background-color: #f1faff; }
+#productTable tbody td:nth-child(4),
+#productTable tbody td:nth-child(3) { font-weight: 600; color: #198754; }
+#productTable tbody td:nth-child(6) { font-weight: 500; color: #0d6efd; }
+#productTable .add-to-cart-btn { font-size: 0.85rem; font-weight: 500; padding: 4px 8px; border:none !important; }
+.text-primary{ color:#b66dff !important; }
+.btn-primary{ background-color:#b66dff !important; color:white; }
+
+/* ---------- DataTables Layout ---------- */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    margin-bottom: 15px;
+    padding: 10px 0;
+}
+</style>
+
+<div class="mt-4">
+    <h3 class="mb-4 text-center text-primary">Products & Cart</h3>
+
+    <div class="row g-4">
+        <!-- CART & QUERIES -->
+        <div class="col-md-4">
+            <!-- Cart -->
+            <div class="cart-card mb-4">
+                <div class="cart-header">
+                    Cart <span id="cart-count" class="badge bg-light text-dark ms-2">0</span>
+                </div>
+                <div class="cart-body" id="cart-items">
+                    <p class="text-muted text-center">No items in cart.</p>
+                </div>
+                <div class="cart-footer">
+                    Subtotal: ₹<span id="cart-subtotal">0</span>
+                </div>
+            </div>
+
+            <!-- Query Form -->
+            <div class="card shadow-sm">
+                <div class="cart-header">Missed Products / Queries</div>
+                <div class="card-body">
+                    <form id="query-form" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div id="query-items-container"></div>
+                        <button type="button" id="add-query-item" class="btn btn-sm btn-info w-100 mb-2">
+                            <i class="bi bi-plus-circle"></i> Add Query
+                        </button>
+                        <button type="button" id="checkout" class="btn btn-success w-100 fw-bold">
+                            <i class="bi bi-bag-check"></i> Checkout & Submit
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCTS TABLE -->
+        <div class="col-md-8">
+            {% if products %}
+            <div class="bg-white shadow-sm p-4 mb-3">
+                <table id="productTable" class="table table-hover mt-3 pt-2">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Composition</th>
+                            <th>Company</th>
+                            <th>MRP (₹)</th>
+                            <th>Price (₹)</th>
+                            <th>Qty</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.name }}</td>
+                            <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
+                                {{ product.composition_name }}
+                            </td>
+                            <td>{{ product.company|default:"-" }}</td>
+                            <td>{{ product.MRP|default:"-" }}</td>
+                            <td>{{ product.display_price|default:"-" }}</td>
+                            <td>{{ product.quantity|default:"-" }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary add-to-cart-btn" 
+                                        data-product-id="{{ product.id }}"
+                                        data-product-name="{{ product.name }}"
+                                        data-product-price="{{ product.display_price|default:0 }}"
+                                        data-product-quantity="{{ product.quantity|default:0 }}">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center mt-5">
+                No products available.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#productTable').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [5, 10, 25, 50],
+        "ordering": true,
+        "dom": '<"top"lf>rt<"bottom"ip><"clear">'
+    });
+
+    let cart = [];
+
+    function updateCartCount() {
+        let totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+        $('#cart-count').text(totalQty);
+    }
+
+    function updateCartUI() {
+        let container = $('#cart-items');
+        container.empty();
+        if(cart.length === 0){
+            container.html('<p class="text-muted text-center">No items in cart.</p>');
+            $('#cart-subtotal').text('0');
+        } else {
+            let subtotal = 0;
+            cart.forEach(item => {
+                let itemTotal = item.price * item.qty;
+                subtotal += itemTotal;
+                container.append(`
+                    <div class="cart-item">
+                        <div class="name">${item.name}</div>
+                        <div class="qty-controls">
+                            <button class="btn btn-outline-secondary decrease-qty" data-id="${item.id}">-</button>
+                            <span class="qty">${item.qty}</span>
+                            <button class="btn btn-outline-secondary increase-qty" data-id="${item.id}">+</button>
+                        </div>
+                        <div class="price">₹${itemTotal.toFixed(2)}</div>
+                    </div>
+                `);
+            });
+            $('#cart-subtotal').text(subtotal.toFixed(2));
+        }
+        updateCartCount();
+    }
+
+    $('.add-to-cart-btn').click(function(){
+        let product = {
+            id: $(this).data('product-id'),
+            name: $(this).data('product-name'),
+            price: parseFloat($(this).data('product-price')) || 0,
+            qty: 1,
+            available_quantity: parseInt($(this).data('product-quantity')) || 0
+        };
+        let existing = cart.find(x => x.id === product.id);
+        if(existing){
+            if(existing.qty < existing.available_quantity) existing.qty +=1;
+            else { alert('Cannot exceed stock!'); return; }
+        } else {
+            cart.push(product);
+        }
+        updateCartUI();
+    });
+
+    $(document).on('click', '.increase-qty', function(){
+        let id = $(this).data('id');
+        let product = cart.find(x => x.id === id);
+        if(product.qty < product.available_quantity){
+            product.qty += 1;
+            updateCartUI();
+        } else {
+            alert('Cannot exceed stock!');
+        }
+    });
+
+    $(document).on('click', '.decrease-qty', function(){
+        let id = $(this).data('id');
+        let product = cart.find(x => x.id === id);
+        if(product.qty > 1){
+            product.qty -= 1;
+            updateCartUI();
+        } else {
+            cart = cart.filter(x => x.id !== id);
+            updateCartUI();
+        }
+    });
+
+    // --- Query Add/Remove ---
+    $('#add-query-item').click(function(){
+        let idx = $('#query-items-container .query-item').length;
+        let html = `
+            <div class="query-item">
+                <button type="button" class="btn-close remove-query-item"></button>
+                <div class="mb-2">
+                    <label>Business Name</label>
+                    <input type="text" name="Business_name_${idx}" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Contact Number</label>
+                    <input type="text" name="contact_number_${idx}" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Description</label>
+                    <textarea name="description_${idx}" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="mb-2">
+                    <label>Image (optional)</label>
+                    <input type="file" name="Product_image_${idx}" class="form-control">
+                </div>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" name="generic_${idx}" class="form-check-input">
+                    <label class="form-check-label">Generic</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" name="same_brand_${idx}" class="form-check-input">
+                    <label class="form-check-label">Same brand</label>
+                </div>
+            </div>
+        `;
+        $('#query-items-container').append(html);
+    });
+
+    $(document).on('click', '.remove-query-item', function(){
+        $(this).closest('.query-item').remove();
+    });
+
+    // --- Checkout ---
+    $('#checkout').click(function(){
+        if(cart.length === 0 && $('#query-items-container .query-item').length===0){
+            alert('Add cart items or queries before checkout!');
+            return;
+        }
+        let formData = new FormData($('#query-form')[0]);
+        formData.append('cart', JSON.stringify(cart));
+
+        $.ajax({
+            url: "{% url 'checkout_and_query' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(resp){
+                alert('✅ Order & Queries submitted successfully!');
+                cart = [];
+                updateCartUI();
+                $('#query-items-container').empty();
+            },
+            error: function(err){
+                alert('❌ Error submitting order!');
+                console.log(err);
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

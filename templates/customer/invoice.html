@@ -1,0 +1,369 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tax Invoice</title>
+  <style>
+    /* Reset and base */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding: 30px 15px;
+      color: #333;
+    }
+
+    /* Container card for entire invoice */
+    .invoice-container {
+      background: #fff;
+      width: 100%;
+      max-width: 900px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      padding: 30px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Header Row: Logo and Dates on same line */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #007bff;
+      padding-bottom: 15px;
+      gap: 20px;
+    }
+
+    /* Logo container */
+    .logo {
+      width: 100px;
+      height: 100px;
+      border: 2px solid #007bff;
+      background-color: #e9f0ff;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .logo img {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+    }
+
+    /* Date field container, all dates in a single vertical column but compact */
+    .date-field {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      min-width: 180px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #222;
+    }
+
+    .date-field p {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .date-field strong {
+      color: #007bff;
+      font-weight: 700;
+    }
+
+    /* Invoice Title */
+    .invoice-header h3 {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      color: #007bff;
+      letter-spacing: 2px;
+      margin: 0;
+    }
+
+    /* Business Info */
+    .business-info {
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.4;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    /* Divider line */
+    .divider {
+      border-top: 2px dashed #007bff;
+      margin: 0 0 15px 0;
+      opacity: 0.3;
+    }
+
+    /* User Details */
+    .user-details {
+      background-color: #f9fbff;
+      border-radius: 8px;
+      padding: 20px 25px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #444;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 30px;
+      justify-content: space-between;
+      margin-top: 0;
+    }
+
+    .user-details p {
+      margin: 0;
+      min-width: 45%;
+    }
+
+    /* Description heading */
+    h4 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #007bff;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 6px;
+      letter-spacing: 1.5px;
+    }
+
+    /* Invoice Table */
+    table.invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .invoice-table th,
+    .invoice-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+      vertical-align: middle;
+      color: #555;
+    }
+
+    .invoice-table th {
+      background-color: #007bff;
+      color: white;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .invoice-table td:first-child,
+    .invoice-table th:first-child {
+      width: 40px;
+    }
+
+    .invoice-table td:nth-child(2),
+    .invoice-table th:nth-child(2) {
+      text-align: left;
+      padding-left: 14px;
+      color: #333;
+    }
+
+    .invoice-table tbody tr:hover {
+      background-color: #f1faff;
+    }
+
+    /* Remarks box */
+    .remarks {
+      background-color: #f9fbff;
+      padding: 18px 25px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+      border-left: 4px solid #007bff;
+      user-select: none;
+      margin-top: 0;
+    }
+
+    /* Summary Table */
+    table.summary-table {
+      width: 350px;
+      border-collapse: collapse;
+      margin-left: auto;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .summary-table td {
+      padding: 10px 12px;
+      color: #333;
+      border-bottom: 1px solid #eee;
+    }
+
+    .summary-table td.right-align {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .summary-table tr:last-child td {
+      border-top: 2px solid #007bff;
+      font-size: 16px;
+      color: #007bff;
+      font-weight: 800;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+      font-style: italic;
+      user-select: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 720px) {
+      .invoice-container {
+        padding: 25px 20px;
+      }
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      .date-field {
+        align-self: flex-end;
+      }
+      .user-details p {
+        min-width: 100%;
+      }
+      table.summary-table {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="invoice-container">
+
+    <div class="header-row">
+      <div class="logo">
+        <img src="{% static 'img/logo1.png' %}" alt="logo" />
+      </div>
+      <div class="date-field">
+        <p><strong>Invoice No:</strong> {{ order.id }}</p>
+        <p><strong>Date:</strong> {{ date_time|date:"d-M-y" }}</p>
+        <p><strong>Due Date:</strong> {{ order.due_date|date:"d-M-y" }}</p>
+      </div>
+    </div>
+
+    <div class="invoice-header">
+      <h3>SRI LAKSHMI PHARMACEUTICAL AGENCY</h3>
+    </div>
+    <div class="business-info">
+      <p>Shop 2, Plot 4161, TNHB LIG-I, 6th Main Road, Ayappakkam, Tiruvallur, Tamil Nadu - 600077</p>
+      <p>Contact: 7845813159 | Email: krpalani22@gmail.com</p>
+      <p>GSTIN: 33BAQPP9410C2ZP | DRUG LIC: TN/TVR/20B/00705, TN/TVR/21B/00705</p>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="user-details">
+      <p><strong>To:</strong> {{ user.first_name }} {{ user.last_name }}{% if user.company_name %}, {{ user.company_name }}{% endif %}</p>
+      <p><strong>Address:</strong> {{ user.address }}</p>
+      <p><strong>Contact:</strong> {{ user.phone_number }}{% if user.email %} | {{ user.email }}{% endif %}</p>
+      <p><strong>GSTIN:</strong> {{ user.gstin }} | <strong>Drug Lic:</strong> {{ user.drug_license }}</p>
+      <p><strong>User Category:</strong> {{ user.user_category }}</p>
+    </div>
+
+    <h4>DESCRIPTION</h4>
+
+    <table class="invoice-table" cellspacing="0" cellpadding="0">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Product</th>
+          {% comment %} <th>HSN</th> {% endcomment %}
+          <th>Batch</th>
+          <th>MRP</th>
+          <th>Rate</th>
+          <th>Qty</th>
+          <th>Dis%</th>
+          <th>GST</th>
+          <th>Amt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order_items %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ item.product_name }}</td>
+          {% comment %} <td>{{ item.product.hsn }}</td> {% endcomment %}
+          <td>{{ item.batch }}</td>
+          <td>₹{{ item.MRP }}</td>
+          <td>₹{{ item.user_price }}</td>
+          <td>{{ item.quantity }}</td>
+            <td>{{ item.discount|default:"0" }}%</td>
+          <td>{{ item.GST }}%</td>
+          <td>₹{{ item.total_price }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="11" style="text-align:center; padding: 15px;">No items in this order.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="remarks">
+      <p><strong>REMARKS:</strong> E&OE. We only accept whole medicine strips for return.</p>
+    <p>Products: {{ order_items|length }} | Total Qty: {{ total_quantity }} | Cust Code: {{ user.customer_code }}</p>
+    </div>
+
+    <table class="summary-table" cellspacing="0" cellpadding="0">
+      <tr>
+        <td>Subtotal</td>
+        <td class="right-align">₹{{ subtotal|default:"0.00" }}</td>
+      </tr>
+      <tr>
+        <td>Discount</td>
+        <td class="right-align">₹{{ order.discount|default:"0.00" }}</td>
+      </tr>
+      <tr>
+        <td>GST</td>
+        <td class="right-align">₹{{ order.tax_amount|default:"0.00" }}</td>
+      </tr>
+      {% comment %} <tr>
+        <td>Freight</td>
+        <td class="right-align">₹{{ order.freight_charges|default:"0.00" }}</td>
+      </tr> {% endcomment %}
+      <tr>
+        <td>Grand Total</td>
+        <td class="right-align">₹{{ subtotal|default:"0.00" }}</td>
+      </tr>
+    </table>
+
+    <p class="footer">This is a computer-generated invoice and does not require a physical signature.</p>
+
+  </div>
+
+</body>
+</html>

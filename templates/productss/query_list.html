@@ -1,0 +1,80 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+<style>
+  .query-image {
+      width: 400px;
+      height: 400px;
+      transition: transform 0.3s ease-in-out;
+  }
+  
+  .query-image:hover {
+      transform: scale(8); /* Enlarges the image to 2x size on hover */
+  }
+</style>
+<!-- FontAwesome for icons (make sure it's included in your base template) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+  
+  <!-- Top Section with Create Button -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <center><h2 class="text-primary">query List</h2></center>
+    <a href="{% url 'query_create' %}" class="btn btn-primary">
+      <i class="fa fa-plus"></i> Create query
+    </a>
+  </div>
+
+  <div class="users-table table-wrapper mt-4">
+    <table class="posts-table table table-striped table-bordered">
+      <thead>
+        <tr class="users-table-info text-center">
+            <th class="bg-primary text-white">Business Name</th>
+            <th class="bg-primary text-white">Contact</th>
+            <th class="bg-primary text-white">Description</th>
+            <th class="bg-primary text-white">Image</th>
+            <th class="bg-primary text-white">Generic</th>
+            <th class="bg-primary text-white">Same Brand</th>
+            <th class="bg-primary text-white">Order by</th>
+            <th class="bg-primary text-white">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for State in queries %}
+        <tr>
+            <td>{{ State.Business_name }}</td>
+            <td>{{ State.contact_number }}</td>
+            <td>{{ State.description }}</td>
+            <!-- Add this CSS in your <head> or stylesheet -->
+<!-- Modified HTML with hover effect -->
+<td>
+  <div class="image-hover-container">
+    {% if State.Product_image %}
+      <img 
+          src="{{ State.Product_image.url }}" 
+          alt="Query Image" 
+          class="query-image"
+          onmousemove="showZoomPreview(event, '{{ State.Product_image.url }}')"
+          onmouseout="hideZoomPreview()"
+      >
+      <div id="zoomPreview" class="zoom-preview"></div>
+    {% else %}
+      No Image
+    {% endif %}
+            <td>{{ State.generic }}</td>
+            <td>{{ State.same_brand }}</td>
+            <td>{{ State.created_by }}</td>
+
+  </div>
+</td>
+            <td>
+                <a href="{% url 'query_update' State.id %}" class="btn btn-primary btn-sm">
+                    <i class="fa fa-edit"></i> Update</a>
+                <a href="{% url 'query_delete' State.id %}" class="btn btn-danger btn-sm">
+                    <i class="fa fa-trash"></i> Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

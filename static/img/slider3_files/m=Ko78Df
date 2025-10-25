@@ -1,0 +1,10 @@
+this._s=this._s||{};(function(_){var window=this;
+try{
+_.r("Ko78Df");
+var Ovz=class{constructor(a){this.state=a}getId(){return this.state.id}getPushId(){return this.state.pushId}getUrl(){return this.state.url}getUserData(){return this.state.userData}};
+_.lo(_.NZa,class extends _.jo{static Ra(){return{service:{history:_.W9a}}}constructor(a){super();this.history=a.service.history;this.Yr=document.body;this.oa=new Map;this.history.addListener((b,c,d)=>{if(d.Pba)for(const e of d.Pba)if(this.oa.has(e.id)){const f=this.oa.get(e.id);f&&_.Zm(()=>{f(e.CHa)});this.oa.delete(e.id)}d.userInitiated&&this.Yr.dispatchEvent(new CustomEvent("FWkcec"))})}pushAsync(a,b,c,d){a=d?this.history.oa(a,b):this.history.pushAsync(a,b);return Promise.resolve(a.then(e=>{c&&
+this.oa.set(e.id,c);return e.id}))}pop(a,b){a=b?this.history.Ca(a):this.history.pop(a);return Promise.resolve(a.then(c=>c?new Ovz(c):null))}getState(){const a=this.history.getState();return a?new Ovz(a):null}getCurrentUrl(){return this.history.getCurrentUrl()}getEventTarget(){return this.Yr}navigate(a,b){a=this.history.navigate(a,b).committed;return Promise.resolve(a.then(c=>new Ovz(c)))}});
+_.v();
+}catch(e){_._DumpException(e)}
+})(this._s);
+// Google Inc.

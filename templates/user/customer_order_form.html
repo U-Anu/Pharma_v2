@@ -1,0 +1,105 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block body_block %}
+<style>
+    .form-check-inline {
+        margin-right: 10px;
+    }
+</style>
+
+<h2>{% if form.instance.pk %}Edit Order{% else %}Add New Order{% endif %}</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Display form errors -->
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- Order form -->
+<div class="form-row d-flex">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="{{ form.customer_name.id_for_label }}">Customer Name</label>
+                {{ form.customer_name }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="{{ form.number.id_for_label }}">Number</label>
+                {{ form.number }}
+            </div>
+        </div>
+        </div>
+    <!-- Order items form (form1) in a single row -->
+    <div class="form-row d-flex">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="{{ form1.product_name.id_for_label }}">Product Name</label>
+                {{ form1.product_name }}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="{{ form1.product_type.id_for_label }}">Product Type</label>
+                {{ form1.product_type }}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="{{ form1.quantity.id_for_label }}">Quantity</label>
+                {{ form1.quantity }}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="{{ form1.notes.id_for_label }}">Notes</label>
+                {{ form1.notes }}
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'customer_order_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+{% if items %}
+    <h3>Existing Order Items</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Product Type</th>
+                <th>Quantity</th>
+                <th>Notes</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.product_type }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.notes }}</td>
+                    <td>
+                        <a href="{% url 'customer_order_delete' item.id %}" class="btn btn-danger btn-sm">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+  <!-- Top Section with Create Button -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <h2 class="text-primary text-center w-100">User Approval</h2>
+  </div>
+
+  <div class="users-table table-wrapper mt-4">
+    <table class="posts-table table table-striped table-bordered">
+      <thead class="bg-primary">
+        <tr class="users-table-info text-center bg-primary">
+          <th class="bg-primary text-white">S No</th>
+          <th class="bg-primary text-white">Name</th>
+          <th class="bg-primary text-white">Email</th>
+          <th class="bg-primary text-white">Phone Number</th>
+          <th class="bg-primary text-white">Date of Birth</th>
+          <th class="bg-primary text-white">Address</th>
+          <th class="bg-primary text-white">Gender</th>
+
+          <th class="bg-primary text-white">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for admin in users %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+
+          <td>{{ admin.first_name }} {{ admin.last_name }}</td>
+          <td>{{ admin.email }}</td>
+          <td>{{ admin.phone_number }}</td>
+          <td>{{ admin.dob }}</td>
+          <td>{{ admin.address }}</td>
+          <td>{{ admin.get_gender_display }}</td>
+        <td>      <a href="{% url 'approve_user' admin.id %}" class="btn btn-success" style="background-color: #90EE90; border-color: #90EE90; color: white;">
+          <i class="fas fa-check-circle"></i> Approve
+      </a>
+  </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

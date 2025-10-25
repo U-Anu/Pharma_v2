@@ -1,0 +1,57 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+
+<div class="container mt-4">
+    <h3 class="text-primary">
+        {% if category.usercategorymarkup_set.exists %}
+            Update Markup for Category: <strong>{{ category.name }}</strong>
+        {% else %}
+            Add Markup for Category: <strong>{{ category.name }}</strong>
+        {% endif %}
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+
+        {% for form in formset %}
+            <div class="border p-3 mb-3 rounded shadow-sm">
+                <div class="row align-items-end">
+                    <!-- Hidden product_type field -->
+                    {{ form.product_type }}
+
+                    <div class="col-md-6">
+                        <label class="form-label">Product Type</label>
+                        <input type="text" class="form-control bg-light" value="{{ form.product_type_name }}" readonly>
+                    </div>
+
+                    <div class="col-md-4">
+                        {{ form.markup_percentage.label_tag }}
+                        {{ form.markup_percentage }}
+                        {% if form.markup_percentage.errors %}
+                            <div class="text-danger small">{{ form.markup_percentage.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-2">
+                        {% if form.instance.pk %}
+                            <label class="form-label">Delete</label><br>
+                            {{ form.DELETE }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-success">
+            <i class="fa fa-save"></i>
+            {% if category.usercategorymarkup_set.exists %} Update Markups {% else %} Save Markups {% endif %}
+        </button>
+
+        <a href="{% url 'user_category_markup_list' %}" class="btn btn-secondary">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+    </form>
+</div>
+
+{% endblock %}

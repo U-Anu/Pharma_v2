@@ -1,0 +1,88 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<h2 class="text-center">{% if form.instance.pk %}Edit Admin{% else %}Admin Register{% endif %}</h2>
+<form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="first_name">First Name *</label>
+            {{ form.first_name }}
+            <div class="text-danger">{{ form.first_name.errors }}</div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="last_name">Last Name *</label>
+            {{ form.last_name }}
+            <div class="text-danger">{{ form.last_name.errors }}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="email">Email *</label>
+            {{ form.email }}
+            <div class="text-danger">{{ form.email.errors }}</div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="phone_number">Phone Number *</label>
+            {{ form.phone_number }}
+            <div class="text-danger">{{ form.phone_number.errors }}</div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="alternate_phone_number">Alternate Phone Number</label>
+            {{ form.alternate_phone_number }}
+            <div class="text-danger">{{ form.alternate_phone_number.errors }}</div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="dob">Date of Birth *</label>
+            {{ form.dob }}
+            <div class="text-danger">{{ form.dob.errors }}</div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label for="gender">Gender *</label>
+        {{ form.gender }}
+        <div class="text-danger">{{ form.gender.errors }}</div>
+    </div>
+    <div class="mb-3">
+        <label for="profile_image">Profile Image</label>
+        {{ form.profile_image }}
+        <div class="text-danger">{{ form.profile_image.errors }}</div>
+    </div>
+    <div class="mb-3">
+        <label for="address">Address *</label>
+        {{ form.address }}
+        <div class="text-danger">{{ form.address.errors }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="password1">Password *</label>
+            <input type="password" name="password1" id="id_password1" class="form-control" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="password2">Confirm Password *</label>
+            <input type="password" name="password2" id="id_password2" class="form-control" required>
+        </div>
+    </div>
+    <div class="alert alert-danger d-none" id="passwordMismatch">Passwords do not match!</div>
+    <button type="submit" class="btn btn-primary btn-block">Save</button>
+    <a href="{% url 'country_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function (e) {
+        let pass1 = document.getElementById('id_password1').value;
+        let pass2 = document.getElementById('id_password2').value;
+        let alertBox = document.getElementById('passwordMismatch');
+        if (pass1 !== pass2) {
+            e.preventDefault();
+            alertBox.classList.remove('d-none');
+        } else {
+            alertBox.classList.add('d-none');
+        }
+    });
+</script>
+
+{% endblock %}

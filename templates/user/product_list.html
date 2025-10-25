@@ -1,0 +1,76 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<style>
+  td:nth-child(3) { /* Target Composition Name column */
+    word-wrap: break-word;
+    white-space: normal;
+    max-width: 250px;
+    overflow-wrap: break-word;
+  }
+</style>
+
+<!-- FontAwesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center">
+    <h2 class="text-primary text-center w-100 mb-3">Product List</h2>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'update_all_products' %}" class="btn btn-primary">
+        <i class="fa fa-upload"></i> Upload Products
+      </a>
+
+      <a href="{% url 'product_create' %}" class="btn btn-success">
+        <i class="fa fa-plus"></i> Create Product
+      </a>
+    </div>
+  </div>
+
+  <div class="table-responsive mt-4">
+    <table class="table table-striped table-bordered text-center">
+      <thead class="thead-dark">
+        <tr>
+          <th>S.No</th>
+          <th>Product Name</th>
+          <th>Composition</th>
+          <th>Product Type</th>
+          <th>Form</th>
+          {% comment %} <th>Markup (%)</th> {% endcomment %}
+          <th>MRP</th>
+          <th>User Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ product.name }}</td>
+          <td class="text-wrap">{{ product.composition_name }}</td>
+          <td>{{ product.product_type }}</td>
+          <td>{{ product.form }}</td>
+          {% comment %} <td>
+            {% with product_type=product.product_type %}
+                {% for markup in user.userproductmarkup_set.all %}
+                    {% if markup.product_type == product_type %}
+                        {{ markup.markup_percentage }}%
+                    {% endif %}
+                {% endfor %}
+            {% endwith %}
+          </td> {% endcomment %}
+          <td>{{product.MRP}}</td>
+          <td>₹{{ product.user_price|default_if_none:"0" }} </td>
+          
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center">No products found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

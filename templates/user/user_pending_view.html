@@ -1,0 +1,36 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+
+<h2 class="text-center">User Details</h2>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image.url }}" class="img-fluid rounded-circle" width="150" height="150">
+                    {% else %}
+                        <img src="{% static 'default-profile.png' %}" class="img-fluid rounded-circle" width="150" height="150">
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <p><strong>First Name:</strong> {{ user.first_name }}</p>
+                    <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Phone Number:</strong> {{ user.phone_number }}</p>
+                    <p><strong>Alternate Phone:</strong> {{ user.alternate_phone_number }}</p>
+                    <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
+                    <p><strong>Gender:</strong> {{ user.get_gender_display }}</p>
+                    <p><strong>Address:</strong> {{ user.address }}</p>
+                    <p><strong>Account Created:</strong> {{ user.created_at }}</p>
+                    <p><strong>Last Updated:</strong> {{ user.updated_at }}</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{% endblock %}

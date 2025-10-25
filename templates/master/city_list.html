@@ -1,0 +1,42 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons (make sure it's included in your base template) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+  
+  <!-- Top Section with Create Button -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <center><h2 class="text-primary">City List</h2></center>
+    <a href="{% url 'city_create' %}" class="btn btn-primary">
+      <i class="fa fa-plus"></i> Create City
+    </a>
+  </div>
+
+  <div class="users-table table-wrapper mt-4">
+    <table class="posts-table table table-striped table-bordered">
+      <thead>
+        <tr class="users-table-info text-center">
+            <th>City Name</th>
+            <th>State</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for city in cities %}
+        <tr>
+            <td>{{ city.name }}</td>
+            <td>{{ city.state }}</td>
+            <td>
+                <a href="{% url 'city_update' city.id %}" class="btn btn-primary btn-sm">
+                    <i class="fa fa-edit"></i> Update</a>
+                <a href="{% url 'city_delete' city.id %}" class="btn btn-danger btn-sm">
+                    <i class="fa fa-trash"></i> Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

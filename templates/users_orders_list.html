@@ -1,0 +1,149 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+<style>
+  .query-image {
+      width: 400px;
+      height: 400px;
+      transition: transform 0.3s ease-in-out;
+  }
+
+  .query-image:hover {
+      transform: scale(8); /* Enlarges the image to 2x size on hover */
+  }
+
+  .order-details {
+      display: none; /* Hide order details by default */
+      margin-top: 10px;
+  }
+
+  .toggle-btn {
+      cursor: pointer;
+  }
+  /* Product Table Styles */
+  .product-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 10px;
+  }
+
+  .product-table th {
+      background-color: var(--primary-lighter);
+      color: var(--primary-dark);
+      padding: 12px 15px;
+      text-align: left;
+  }
+
+  .product-table td {
+      padding: 12px 15px;
+      background-color: white;
+      border-top: 1px solid var(--primary-light);
+      border-bottom: 1px solid var(--primary-light);
+  }
+
+  .product-table tr {
+      transition: all 0.2s ease;
+      cursor: pointer;
+  }
+
+  
+
+</style>
+<!-- FontAwesome for icons (make sure it's included in your base template) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+    <!-- Top Section with Create Button -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <center><h2 class="text-primary">Orders List</h2></center>
+        {% comment %} <a href="{% url 'product_order' %}" class="btn btn-primary">
+          <i class="fa fa-plus"></i> To Order
+        </a> {% endcomment %}
+    </div>
+
+    <div class="users-table table-wrapper mt-4">
+        <table class="product-table">
+            <thead>
+                <tr class="text-primary-custom">
+                    <th>Order   - Order Value</th>
+                    <th>Date</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_no }} - Rs.{{order.total_price}}</a></td>
+                    <td>{{ order.created_at|date:"F d, Y" }}</td>
+                    <td><button class="btn btn-primary-custom" onclick="toggleOrderDetails({{ order.id }})"><i class="fa fa-chevron-down"></i> </button></td>
+                    <td>
+                        <a href="{% url 'order_update' order.pk %}" class="text-decoration-none"  ><i class="fa fa-edit text-primary"></i>&nbsp;&nbsp;</a>
+                        <a href="{% url 'invoice' order.pk %}"><i class="fa fa-file-text-o text-primary"></i></td></a>
+                </tr>
+                <tr id="order-details-{{ order.id }}" class="order-details">
+                    <td colspan="4">
+                        <div class="order-detail-content">
+                            <!-- Order Details -->
+                            <h3>Order Details</h3>
+                            <table class="product-table">
+                                
+                               <tr>
+                                <th>Customer</th>
+                    <td>{{ order.created_by.first_name }}</a> 
+                                    <th>Total Price</th>
+                                    <td>{{ order.total_price }}</td>
+                                </tr>
+                               
+                            </table>
+                            <h4>Items:</h4>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Product ID</th>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.items.all %}
+                                    <tr>
+                                        <td>{{ item.product_no }}</td>
+                                        <td>{{ item.product_name }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.total_price }}</td>
+                                        <td>{{ item.status }}</td>
+
+                                       
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+  function toggleOrderDetails(orderId) {
+    const detailsRow = document.getElementById(`order-details-${orderId}`);
+    const icon = detailsRow.previousElementSibling.querySelector('i');
+
+    // Toggle visibility of the order details
+    if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
+      detailsRow.style.display = "table-row";
+      icon.classList.remove('fa-chevron-down');
+      icon.classList.add('fa-chevron-up');
+    } else {
+      detailsRow.style.display = "none";
+      icon.classList.remove('fa-chevron-up');
+      icon.classList.add('fa-chevron-down');
+    }
+  }
+</script>
+{% endblock %}

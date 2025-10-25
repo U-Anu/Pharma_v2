@@ -1,0 +1,12 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+
+<h2>{% if form.instance.pk %}Edit Status{% else %}Add New Status{% endif %}</h2><form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'status_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

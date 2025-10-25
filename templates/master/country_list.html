@@ -1,0 +1,52 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons (make sure it's included in your base template) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+     
+      <!-- Top Section with Create Button -->
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <center><h2 class="text-primary">Country List</h2></center>
+
+        <a href="{% url 'country_create' %}" class="btn btn-primary">
+          <i class="fa fa-plus"></i> Create Country
+        </a>
+      </div>
+      {% comment %} id="tableID" {% endcomment %}
+
+      <div class="users-table table-wrapper mt-4">
+        <table class="posts-table table table-striped table-bordered" >
+          <thead>
+            <tr class="users-table-info text-center">
+              <th>Country Code</th>
+              <th>Country Name</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for data in countries %}
+            <tr>
+              <td>{{ data.code }}</td>
+              <td>{{ data.name }}</td>
+              <td class="text-center">
+                <!-- Update (Edit) Button -->
+                <a href="{% url 'country_update' data.id %}" class="btn btn-primary btn-sm">
+                  <i class="fa fa-edit"></i> Update
+                </a>
+
+                <!-- Delete Button -->
+                <a href="{% url 'country_delete' data.id %}" class="btn btn-danger btn-sm">
+                  <i class="fa fa-trash"></i> Delete
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+{% endblock %}

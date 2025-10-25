@@ -1,0 +1,11 @@
+<div class="card">
+    {% if article.image %}
+        <img src="{{ article.image.url }}" alt="{{ article.title }}" class="card-img-top">
+    {% endif %}
+    <div class="card-body">
+        <h3 class="news-title">{{ article.title }}</h3>
+        <p><strong>Category:</strong> {{ article.category.name }}</p>
+        <p>{{ article.content }}</p>
+        <p><strong>Published:</strong> {{ article.published_at|date:"F d, Y H:i" }}</p>
+    </div>
+</div>

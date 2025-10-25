@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Order</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            gap: 20px;
+        }
+        .cart-box {
+            width: 30%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        .cart-box h3 {
+            margin-top: 0;
+        }
+        .cart-box table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .cart-box table, .cart-box th, .cart-box td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .cart-box button {
+            width: 100%;
+            padding: 8px;
+            background-color: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .cart-box button:hover {
+            background-color: darkgreen;
+        }
+        .product-container {
+            width: 65%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        button {
+            background-color: blue;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkblue;
+        }
+        .filter-box {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f1f1f1;
+        }
+        .filter-box input {
+            padding: 5px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cart Box -->
+    <div class="cart-box">
+        <h3>Cart</h3>
+        <table id="cart_table">
+            <tr>
+                <th>Name</th>
+                <th>Qty</th>
+                <th>Total</th>
+                <th>Action</th>
+            </tr>
+        </table>
+        <h4>Total Amount: <span id="total_amount">0</span></h4>
+        <button onclick="placeOrder()">Place Order</button>
+    </div>
+
+    <!-- Product Section -->
+    <div class="product-container">
+        <h2>Place Order</h2>
+
+        <!-- Filters -->
+        <div class="filter-box">
+            <form method="GET">
+                <input type="text" name="name" placeholder="Search by name" value="{{ request.GET.name }}">
+                <input type="text" name="company" placeholder="company" value="{{ request.GET.company }}">
+                <button type="submit">Filter</button>
+            </form>
+        </div>
+
+        <!-- Product List -->
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Company</th>
+                <th>MRP</th>
+                <th>Exp Date</th>
+                <th>Price</th>
+                <th>Available Quantity</th>
+                <th>Order Quantity</th>
+            </tr>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.company }}</td>
+                <td>{{ product.MRP }}</td>
+                <td>{{ product.expiry_date }}</td>
+                <td>{{ product.price }}</td>
+                <td id="stock_{{ product.id }}">{{ product.quantity }}</td>
+                <td>
+                    <input type="number" id="quantity_{{ product.id }}" min="1" max="{{ product.quantity }}" value="1">
+                    <button onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }}, {{ product.quantity }})">
+                        Add to Cart
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <script>
+        let cart = [];
+
+        function addToCart(id, name, price, availableQty) {
+            let quantity = parseInt(document.getElementById("quantity_" + id).value);
+            
+            if (quantity > availableQty) {
+                alert("Not enough stock available");
+                return;
+            }
+
+            let itemIndex = cart.findIndex(item => item.id === id);
+            if (itemIndex > -1) {
+                cart[itemIndex].quantity += quantity;
+                cart[itemIndex].total = cart[itemIndex].quantity * price;
+            } else {
+                cart.push({ id, name, price, quantity, total: price * quantity });
+            }
+
+            updateCartTable();
+        }
+
+        function updateCartTable() {
+            let cartTable = document.getElementById("cart_table");
+            cartTable.innerHTML = `
+                <tr>
+                    <th>Name</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            let totalAmount = 0;
+            cart.forEach((item, index) => {
+                totalAmount += item.total;
+                cartTable.innerHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.total}</td>
+                        <td><button onclick="removeFromCart(${index})">X</button></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById("total_amount").innerText = totalAmount.toFixed(2);
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartTable();
+        }
+
+        function placeOrder() {
+            if (cart.length === 0) {
+                alert("Cart is empty!");
+                return;
+            }
+
+            fetch("{% url 'place_order' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(cart)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert("Order placed successfully! Order ID: " + data.order_id);
+                    cart = [];
+                    updateCartTable();
+                    location.reload();
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+
+</body>
+</html>

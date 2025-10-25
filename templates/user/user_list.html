@@ -1,0 +1,46 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+  <!-- Top Section with Create Button -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <h2 class="text-primary text-center w-100">Users List</h2>
+    <a href="{% url 'admin_signup' %}" class="btn btn-primary">
+       Create
+    </a>
+  </div>
+
+  <div class="users-table table-wrapper mt-4">
+    <table class="posts-table table table-striped table-bordered">
+      <thead>
+        <tr class="users-table-info text-center">
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone Number</th>
+          <th>Category</th>
+          <th>Address</th>
+          {% comment %} <th>Actions</th> {% endcomment %}
+        
+        </tr>
+      </thead>
+      <tbody>
+        {% for admin in admin %}
+        <tr>
+          <td>{{ admin.first_name }} {{ admin.last_name }}</td>
+          <td>{{ admin.email }}</td>
+          <td>{{ admin.phone_number }}</td>
+          <td>{{ admin.user_category }}</td>
+          <td>{{ admin.address }}</td>
+            
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

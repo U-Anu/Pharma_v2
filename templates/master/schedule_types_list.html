@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Types</title>
+
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1 class="text-center">📅 Schedule Types</h1>
+    <a href="{% url 'schedule_types_create' %}" class="btn btn-success mb-3">➕ Add New Schedule</a>
+
+    {% if schedules %}
+        <div class="list-group">
+            {% for schedule in schedules %}
+                <div class="schedule-card">
+                    <h4 class="mb-1">{{ schedule.schedule_name }}</h4>
+                    <p><strong>Code:</strong> {{ schedule.schedule_code }}</p>
+                    <p>{{ schedule.description }}</p>
+                    
+                    <a href="{% url 'schedule_types_update' schedule.id %}" class="btn btn-warning btn-sm">✏ Edit</a>
+                    <a href="{% url 'schedule_types_delete' schedule.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">❌ Delete</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="alert alert-warning">No schedules available.</p>
+    {% endif %}
+</div>
+
+
+</body>
+</html>

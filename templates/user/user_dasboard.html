@@ -1,0 +1,146 @@
+{% extends 'user/user_base.html' %}
+{% block body_block %}
+{% load static %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-gradient-primary text-white me-2">
+        <i class="mdi mdi-home"></i>
+      </span> User Dashboard
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+          <span></span>Overview <i class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="row">
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card bg-gradient-danger card-img-holder text-white">
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3">Points <i class="mdi mdi-chart-line mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{user_points}}</h2>
+          <h6 class="card-text">Points</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card bg-gradient-info card-img-holder text-white">
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg'%}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3"> Orders <i class="mdi mdi-bookmark-outline mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{orders}}</h2>
+          <h6 class="card-text">orders</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card bg-gradient-success card-img-holder text-white">
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3">Products <i class="mdi mdi-diamond mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{products}}</h2>
+          <h6 class="card-text">products</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-7 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <div class="clearfix">
+            <h4 class="card-title float-start">Points Information</h4>
+            <div id="visit-sale-chart-legend" class="rounded-legend legend-horizontal legend-top-right float-end"></div>
+          </div>
+          
+          <!-- Points Allocation Table -->
+          <div class="table-responsive mt-4">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Points Range</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for allocation in point_table %}
+                <tr>
+                  <td>{{ allocation.min_amount }} - {{allocation.max_amount}}</td>
+                  <td>{{ allocation.points }} Points</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <canvas id="visit-sale-chart" class="mt-4"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-5 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Traffic Sources</h4>
+          <div class="doughnutjs-wrapper d-flex justify-content-center">
+            <canvas id="traffic-chart"></canvas>
+          </div>
+          <div id="traffic-chart-legend" class="rounded-legend legend-vertical legend-bottom-left pt-4"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Recent Orders</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                              <th> Order ID </th>
+                                <th> Total Quantity </th>
+                                <th> Status </th>
+                                <th> Last Order </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in top_orders %}
+                            <tr>
+                              <td> OD-{{ order.id }} </td>
+                           
+                                <td> {{ order.total_quantity }} </td>
+                                <td>
+                                    {% if order.status == 'delivered' %}
+                                    <label class="badge badge-gradient-success">DELIVERED</label>
+                                    {% elif order.status == 'approved' %}
+                                    <label class="badge badge-gradient-warning">APPROVED</label>
+                                    {% elif order.status == 'packed' %}
+                                    <label class="badge badge-gradient-info">PACKED</label>
+                                    {% else %}
+                                    <label class="badge badge-gradient-danger">ORDERED</label>
+                                    {% endif %}
+                                </td>
+                                <td> {{ order.created_at|date:"M d, Y" }} </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No recent orders</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>{% endblock %}

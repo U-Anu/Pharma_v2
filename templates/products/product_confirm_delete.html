@@ -1,0 +1,13 @@
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-danger">❌ Delete Product</h2>
+        <p class="text-center">Are you sure you want to delete <strong>"{{ product.name }}"</strong>?</p>
+        
+        <form method="post" class="text-center">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">✅ Yes, Delete</button>
+            <a href="{% url 'product_list' %}" class="btn btn-secondary">❌ Cancel</a>
+        </form>
+    </div>
+</div>

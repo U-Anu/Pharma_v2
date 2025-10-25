@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Related Products</title>
+</head>
+<body>
+    <h1>Related Products</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Related Products</th>
+                <th>Relationship Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product, related_list in related_products.items %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>
+                        {% for related_product in related_list %}
+                            {{ related_product.related_product.name }}<br>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for related_product in related_list %}
+                            {{ related_product.get_relationship_type_display }}<br>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No related products found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

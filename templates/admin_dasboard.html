@@ -1,0 +1,220 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+<style>
+  #bg-gradient-warning {
+    background: linear-gradient(45deg, #4A148C, #880E4F, #000000);
+}
+#bg-gradient-success {
+  background: linear-gradient(45deg, #F4A261, #BC6C25, #6D4C41);
+}
+
+#bg-gradient-purple {
+  background: linear-gradient(45deg, #0F2027, #203A43, #2C5364, #FF00FF);
+}
+
+#bg-gradient-sea {
+  background: linear-gradient(45deg, #000428, #004E92, #1B0034);
+}
+#bg-gradient-pink{
+  background: linear-gradient(45deg, #BA68C8, #E040FB, #8E24AA);
+
+}
+
+</style>
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-gradient-primary text-white me-2">
+        <i class="mdi mdi-home"></i>
+      </span> Admin Dashboard
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+          <span></span>Overview <i class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="row">
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card bg-gradient-danger card-img-holder text-white">
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3">No Of Users <i class="mdi mdi-chart-line mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{users}}</h2>
+          <a href="{% url 'user_list' %}" class="text-white text-decoration-none">Users</a>     
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card bg-gradient-warning card-img-holder text-white" >
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3">No Of User Registered <i class="mdi mdi-chart-line mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{pending_users}}</h2>
+          <a href="{% url 'user_pending_list' %}" class="text-white text-decoration-none">Registered Users</a>        </div>
+      </div>
+    </div>
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card bg-gradient-success card-img-holder text-white">
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg'%}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3"> Orders <i class="mdi mdi-bookmark-outline mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{orders}}</h2>
+          <a href="{% url 'admin_orders' %}" class="text-white text-decoration-none">Orders</a>     
+        </div>
+      </div>
+    </div>
+   
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card card-img-holder text-white" id='bg-gradient-warning'>
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3">Pending Orders <i class="mdi mdi-chart-line mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{pending_orders}}</h2>
+          <a href="{% url 'admin_orders' %}" class="text-white text-decoration-none">Pending Orders</a>        </div>
+      </div>
+    </div>
+    <div class="col-md-4 stretch-card grid-margin" >
+      <div class="card card-img-holder text-white"  id='bg-gradient-purple'>
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3">Queries <i class="mdi mdi-chart-line mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{queries}}</h2>
+          <a href="{% url 'query_list' %}" class="text-white text-decoration-none">Queries</a>        
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 stretch-card grid-margin">
+      <div class="card card-img-holder text-white" id='bg-gradient-sea'>
+        <div class="card-body">
+          <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
+          <h4 class="font-weight-normal mb-3">Products <i class="mdi mdi-diamond mdi-24px float-end"></i>
+          </h4>
+          <h2 class="mb-5">{{products}}</h2>
+        <a href="{% url 'admin_product_list' %}" class="text-white text-decoration-none">Products</a>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="row">
+    <div class="col-md-5 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+         <img src="{% static 'img/meds-dr.gif' %}" width="100%" height="100%">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-7 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Order Status Distribution</h4>
+          <div class="doughnutjs-wrapper d-flex justify-content-center">
+            <canvas id="order-status-chart"></canvas>
+          </div>
+          <div id="order-status-legend" class="rounded-legend legend-vertical legend-bottom-left pt-4"></div>
+        </div>
+      </div>
+    </div></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          const ctx = document.getElementById('order-status-chart').getContext('2d');
+    
+          // Create pastel pink-to-purple gradient for Pending Orders
+          let gradientPending = ctx.createLinearGradient(0, 0, 0, 400);
+          gradientPending.addColorStop(0, '#F8BBD0');  // Soft Pink
+          gradientPending.addColorStop(1, '#CE93D8');  // Soft Purple
+    
+          // Create pastel mint gradient for Dispatched Orders
+          let gradientDispatched = ctx.createLinearGradient(0, 0, 0, 400);
+          gradientDispatched.addColorStop(0, '#B2DFDB');  // Soft Mint
+          gradientDispatched.addColorStop(1, '#80CBC4');  // Soft Teal
+    
+          const orderStatusChart = new Chart(ctx, {
+              type: 'doughnut',
+              data: {
+                  labels: ['Pending Orders', ' Orders'],
+                  datasets: [{
+                      data: [{{ pending_orders }}, {{ orders }}],
+                      backgroundColor: [gradientPending, gradientDispatched],
+                      borderColor: ['#CE93D8', '#80CBC4'],
+                      borderWidth: 1
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  plugins: {
+                      legend: {
+                          display: true,
+                          position: 'bottom'
+                      },
+                      tooltip: {
+                          enabled: true
+                      }
+                  }
+              }
+          });
+      });
+    </script>
+    
+  
+    <div class="row">
+      <div class="col-12 grid-margin">
+          <div class="card">
+              <div class="card-body">
+                  <h4 class="card-title">Recent Orders</h4>
+                  <div class="table-responsive">
+                      <table class="table">
+                          <thead>
+                              <tr>
+                                  <th> Customer </th>
+                                  <th> Total Quantity </th>
+                                  <th> Status </th>
+                                  <th> Last Update </th>
+                                  <th> Order ID </th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {% for order in top_orders %}
+                              <tr>
+                                  <td>
+                                      {{ order.created_by.first_name }}
+                                  </td>
+                                  <td> {{ order.total_quantity }} </td>
+                                  <td>
+                                      {% if order.status == 'delivered' %}
+                                      <label class="badge badge-gradient-success">DELIVERED</label>
+                                      {% elif order.status == 'approved' %}
+                                      <label class="badge badge-gradient-warning">APPROVED</label>
+                                      {% elif order.status == 'packed' %}
+                                      <label class="badge badge-gradient-info">PACKED</label>
+                                      {% else %}
+                                      <label class="badge badge-gradient-danger">ORDERED</label>
+                                      {% endif %}
+                                  </td>
+                                  <td> {{ order.created_at|date:"M d, Y" }} </td>
+                                  <td> OD-{{ order.id }} </td>
+                              </tr>
+                              {% empty %}
+                              <tr>
+                                  <td colspan="5" class="text-center">No recent orders</td>
+                              </tr>
+                              {% endfor %}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+   {% endblock %} 

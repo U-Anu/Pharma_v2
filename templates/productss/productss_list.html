@@ -1,0 +1,52 @@
+{% extends 'user/user_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<!-- FontAwesome for icons (make sure it's included in your base template) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container">
+  
+  <!-- Top Section with Create Button -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <center><h2 class="text-primary">Product List</h2></center>
+      
+    <a href="{% url 'upload_products' %}">
+        Upload Products <i class="fa fa-plus"></i>
+    </a>
+  </div>
+  <div class="users-table table-wrapper mt-4">
+    <table class="posts-table table table-striped table-bordered">
+      <thead>
+        <tr class="users-table-info text-center">
+            <th>S No</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>In Stock</th>
+            {% comment %} <th>Action</th> {% endcomment %}
+
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.price }}</td>
+            <td>{{ product.quantity }}</td>
+
+       
+                {% comment %} <a href="{% url 'product_edit' product.id %}">view</a>
+                <a href="{% url 'product_edit' product.id %}">Edit</a>
+                <a href="{% url 'product_delete' product.id %}">Delete</a> {% endcomment %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+

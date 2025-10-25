@@ -1,0 +1,30 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<div class="container mt-4">
+    <h2 class="text-primary text-center">
+        {% if form.instance.pk %} Update Product Type {% else %} Create Product Type {% endif %}
+    </h2>
+
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_name" class="form-label">Product Type Name</label>
+            {{ form.name }}
+        </div>
+        <div class="mb-3">
+            <label for="id_default_markup" class="form-label">Default Markup (%)</label>
+            {{ form.markup_range }}
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="fa fa-save"></i> {% if form.instance.pk %} Update {% else %} Submit {% endif %}
+        </button>
+        <a href="{% url 'product_type_list' %}" class="btn btn-secondary">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+<div class="container mt-4">
+  <h2 class="mb-4">Set Markups for {{ user_category.name }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="table-responsive" style="max-height: 70vh;">
+      <table id="markup-table" class="table table-striped table-hover table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>S.No</th>
+            <th>Product</th>
+            <th>Price</th>
+            <th>MRP</th>
+            <th>Owner Margin %</th>
+            <th>Owner Margin ₹</th>
+            <th>Owner Selling ₹</th>
+            <th>Retailer Margin ₹</th>
+            <th>Retailer Margin %</th>
+            <th>Discount %</th>
+            <th>Scheme</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ product.name }}</td>
+            <td class="price" id="price_{{ product.id }}">{{ product.price|default:"0.00" }}</td>
+            <td class="mrp" id="mrp_{{ product.id }}">{{ product.MRP|default:"0.00" }}</td>
+            <td>
+              <input type="number" step="0.01" name="owner_margin_percent_{{ product.id }}"
+                     value="{{ product.markup.owner_margin_percent|default:15 }}"
+                     class="form-control form-control-sm margin-input" data-id="{{ product.id }}">
+            </td>
+            <td><input type="text" readonly id="margin_amt_{{ product.id }}" 
+                      class="form-control form-control-sm text-muted" 
+                      value="{% with margin=product.price|default:0 %}{% widthratio margin 1 product.markup.owner_margin_percent|default:15 %}{% endwith %}"></td>
+            <td><input type="text" readonly id="selling_{{ product.id }}" 
+                      class="form-control form-control-sm text-muted" 
+                      value="{{ product.markup.owner_selling_price|default:product.price|default:'0.00' }}"></td>
+            <td><input type="text" readonly id="retail_margin_amt_{{ product.id }}" 
+                      class="form-control form-control-sm text-muted" 
+                      value="{{ product.markup.retailer_margin|default:'0.00' }}"></td>
+            <td><input type="text" readonly id="retail_margin_percent_{{ product.id }}" 
+                      class="form-control form-control-sm text-muted" 
+                      value="{{ product.markup.retailer_margin_percent|default:'0.00'|floatformat:2 }}"></td>
+            <td>
+              <input type="number" step="0.01" name="discount_{{ product.id }}"
+                     value="{{ product.markup.discount_percent|default:'' }}"
+                     class="form-control form-control-sm">
+            </td>
+            <td>
+              <input type="text" name="scheme_{{ product.id }}"
+                     value="{{ product.markup.scheme|default:'' }}"
+                     class="form-control form-control-sm" placeholder="e.g. 5+1">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button type="submit" class="btn btn-success mt-4 w-100">💾 Save All Markups</button>
+  </form>
+</div>
+
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css">
+
+<!-- Include jQuery and DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
+
+<style>
+  /* Custom styling for DataTables with fixed header */
+  .dataTables_wrapper .dataTables_scroll {
+    overflow: auto;
+    max-height: 70vh;
+  }
+  
+  /* Input field styling */
+  .form-control-sm {
+    min-width: 80px;
+  }
+  
+  /* Search box styling */
+  .dataTables_filter input {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+  }
+</style>
+
+<script>
+  $(document).ready(function() {
+    // Initialize DataTable with fixed header
+    var table = $('#markup-table').DataTable({
+      scrollY: "70vh",
+      scrollCollapse: true,
+      paging: false,
+      fixedHeader: true,
+      responsive: true,
+      dom: '<"top"f>rt<"bottom"lip>',
+      initComplete: function() {
+        // Calculate margins after table initialization
+        $('.margin-input').each(function() {
+          calculateMargins($(this).data('id'));
+        });
+      }
+    });
+
+    // Margin calculation function
+    function calculateMargins(id) {
+      const marginPercent = parseFloat($(`input[name='owner_margin_percent_${id}']`).val()) || 0;
+      const price = parseFloat($(`#price_${id}`).text()) || 0;
+      const mrp = parseFloat($(`#mrp_${id}`).text()) || 0;
+      
+      const marginAmt = (price * marginPercent / 100).toFixed(2);
+      const sellingPrice = (price + parseFloat(marginAmt)).toFixed(2);
+      const retailerMargin = (mrp - sellingPrice).toFixed(2);
+      const retailerPercent = mrp ? ((retailerMargin / mrp) * 100).toFixed(2) : '0.00';
+      
+      $(`#margin_amt_${id}`).val(marginAmt);
+      $(`#selling_${id}`).val(sellingPrice);
+      $(`#retail_margin_amt_${id}`).val(retailerMargin);
+      $(`#retail_margin_percent_${id}`).val(retailerPercent);
+    }
+
+    // Event delegation for dynamically created elements
+    $('#markup-table').on('input', '.margin-input', function() {
+      calculateMargins($(this).data('id'));
+    });
+  });
+</script>
+{% endblock %}

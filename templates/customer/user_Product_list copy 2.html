@@ -1,0 +1,294 @@
+{% extends 'user/user_base.html' %}
+{% block body_block %}
+{% load static %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    /* Card hover effect */
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Compact cart table */
+    #cart-items table {
+        width: 100%;
+    }
+
+    #cart-items table tbody tr {
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    #cart-items table tbody tr:hover {
+        background: #e0f7fa;
+    }
+
+    #cart-items td {
+        vertical-align: middle;
+        padding: 5px 10px;
+    }
+
+    .qty-badge {
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 5px;
+        padding: 2px 8px;
+        font-size: 0.9rem;
+    }
+
+    /* Query item card */
+    .query-item {
+        background: #fff3cd;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        position: relative;
+    }
+    .query-item .btn-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+
+    /* Add-to-cart button hover */
+    .add-to-cart-btn:hover {
+        transform: scale(1.05);
+        transition: 0.2s ease-in-out;
+    }
+
+    /* Product table hover */
+    #productTable tbody tr:hover {
+        background: #f1f5f9;
+    }
+
+    /* Checkout button hover */
+    #checkout:hover {
+        transform: scale(1.05);
+        transition: transform 0.2s ease;
+    }
+</style>
+
+<div class="container mt-4">
+    <h3 class="mb-4 text-center text-primary fw-bold">Products & Cart</h3>
+    
+    <div class="row g-4">
+        <!-- Cart & Query Column -->
+        <div class="col-md-4">
+            <!-- Cart -->
+            <div class="card shadow-sm mb-4 card-hover">
+                <div class="card-header bg-primary text-white fw-bold">
+                    Cart
+                </div>
+                <div class="card-body p-2" id="cart-items">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted text-center">No items in cart.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-light text-end fw-bold">
+                    Subtotal: ₹<span id="cart-subtotal">0</span>
+                </div>
+            </div>
+
+            <!-- Multi Query Form -->
+            <div class="card shadow-sm card-hover">
+                <div class="card-header bg-warning text-dark fw-bold">
+                    Missed Products / Queries
+                </div>
+                <div class="card-body">
+                    <form id="query-form" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div id="query-items-container"></div>
+                        <button type="button" id="add-query-item" class="btn btn-sm btn-info w-100 mb-2">
+                            <i class="bi bi-plus-circle"></i> Add Query
+                        </button>
+                        <button type="button" id="checkout" class="btn btn-success w-100 fw-bold">
+                            <i class="bi bi-bag-check"></i> Checkout & Submit
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Column -->
+        <div class="col-md-8">
+            {% if products %}
+            <div class="table-responsive shadow-sm card-hover">
+                <table id="productTable" class="table table-striped table-hover table-bordered align-middle">
+                    <thead class="table-primary text-center fw-bold">
+                        <tr>
+                            <th>Name</th>
+                            <th>Company</th>
+                            <th>MRP (₹)</th>
+                            <th>Our Price (₹)</th>
+                            <th>Pack Size</th>
+                            <th>Quantity</th>
+                            <th>Add to Cart</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.company|default:"-" }}</td>
+                            <td>{{ product.MRP|default:"-" }}</td>
+                            <td>{{ product.display_price|default:"-" }}</td>
+                            <td>{{ product.pack_size|default:"-" }}</td>
+                            <td>{{ product.quantity|default:"-" }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-success add-to-cart-btn" 
+                                        data-product-id="{{ product.id }}"
+                                        data-product-name="{{ product.name }}"
+                                        data-product-price="{{ product.display_price|default:0 }}"
+                                        data-product-quantity="{{ product.quantity|default:0 }}">
+                                    <i class="bi bi-cart-plus"></i> Add
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center mt-5">
+                No products available at the moment.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#productTable').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [5, 10, 25, 50],
+        "ordering": true
+    });
+
+    let cart = [];
+
+    function updateCartUI() {
+        let container = $('#cart-items tbody');
+        container.empty();
+
+        if(cart.length === 0){
+            container.html('<tr><td class="text-muted text-center">No items in cart.</td></tr>');
+            $('#cart-subtotal').text('0');
+            return;
+        }
+
+        let subtotal = 0;
+        cart.forEach(item => {
+            let itemTotal = item.price * item.qty;
+            subtotal += itemTotal;
+
+            let row = $(`
+                <tr>
+                    <td class="text-start">${item.name}</td>
+                    <td><span class="qty-badge">${item.qty}</span></td>
+                    <td class="text-end">₹${itemTotal.toFixed(2)}</td>
+                </tr>
+            `);
+            container.append(row);
+        });
+
+        $('#cart-subtotal').text(subtotal.toFixed(2));
+    }
+
+    // Add to cart
+    $('.add-to-cart-btn').click(function(){
+        let product = {
+            id: $(this).data('product-id'),
+            name: $(this).data('product-name'),
+            price: parseFloat($(this).data('product-price')) || 0,
+            qty: 1,
+            available_quantity: parseInt($(this).data('product-quantity')) || 0
+        };
+
+        let existing = cart.find(x => x.id === product.id);
+        if(existing){
+            if(existing.qty < existing.available_quantity) existing.qty +=1;
+            else { alert('Cannot exceed stock!'); return; }
+        } else {
+            cart.push(product);
+        }
+
+        updateCartUI();
+    });
+
+    // Add new query item
+    $('#add-query-item').click(function(){
+        let idx = $('#query-items-container .query-item').length;
+        let html = `
+            <div class="query-item">
+                <button type="button" class="btn-close remove-query-item"></button>
+                <div class="mb-2">
+                    <label>Description</label>
+                    <textarea name="description_${idx}" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="mb-2">
+                    <label>Image (optional)</label>
+                    <input type="file" name="Product_image_${idx}" class="form-control">
+                </div>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" name="generic_${idx}" class="form-check-input">
+                    <label class="form-check-label">Generic</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" name="same_brand_${idx}" class="form-check-input">
+                    <label class="form-check-label">Same brand</label>
+                </div>
+            </div>
+        `;
+        $('#query-items-container').append(html);
+    });
+
+    $(document).on('click', '.remove-query-item', function(){
+        $(this).closest('.query-item').remove();
+    });
+
+    // Checkout
+    $('#checkout').click(function(){
+        if(cart.length === 0 && $('#query-items-container .query-item').length===0){
+            alert('Add cart items or queries before checkout!');
+            return;
+        }
+
+        let formData = new FormData($('#query-form')[0]);
+        formData.append('cart', JSON.stringify(cart));
+
+        $.ajax({
+            url: "{% url 'checkout_and_query' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(resp){
+                alert('Order & queries submitted!');
+                cart = [];
+                updateCartUI();
+                $('#query-items-container').empty();
+            },
+            error: function(err){ alert('Error submitting order.'); console.log(err); }
+        });
+    });
+
+});
+</script>
+
+{% endblock %}
