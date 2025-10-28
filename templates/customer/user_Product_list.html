@@ -224,7 +224,6 @@ $(document).ready(function() {
         $('#cart-count').text(totalQty);
     }
 
-    // Reverse order cart UI
     function updateCartUI() {
         let container = $('#cart-items');
         container.empty();
@@ -280,7 +279,6 @@ $(document).ready(function() {
         updateCartUI();
     });
 
-    // Quantity controls
     $(document).on('click', '.increase-qty', function(){
         let id = $(this).data('id');
         let product = cart.find(x => x.id === id);
@@ -316,7 +314,6 @@ $(document).ready(function() {
         updateCartUI();
     });
 
-    // QUERY LOGIC
     function updateQueryCount(){
         $('#query-count').text($('#query-items-container .query-item').length);
     }
@@ -332,22 +329,18 @@ $(document).ready(function() {
         updateQueryCount();
     });
 
-    function getQueryHTML(idx, product=null, requestedQty=null){
-        let desc = "";
-        if(product && requestedQty){
-            desc = `Requested ${requestedQty} units but only ${product.quantity} available.`;
-        }
+    function getQueryHTML(idx){
         return `
             <div class="query-item">
                 <button type="button" class="btn-close remove-query-item"></button>
                 <div class="mb-2"><label>Business Name</label>
-                    <input type="text" name="Business_name_${idx}" class="form-control" value="${product ? product.name : ''}" required>
+                    <input type="text" name="Business_name_${idx}" class="form-control" required>
                 </div>
                 <div class="mb-2"><label>Contact Number</label>
                     <input type="text" name="contact_number_${idx}" class="form-control" required>
                 </div>
                 <div class="mb-2"><label>Description</label>
-                    <textarea name="description_${idx}" class="form-control" rows="2" required>${desc}</textarea>
+                    <textarea name="description_${idx}" class="form-control" rows="3" required></textarea>
                 </div>
                 <div class="mb-2"><label>Image (optional)</label>
                     <input type="file" name="Product_image_${idx}" class="form-control">
@@ -364,12 +357,26 @@ $(document).ready(function() {
         `;
     }
 
+    // ✅ NEW LOGIC — combine all out-of-stock products into one query description
     function addToQuery(product, requestedQty=null){
-        let idx = $('#query-items-container .query-item').length;
-        let html = getQueryHTML(idx, product, requestedQty);
-        $('#query-items-container').append(html);
+        let queryContainer = $('#query-items-container');
+        let existingQuery = queryContainer.find('.query-item').first();
+        let descText = `• Requested ${requestedQty} units of ${product.name} but only ${product.available_quantity} available.\n`;
+
+        // If no query item exists, create one
+        if (existingQuery.length === 0) {
+            let idx = 0;
+            queryContainer.append(getQueryHTML(idx));
+            existingQuery = queryContainer.find('.query-item').first();
+        }
+
+        // Append product info to description
+        let descBox = existingQuery.find('textarea[name^="description_"]');
+        let currentText = descBox.val();
+        descBox.val(currentText + descText);
+
         updateQueryCount();
-        alert(`Stock not sufficient! Added "${product.name}" to query list.`);
+        alert(`Stock not sufficient! Added "${product.name}" info to query description.`);
     }
 
     $('#checkout').click(function(){
