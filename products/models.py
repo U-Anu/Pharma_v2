@@ -300,12 +300,9 @@ class Query(models.Model):
     description = models.TextField()
     Business_name = models.CharField(max_length=100,null=True,blank=True)
     contact_number = models.CharField(max_length=15, null=True, blank=True)
-    Product_image = models.ImageField(upload_to='query_images/', blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     created_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_created_by',null=True,on_delete=models.CASCADE)
     updated_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_updated_by',null=True,on_delete=models.CASCADE)
-    generic=models.BooleanField(default=False)
-    same_brand=models.BooleanField(default=False)
     def __str__(self):
         return f"Query {self.created_by}"
 

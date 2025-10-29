@@ -21,6 +21,13 @@ body {
     color: #fff !important;
     font-weight: 600;
 }
+#productTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #b66dff !important;
+    color: #fff !important;
+}
 #productTable tbody tr:hover {
     background-color: #f1faff;
 }
@@ -59,7 +66,7 @@ body {
 }
 .cart-item:hover { background:#f1faff; }
 .cart-item .name { font-weight:500; color:#212529; }
-.cart-item .qty-controls { display:flex; align-items:center; gap:5px; }
+.cart-item .qty-controls { display:flex; align-items:center; gap:6px; }
 .cart-item .qty-controls input { width:60px; text-align:center; border-radius:6px; }
 .cart-item .price { font-weight:600; color:#198754; text-align:right; }
 .cart-footer {
@@ -113,65 +120,68 @@ table.dataTable thead .sorting_asc {
         <!-- LEFT: PRODUCTS -->
         <div class="col-lg-8">
             <div class="bg-white shadow-sm p-4 mb-3">
-                <table id="productTable" class="table table-hover mt-3 pt-2">
-               <thead class="text-white" style="background-color: #b66dff;">
-    <tr>
-        <th style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                <div style="font-size: 0.75em; color: #ffff;">Pack Size</div>
-                <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">Product Name</div>
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                    <span style="font-style: italic; font-size: 0.95em;">Company</span>
-                    <span style="font-size: 0.8em; color: #fff;">MRP</span>
-                </div>
-            </div>
-        </th>
-        <th>Composition</th>
-        <th>Price</th>
-        <th>Available Qty</th>
-        <th>Add</th>
-    </tr>
-</thead>
-
-                    <tbody>
-                        {% for product in products %}
-                        <tr>
-                             <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
-                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                                    <div style="font-size: 0.75em; color: #6c757d;">{{ product.pack_size|default:"" }}'s</div>
-                                    <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">{{ product.name }}</div>
-                                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                                        <span style="font-style: italic; font-size: 0.95em;">{{ product.company|default:"-" }}</span>
-                                        <span style="font-size: 0.8em; color: #6c757d;">₹{{ product.MRP|default:"-" }}</span>
+                <!-- ✅ Added scroll container for sticky header -->
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table id="productTable" class="table table-hover mt-3 pt-2">
+                        <thead class="text-white" style="background-color: #b66dff;">
+                            <tr>
+                                <th style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                        <div style="font-size: 0.75em; color: #ffff;">Pack Size</div>
+                                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">Product Name</div>
+                                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                            <span style="font-style: italic; font-size: 0.95em;">Company</span>
+                                            <span style="font-size: 0.8em; color: #fff;">MRP</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                          <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
-                                {{ product.composition_name }}
-                            </td>
-                            <td>₹{{ product.price }}</td>
-                            <td>{{ product.quantity }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary add-to-cart-btn"
-                                        data-product-id="{{ product.id }}"
-                                        data-product-name="{{ product.name }}"
-                                        data-product-price="{{ product.price }}"
-                                        data-product-quantity="{{ product.quantity }}">
-                                    <i class="bi bi-cart-plus"></i> Add
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </th>
+                                <th>Composition</th>
+                                <th>Price</th>
+                                <th style="width: 60px;">Stock</th>
+                                <th>Add</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                        <div style="font-size: 0.75em; color: #6c757d;">{{ product.pack_size|default:"" }}'s</div>
+                                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">{{ product.name }}</div>
+                                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                            <span style="font-size: 0.95em;">{{ product.company|default:"-" }}</span>
+                                            <span style="font-size: 0.8em; color: #6c757d;">₹{{ product.MRP|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
+                                    {{ product.composition_name }}
+                                </td>
+                                <td>₹{{ product.price }}</td>
+                                <td style="white-space: nowrap; text-align: center; width: 60px;">{{ product.quantity }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary add-to-cart-btn"
+                                            data-product-id="{{ product.id }}"
+                                            data-product-name="{{ product.name }}"
+                                            data-product-price="{{ product.price }}"
+                                            data-product-quantity="{{ product.quantity }}">
+                                        <i class="bi bi-cart-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- RIGHT: CART & QUERY -->
-        <div class="col-lg-4">
+        <div class="col-lg-4" style="margin-top:29px!important; padding-top:12px " >
 
             <!-- CART -->
-            <div class="cart-card mb-4">
+            <div class="cart-card mb-4 mt-5" >
                 <div class="cart-header">
                     Cart (<span id="cart-count">0</span>)
                 </div>
@@ -243,8 +253,8 @@ $(document).ready(function() {
                 <div class="cart-item">
                     <div class="name">${item.name}</div>
                     <div class="qty-controls">
-                        <button class="btn btn-outline-secondary decrease-qty" data-id="${item.id}">-</button>
                         <input type="number" class="form-control text-center qty-input" min="1" max="${item.available_quantity}" data-id="${item.id}" value="${item.qty}">
+                        <button class="btn btn-outline-danger remove-item" data-id="${item.id}"><i class="bi bi-trash"></i></button>
                         <button class="btn btn-outline-secondary increase-qty" data-id="${item.id}">+</button>
                     </div>
                     <div class="price">₹${itemTotal.toFixed(2)}</div>
@@ -290,14 +300,9 @@ $(document).ready(function() {
         }
     });
 
-    $(document).on('click', '.decrease-qty', function(){
+    $(document).on('click', '.remove-item', function(){
         let id = $(this).data('id');
-        let product = cart.find(x => x.id === id);
-        if(product.qty > 1){
-            product.qty -= 1;
-        } else {
-            cart = cart.filter(x => x.id !== id);
-        }
+        cart = cart.filter(x => x.id !== id);
         updateCartUI();
     });
 
@@ -342,35 +347,22 @@ $(document).ready(function() {
                 <div class="mb-2"><label>Description</label>
                     <textarea name="description_${idx}" class="form-control" rows="3" required></textarea>
                 </div>
-                <div class="mb-2"><label>Image (optional)</label>
-                    <input type="file" name="Product_image_${idx}" class="form-control">
-                </div>
-                <div class="form-check form-check-inline">
-                    <input type="checkbox" name="generic_${idx}" class="form-check-input">
-                    <label class="form-check-label">Generic</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input type="checkbox" name="same_brand_${idx}" class="form-check-input">
-                    <label class="form-check-label">Same brand</label>
-                </div>
             </div>
         `;
     }
 
-    // ✅ NEW LOGIC — combine all out-of-stock products into one query description
+    // ✅ Combine all out-of-stock products into one query description
     function addToQuery(product, requestedQty=null){
         let queryContainer = $('#query-items-container');
         let existingQuery = queryContainer.find('.query-item').first();
-        let descText = `• Requested ${requestedQty} units of ${product.name} but only ${product.available_quantity} available.\n`;
+        let descText = `•  ${requestedQty} units of ${product.name} \n`;
 
-        // If no query item exists, create one
         if (existingQuery.length === 0) {
             let idx = 0;
             queryContainer.append(getQueryHTML(idx));
             existingQuery = queryContainer.find('.query-item').first();
         }
 
-        // Append product info to description
         let descBox = existingQuery.find('textarea[name^="description_"]');
         let currentText = descBox.val();
         descBox.val(currentText + descText);

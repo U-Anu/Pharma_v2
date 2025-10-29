@@ -350,18 +350,12 @@ def checkout_and_query(request):
                     business_name = request.POST.get(f'Business_name_{index}')
                     contact_number = request.POST.get(f'contact_number_{index}')
                     description = request.POST.get(f'description_{index}')
-                    generic = request.POST.get(f'generic_{index}') == 'on'
-                    same_brand = request.POST.get(f'same_brand_{index}') == 'on'
-                    product_image = request.FILES.get(f'Product_image_{index}')
 
                     q = Query.objects.create(
                         created_by=user,
                         Business_name=business_name,
                         contact_number=contact_number,
                         description=description,
-                        generic=generic,
-                        same_brand=same_brand,
-                        Product_image=product_image
                     )
                     queries.append(q.id)
 

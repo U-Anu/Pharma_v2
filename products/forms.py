@@ -71,17 +71,14 @@ class UserCategoryMarkupForm(forms.ModelForm):
 class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
-        fields = ['description', 'Product_image','generic','same_brand']
+        fields = ['description']
         widgets = {
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'Business_name': forms.TextInput(attrs={'class': 'form-control'}),
             'contact_number': forms.TextInput(attrs={'class': 'form-control'}),            
-            'Product_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-    generic = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
-    same_brand = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
-
+    
 class CompositionForm(forms.ModelForm):
     class Meta:
         model = Composition
