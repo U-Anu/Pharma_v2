@@ -222,7 +222,7 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=[
         ('ordered', 'Ordered'),
-        ('approved', 'Approved'),
+        ('billed', 'Billed'),
         ('packed', 'Packed'),
         ('delivered', 'Delivered'),
     ], default='ordered')
@@ -269,7 +269,7 @@ class OrderItem(models.Model):
     updated_by = models.ForeignKey('UserManagement.User', related_name='order_items_updated_by', null=True, on_delete=models.SET_NULL)
     status = models.CharField(max_length=20, choices=[
         ('ordered', 'Ordered'),
-        ('approved', 'Approved'),
+        ('billed', 'Billed'),
         ('packed', 'Packed'),
         ('delivered', 'Delivered'),
     ], default='ordered')
