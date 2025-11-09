@@ -37,20 +37,6 @@ body {
     color: #198754;
 }
 
-
-#productTable tbody tr:hover {
-    background-color: #f1faff;
-}
-#productTable tbody td:nth-child(3),
-#productTable tbody td:nth-child(4) {
-    font-weight: 600;
-    color: #198754;
-}
-
-/* Narrow price and stock columns */
-th.col-price, td.col-price { width: 80px; max-width:80px; text-align: right; white-space: nowrap; }
-th.col-stock, td.col-stock { width: 60px; max-width:60px; text-align: center; white-space: nowrap; }
-
 /* ---------- CART ---------- */
 .cart-card {
     background: #ffffff;
@@ -146,32 +132,18 @@ th.col-stock, td.col-stock { width: 60px; max-width:60px; text-align: center; wh
     top: 0;
     z-index: 100;
     background: white;
-    padding: 8px 12px;
+    padding: 0px 0;
     margin-bottom: 0px;
     border-bottom: none;
     width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    justify-content: space-between;
 }
-.search-header-container .left-length { display:flex; align-items:center; }
-.search-header-container .search-box { display:flex; align-items:center; }
-
-/* hide default datatables search */
 .dataTables_filter {
     display: none !important;
 }
 
-/* Make the top container (DataTables) not interfere */
-.dataTables_wrapper .top { padding: 0; }
-
-/* Align product/header styles to match cart header spacing */
-.product-card-header { margin-bottom: 12px; border-radius: 12px 12px 0 0; }
-
 /* ---------- LENGTH DROPDOWN ---------- */
 .dataTables_length {
-    margin: 0; /* we'll position it inside the header */
+    margin-bottom: 10px;
     font-weight: 500;
 }
 .dataTables_length select {
@@ -193,80 +165,79 @@ th.col-stock, td.col-stock { width: 60px; max-width:60px; text-align: center; wh
 </style>
 
 <div class="container-fluid py-4">
-    <h3 class="text-left text-primary mb-4"><i class="bi bi-bag"></i> Products & Cart</h3>
+    <h3 class="text-center text-primary mb-4"><i class="bi bi-bag"></i> Products & Cart</h3>
     <div class="row g-4">
 
         <!-- LEFT: PRODUCTS -->
         <div class="col-lg-8">
             <div class="bg-white shadow-sm p-4 ">
-                <!-- Product header made to match cart header styling -->
+                <!-- ✅ MANUAL SEARCH HEADER -->
                 <div class="search-header-container mb-2">
-                    <div class="left-length"></div>
-                    <div class="search-box" style="margin-left:auto;">
-                        <span class="fw-bold text-dark me-2">Search Products:</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark">Search Products:</span>
                         <input type="search" id="customSearch" class="form-control" placeholder="Type to search..." style="width: 300px;">
                     </div>
                 </div>
 
-                <!-- Table container -->
-
-       <div class="table-responsive mt-0" style="max-height: 500px; overflow-y: auto;">
+                <!-- ✅ Table container -->
+                <div class="table-responsive mt-0" style="max-height: 500px; overflow-y: auto;">
                     <table id="productTable" class="table table-hover">
                         <thead class="text-white" style="background-color: #b66dff;">
-            <tr>
-                <th style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                        <div style="font-size: 0.75em; color: #ffff;">Pack Size</div>
-                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">Product Name</div>
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                            <span style="font-style: italic; font-size: 0.95em;">Company</span>
-                            <span style="font-size: 0.8em; color: #fff;">MRP</span>
-                        </div>
-                    </div>
-                </th>
-                <th>Composition</th>
-                <th class="col-price">Price</th>
-                <th class="col-stock">Stock</th>
-                <th style="width: 60px;">Add</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                        <div style="font-size: 0.75em; color: #6c757d;">{{ product.pack_size|default:"" }}'s</div>
-                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">{{ product.name }}</div>
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                            <span style="font-size: 0.95em;">{{ product.company|default:"-" }}</span>
-                            <span style="font-size: 0.8em; color: #6c757d;">₹{{ product.MRP|default:"-" }}</span>
-                        </div>
-                    </div>
-                </td>
-                <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
-                    {{ product.composition_name }}
-                </td>
-                <td class="col-price">₹{{ product.price }}</td>
-                <td class="col-stock">{{ product.quantity }}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary add-to-cart-btn"
-                            data-product-id="{{ product.id }}"
-                            data-product-name="{{ product.name }}"
-                            data-product-price="{{ product.price }}"
-                            data-product-quantity="{{ product.quantity }}">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                            <tr>
+                                <th style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                        <div style="font-size: 0.75em; color: #ffff;">Pack Size</div>
+                                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">Product Name</div>
+                                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                            <span style="font-style: italic; font-size: 0.95em;">Company</span>
+                                            <span style="font-size: 0.8em; color: #fff;">MRP</span>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>Composition</th>
+                                <th>Price</th>
+                                <th style="width: 60px;">Stock</th>
+                                <th>Add</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                        <div style="font-size: 0.75em; color: #6c757d;">{{ product.pack_size|default:"" }}'s</div>
+                                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">{{ product.name }}</div>
+                                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                            <span style="font-size: 0.95em;">{{ product.company|default:"-" }}</span>
+                                            <span style="font-size: 0.8em; color: #6c757d;">₹{{ product.MRP|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
+                                    {{ product.composition_name }}
+                                </td>
+                                <td>₹{{ product.price }}</td>
+                                <td style="white-space: nowrap; text-align: center; width: 60px;">{{ product.quantity }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary add-to-cart-btn"
+                                            data-product-id="{{ product.id }}"
+                                            data-product-name="{{ product.name }}"
+                                            data-product-price="{{ product.price }}"
+                                            data-product-quantity="{{ product.quantity }}">
+                                        <i class="bi bi-cart-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
         <!-- RIGHT: CART & QUERY -->
-        <div class="col-lg-4" style="margin-top:50px!important; padding-top:12px " >
+        <div class="col-lg-4" style="margin-top:29px!important; padding-top:12px " >
 
             <!-- CART -->
             <div class="cart-card mb-4 mt-5" >
@@ -282,7 +253,7 @@ th.col-stock, td.col-stock { width: 60px; max-width:60px; text-align: center; wh
             </div>
 
             <!-- QUERY -->
-            <div class="card shadow-sm"      style="border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;">
+            <div class="card shadow-sm">
                 <div class="cart-header">Missed Products / Queries (<span id="query-count">0</span>)</div>
                 <div class="card-body">
                     <form id="query-form" enctype="multipart/form-data">
@@ -310,24 +281,21 @@ th.col-stock, td.col-stock { width: 60px; max-width:60px; text-align: center; wh
 $(document).ready(function() {
     let cart = [];
 
-    // Initialize DataTable with custom length options
+    // ✅ Initialize DataTable with custom length options & without default search
     var table = $('#productTable').DataTable({
         "pageLength": 25,
         "lengthMenu": [10, 25, 50, 100],
         "ordering": true,
-        "dom": '<"top"l>rt<"bottom"ip><"clear">',
+        "dom": '<"top"l>rt<"bottom"ip><"clear">', // show entries + pagination
         "searching": true
     });
 
-    // Move the DataTables length control into our header's left slot
-    $('.dataTables_length').appendTo('.search-header-container .left-length');
-
-    // Custom search box linked to DataTable
+    // ✅ Custom search box linked to DataTable
     $('#customSearch').on('keyup', function() {
         table.search(this.value).draw();
     });
 
-    // Clear search when input is empty
+    // ✅ Clear search when input is empty
     $('#customSearch').on('input', function() {
         if(this.value === '') {
             table.search('').draw();
@@ -336,9 +304,8 @@ $(document).ready(function() {
 
     /* ---------- CART FUNCTIONS ---------- */
     function updateCartCount() {
-        const totalItems = cart.length;
-        const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-        $('#cart-count').text(`${totalItems} items (${totalQty} pcs)`);
+        let totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+        $('#cart-count').text(totalQty);
     }
 
     function updateCartUI() {
@@ -383,7 +350,6 @@ $(document).ready(function() {
         updateCartCount();
     }
 
-    // Add-to-cart button handler
     $('#productTable').on('click', '.add-to-cart-btn', function(){
         let product = {
             id: $(this).data('product-id'),
@@ -392,20 +358,12 @@ $(document).ready(function() {
             qty: 1,
             available_quantity: parseInt($(this).data('product-quantity')) || 0
         };
-
-        // If no stock, route directly to query (do not add 1 to cart)
-        if (product.available_quantity <= 0) {
-            addToQuery(product, 1);
-            return;
-        }
-
         let existing = cart.find(x => x.id === product.id);
         if(existing){
             if(existing.qty < existing.available_quantity){
                 existing.qty += 1;
             } else {
-                // no stock left, add remainder 1 to query
-                addToQuery(product, 1);
+                addToQuery(product, existing.qty + 1);
                 return;
             }
         } else {
@@ -414,32 +372,20 @@ $(document).ready(function() {
         updateCartUI();
     });
 
-    // Increase qty button
     $(document).on('click', '.increase-qty', function(){
         let id = $(this).data('id');
         let product = cart.find(x => x.id === id);
-        if(!product) return;
-
-        // If no stock, route directly to query
-        if (product.available_quantity <= 0) {
-            addToQuery(product, 1);
-            return;
-        }
-
         if(product.qty < product.available_quantity){
             product.qty += 1;
             updateCartUI();
         } else {
-            // desired +1 beyond stock: add remainder to query
-            addToQuery(product, 1);
+            addToQuery(product, product.qty + 1);
         }
     });
 
-    // Decrease qty button
     $(document).on('click', '.decrease-qty', function(){
         let id = $(this).data('id');
         let product = cart.find(x => x.id === id);
-        if(!product) return;
         if(product.qty > 1){
             product.qty -= 1;
             updateCartUI();
@@ -449,42 +395,19 @@ $(document).ready(function() {
         }
     });
 
-    // Direct qty input change
     $(document).on('change', '.qty-input', function(){
         let id = $(this).data('id');
-        let newQty = parseInt($(this).val());
-        if (isNaN(newQty)) newQty = 1;
+        let newQty = parseInt($(this).val()) || 1;
         let product = cart.find(x => x.id === id);
-        if(!product){
-            return;
+        if(newQty < 1) newQty = 1;
+        if(newQty > product.available_quantity){
+            addToQuery(product, newQty);
+            newQty = product.available_quantity;
         }
-
-        // If user sets 0 or negative => treat as query request instead of adding 1 to cart
-        if (newQty <= 0) {
-            // remove the product from cart (if present) and add to query the requested 1 (or treat as request)
-            cart = cart.filter(x => x.id !== id);
-            updateCartUI();
-            addToQuery(product, 1);
-            return;
-        }
-
-        if(newQty <= product.available_quantity){
-            product.qty = newQty;
-            updateCartUI();
-            return;
-        }
-
-        // requested exceeds stock: split into cart (max available) + query (remainder)
-        let remainder = newQty - product.available_quantity;
-        product.qty = product.available_quantity;
+        product.qty = newQty;
         updateCartUI();
-        addToQuery(product, remainder);
-
-        // reflect actual cart qty in input
-        $(`.qty-input[data-id="${id}"]`).val(product.available_quantity);
     });
 
-    // Remove item
     $(document).on('click', '.remove-item', function(){
         let id = $(this).data('id');
         cart = cart.filter(x => x.id !== id);
@@ -524,41 +447,25 @@ $(document).ready(function() {
         `;
     }
 
-    // Add to Query: appends requestedQty and prevents duplicate query entries by product id
-    function addToQuery(product, requestedQty){
+    function addToQuery(product, requestedQty=null){
         let queryContainer = $('#query-items-container');
-
-        // Ensure at least one query item exists
-        if (queryContainer.find('.query-item').length === 0) {
-            queryContainer.append(getQueryHTML(0));
-        }
-
-        // Prevent duplicate by checking hidden inputs that track product ids
-        let found = false;
-        queryContainer.find('input[name^="_query_product_id_"]').each(function(){
-            if($(this).val() == product.id){ found = true; return false; }
-        });
-
-        if(found){
-            alert(`"${product.name}" is already present in queries. Please avoid duplicate queries for the same product.`);
-            return;
-        }
-
-        // Append the remainder to the first query description and add a hidden product id input
-        let descBox = queryContainer.find('textarea[name^="description_"]').first();
-        let currentText = descBox.val() || "";
+        let existingQuery = queryContainer.find('.query-item').first();
         let descText = `•  ${requestedQty} units of ${product.name}\n`;
+
+        if (existingQuery.length === 0) {
+            let idx = 0;
+            queryContainer.append(getQueryHTML(idx));
+            existingQuery = queryContainer.find('.query-item').first();
+        }
+
+        let descBox = existingQuery.find('textarea[name^="description_"]');
+        let currentText = descBox.val();
         descBox.val(currentText + descText);
 
-        // Add a hidden input (unique name) to track this product id inside that query-item
-        let firstQuery = queryContainer.find('.query-item').first();
-        firstQuery.append(`<input type="hidden" name="_query_product_id_${product.id}" value="${product.id}">`);
-
         updateQueryCount();
-        alert(`Stock not sufficient. Added ${requestedQty} units of "${product.name}" to queries.`);
+        alert(`Stock not sufficient! Added "${product.name}" info to query description.`);
     }
 
-    // Checkout
     $('#checkout').click(function(){
         if(cart.length === 0 && $('#query-items-container .query-item').length === 0){
             alert('Add cart items or queries before checkout!');
@@ -588,5 +495,4 @@ $(document).ready(function() {
     });
 });
 </script>
-
 {% endblock %}
