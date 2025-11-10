@@ -9,18 +9,18 @@
   }
 
   .query-image:hover {
-      transform: scale(8); /* Enlarges the image to 2x size on hover */
+      transform: scale(8);
   }
 
   .order-details {
-      display: none; /* Hide order details by default */
+      display: none;
       margin-top: 10px;
   }
 
   .toggle-btn {
       cursor: pointer;
   }
-  /* Product Table Styles */
+
   .product-table {
       width: 100%;
       border-collapse: separate;
@@ -46,26 +46,38 @@
       cursor: pointer;
   }
 
-  
-
 </style>
-<!-- FontAwesome for icons (make sure it's included in your base template) -->
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-<div class="container">
-    <!-- Top Section with Create Button -->
-    <div class="d-flex justify-content-between align-items-center mt-4">
-        <center><h2 class="text-primary">Orders List</h2></center>
-        {% comment %} <a href="{% url 'product_order' %}" class="btn btn-primary">
-          <i class="fa fa-plus"></i> To Order
-        </a> {% endcomment %}
-    </div>
+<div class="container mt-4">
+    <center><h2 class="text-primary mb-4">Orders List</h2></center>
 
-    <div class="users-table table-responsive table-wrapper mt-4">
+    <!-- 🔍 FILTER SECTION -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label">Customer Name</label>
+            <input type="text" name="customer" value="{{ request.GET.customer }}" placeholder="Enter customer name" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">From Date</label>
+            <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">To Date</label>
+            <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="form-control">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100"><i class="fa fa-filter"></i> Filter</button>
+        </div>
+    </form>
+
+    <!-- TABLE SECTION -->
+    <div class="users-table table-responsive table-wrapper mt-3">
         <table class="product-table">
             <thead>
                 <tr class="text-primary-custom">
-                    <th>Order   - Order Value</th>
+                    <th>Order - Customer</th>
                     <th>Date</th>
                     <th>Details</th>
                 </tr>
@@ -73,29 +85,38 @@
             <tbody>
                 {% for order in orders %}
                 <tr>
-                    <td>{{ order.order_no }} - Rs.{{order.total_price}}</a></td>
+                     <td>
+                        <button class="btn btn-primary-custom" onclick="toggleOrderDetails({{ order.id }})">
+                            <i class="fa fa-chevron-down"></i>
+                        </button>
+                    </td>
+                    <td>{{ order.order_no }} - {{ order.created_by.first_name }} {{ order.created_by.last_name }}</td>
                     <td>{{ order.created_at|date:"F d, Y" }}</td>
-                    <td><button class="btn btn-primary-custom" onclick="toggleOrderDetails({{ order.id }})"><i class="fa fa-chevron-down"></i> </button></td>
                     <td>
-                        <a href="{% url 'order_update' order.pk %}" class="text-decoration-none"  ><i class="fa fa-edit text-primary"></i>&nbsp;&nbsp;</a>
-                        <a href="{% url 'invoice' order.pk %}"><i class="fa fa-file-text-o text-primary"></i></td></a>
+                        <button class="btn btn-primary-custom" onclick="toggleOrderDetails({{ order.id }})">
+                            <i class="fa fa-chevron-down"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <a href="{% url 'order_update' order.pk %}" class="text-decoration-none">
+                            <i class="fa fa-edit text-primary"></i>
+                        </a>
+                    </td>
                 </tr>
                 <tr id="order-details-{{ order.id }}" class="order-details">
                     <td colspan="4">
                         <div class="order-detail-content">
-                            <!-- Order Details -->
-                            <h3>Order Details</h3>
+                            <h4>Order Details</h4>
                             <table class="product-table">
-                                
-                               <tr>
-                                <th>Customer</th>
-                    <td>{{ order.created_by.first_name }}</a> 
+                                <tr>
+                                    <th>Customer</th>
+                                    <td>{{ order.created_by.first_name }}</td>
                                     <th>Total Price</th>
                                     <td>{{ order.total_price }}</td>
                                 </tr>
-                               
                             </table>
-                            <h4>Items:</h4>
+
+                            <h5 class="mt-3">Items:</h5>
                             <table class="table table-bordered">
                                 <thead>
                                     <tr>
@@ -103,7 +124,7 @@
                                         <th>Product</th>
                                         <th>Quantity</th>
                                         <th>Price</th>
-                                        <th>Actions</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -114,8 +135,6 @@
                                         <td>{{ item.quantity }}</td>
                                         <td>{{ item.total_price }}</td>
                                         <td>{{ item.status }}</td>
-
-                                       
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -123,6 +142,8 @@
                         </div>
                     </td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No orders found</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -134,15 +155,12 @@
     const detailsRow = document.getElementById(`order-details-${orderId}`);
     const icon = detailsRow.previousElementSibling.querySelector('i');
 
-    // Toggle visibility of the order details
     if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
       detailsRow.style.display = "table-row";
-      icon.classList.remove('fa-chevron-down');
-      icon.classList.add('fa-chevron-up');
+      icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
     } else {
       detailsRow.style.display = "none";
-      icon.classList.remove('fa-chevron-up');
-      icon.classList.add('fa-chevron-down');
+      icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
     }
   }
 </script>

@@ -13,22 +13,47 @@ from django.db.models import Q, F
 from .forms import *
 from django.contrib.auth import get_user_model
 User = get_user_model()
+from django.utils.dateparse import parse_date
+from django.db.models import Q
+
 # Create your views here.
 
 # def user_order_list(request):
 #     """ List all orders with related items """
 #     orders = Order.objects.prefetch_related("items__product").filter(created_by_id=request.user.id)
 #     return render(request, "user/user_orders_list.html", {"orders": orders})
-
 def admin_order_list(request):
-    """ List all orders with related items """
+    """List all orders with related items, with filters for customer name and date range."""
     orders = Order.objects.prefetch_related("items__product").all()
-    return render(request, "users_orders_list.html", {"orders": orders})
 
+    # Get filter values
+    customer = request.GET.get("customer", "").strip()
+    start_date = request.GET.get("start_date", "")
+    end_date = request.GET.get("end_date", "")
+
+    # 🔹 Filter by customer name (first OR last)
+    if customer:
+        orders = orders.filter(
+            Q(created_by__first_name__icontains=customer) |
+            Q(created_by__last_name__icontains=customer)
+        )
+
+    # 🔹 Filter by date range
+    if start_date:
+        orders = orders.filter(created_at__date__gte=parse_date(start_date))
+    if end_date:
+        orders = orders.filter(created_at__date__lte=parse_date(end_date))
+
+    # Optional: sort newest first
+    orders = orders.order_by("-created_at")
+
+    return render(request, "users_orders_list.html", {"orders": orders})
 
 def user_order_list(request):
     """ List all orders with related items """
     orders = Order.objects.prefetch_related("items__product").filter(created_by_id=request.user.id)
+    orders = orders.order_by("-created_at")
+
     return render(request, "user/users_orders_list.html", {"orders": orders})
 
 def order_detail(request, order_id):
