@@ -1,6 +1,7 @@
 {% extends 'user/user_base.html' %}
-{% block body_block %}
 {% load static %}
+
+{% block body_block %}
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
@@ -37,19 +38,19 @@ body {
     color: #198754;
 }
 
-
-#productTable tbody tr:hover {
-    background-color: #f1faff;
-}
-#productTable tbody td:nth-child(3),
-#productTable tbody td:nth-child(4) {
-    font-weight: 600;
-    color: #198754;
-}
-
 /* Narrow price and stock columns */
-th.col-price, td.col-price { width: 40px; max-width:80px; text-align: right; white-space: nowrap; }
-th.col-stock, td.col-stock { width: 10px; max-width:60px; text-align: center; white-space: nowrap; }
+th.col-price, td.col-price {
+    width: 40px;
+    max-width:80px;
+    text-align: right;
+    white-space: nowrap;
+}
+th.col-stock, td.col-stock {
+    width: 10px;
+    max-width:60px;
+    text-align: center;
+    white-space: nowrap;
+}
 
 /* ---------- CART ---------- */
 .cart-card {
@@ -79,27 +80,27 @@ th.col-stock, td.col-stock { width: 10px; max-width:60px; text-align: center; wh
     transition: background 0.2s;
 }
 .cart-item:hover { background:#f1faff; }
-.cart-item .name { 
-    font-weight:500; 
-    color:#212529; 
+.cart-item .name {
+    font-weight:500;
+    color:#212529;
     flex: 1;
 }
-.cart-item .qty-controls { 
-    display:flex; 
-    align-items:center; 
-    gap:6px; 
+.cart-item .qty-controls {
+    display:flex;
+    align-items:center;
+    gap:6px;
     margin: 0 10px;
 }
-.cart-item .qty-controls input { 
-    width: 60px; 
-    text-align: center; 
+.cart-item .qty-controls input {
+    width: 60px;
+    text-align: center;
     border-radius: 6px;
     border: 1px solid #ced4da;
     padding: 4px 8px;
 }
-.cart-item .price { 
-    font-weight:600; 
-    color:#198754; 
+.cart-item .price {
+    font-weight:600;
+    color:#198754;
     margin: 0 10px;
     min-width: 80px;
     text-align: right;
@@ -112,7 +113,7 @@ th.col-stock, td.col-stock { width: 10px; max-width:60px; text-align: center; wh
     text-align:right;
 }
 
-/* ---------- QUERY ---------- */
+/* ---------- QUERY (MISSED PRODUCTS) ---------- */
 .query-item {
     background:#fff3cd;
     border-radius:10px;
@@ -162,16 +163,11 @@ th.col-stock, td.col-stock { width: 10px; max-width:60px; text-align: center; wh
 .dataTables_filter {
     display: none !important;
 }
-
-/* Make the top container (DataTables) not interfere */
 .dataTables_wrapper .top { padding: 0; }
-
-/* Align product/header styles to match cart header spacing */
-.product-card-header { margin-bottom: 12px; border-radius: 12px 12px 0 0; }
 
 /* ---------- LENGTH DROPDOWN ---------- */
 .dataTables_length {
-    margin: 0; /* we'll position it inside the header */
+    margin: 0;
     font-weight: 500;
 }
 .dataTables_length select {
@@ -199,7 +195,6 @@ th.col-stock, td.col-stock { width: 10px; max-width:60px; text-align: center; wh
         <!-- LEFT: PRODUCTS -->
         <div class="col-lg-8">
             <div class="bg-white shadow-sm p-4 ">
-                <!-- Product header made to match cart header styling -->
                 <div class="search-header-container mb-2">
                     <div class="left-length"></div>
                     <div class="search-box" style="margin-left:auto;">
@@ -208,93 +203,185 @@ th.col-stock, td.col-stock { width: 10px; max-width:60px; text-align: center; wh
                     </div>
                 </div>
 
-                <!-- Table container -->
-
-       <div class="table-responsive mt-0" style="max-height: 500px; overflow-y: auto;">
+                <div class="table-responsive mt-0" style="max-height: 500px; overflow-y: auto;">
                     <table id="productTable" class="table table-hover">
                         <thead class="text-white" style="background-color: #b66dff;">
-            <tr>
-                <th style="white-space: normal; word-wrap: break-word; max-width:350px; padding: 2px 4px;">
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                        <div style="font-size: 0.75em; color: #ffff;">Pack Size</div>
-                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">Product Name</div>
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                            <span style="font-style: italic; font-size: 0.95em;">Company</span>
-                            <span style="font-size: 0.8em; color: #fff;">MRP</span>
-                        </div>
-                    </div>
-                </th>
-                <th>Composition</th>
-                <th class="col-price">Price</th>
-                <th class="col-stock">Stock</th>
-                <th style="width: 60px;">Add</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                        <div style="font-size: 0.75em; color: #6c757d;">{{ product.pack_size|default:"" }}'s</div>
-                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">{{ product.name }}</div>
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                            <span style="font-size: 0.95em;">{{ product.company|default:"-" }}</span>
-                            <span style="font-size: 0.8em; color: #6c757d;">₹{{ product.MRP|default:"-" }}</span>
-                        </div>
-                    </div>
-                </td>
-                <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
-                    {{ product.composition_name }}
-                </td>
-                <td class="col-price">₹{{ product.price }}</td>
-                <td class="col-stock">{{ product.quantity }}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary add-to-cart-btn"
-                            data-product-id="{{ product.id }}"
-                            data-product-name="{{ product.name }}"
-                            data-product-price="{{ product.price }}"
-                            data-product-quantity="{{ product.quantity }}">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                            <tr>
+                                <th style="white-space: normal; word-wrap: break-word; max-width:350px; padding: 2px 4px;">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                        <div style="font-size: 0.75em; color: #ffff;">Pack Size</div>
+                                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">Product Name</div>
+                                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                            <span style="font-style: italic; font-size: 0.95em;">Company</span>
+                                            <span style="font-size: 0.8em; color: #fff;">MRP</span>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>Composition</th>
+                                <th class="col-price">Price</th>
+                                <th class="col-stock">Stock</th>
+                                <th style="width: 60px;">Add</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                                        <div style="font-size: 0.75em; color: #6c757d;">{{ product.pack_size|default:"" }}'s</div>
+                                        <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">{{ product.name }}</div>
+                                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                            <span style="font-size: 0.95em;">{{ product.company|default:"-" }}</span>
+                                            <span style="font-size: 0.8em; color: #6c757d;">₹{{ product.MRP|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
+                                    {{ product.composition_name }}
+                                </td>
+                                <td class="col-price">₹{{ product.price }}</td>
+                                <td class="col-stock">{{ product.quantity }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary add-to-cart-btn"
+                                            data-product-id="{{ product.id }}"
+                                            data-product-name="{{ product.name }}"
+                                            data-product-price="{{ product.price }}"
+                                            data-product-quantity="{{ product.quantity }}">
+                                        <i class="bi bi-cart-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT: CART & QUERY -->
+        <!-- RIGHT: QUERIES FIRST, THEN CART -->
         <div class="col-lg-4" style="margin-top:50px!important; padding-top:12px " >
 
-            <!-- CART -->
-            <div class="cart-card mb-4 mt-5" >
+            <!-- 1) MISSED PRODUCTS / QUERIES -->
+            <div class="card shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;">
                 <div class="cart-header">
-                    Cart (<span id="cart-count">0</span>)
+                    Missed Products / Queries (<span id="query-count">{{ query_items|length }}</span>)
                 </div>
-                <div class="cart-body" id="cart-items">
-                    <p class="text-muted text-center">No items in cart.</p>
-                </div>
-                <div class="cart-footer">
-                    Subtotal: ₹<span id="cart-subtotal">0</span>
-                </div>
-            </div>
-
-            <!-- QUERY -->
-            <div class="card shadow-sm"      style="border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;">
-                <div class="cart-header">Missed Products / Queries (<span id="query-count">0</span>)</div>
                 <div class="card-body">
                     <form id="query-form" enctype="multipart/form-data">
                         {% csrf_token %}
-                        <div id="query-items-container"></div>
-                        <button type="button" id="add-query-item" class="btn btn-sm btn-info w-100 mb-2">
-                            <i class="bi bi-plus-circle"></i> Add Query
-                        </button>
-                        <button type="button" id="checkout" class="btn btn-success w-100 fw-bold">
+
+                        <div id="query-items-container">
+                            {% for qi in query_items %}
+                                <div class="query-item">
+                                    <button type="button" class="btn-close remove-query-item"
+                                            data-query-id="{{ qi.id }}"></button>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1 me-2">
+                                            <div class="form-check mb-1">
+                                                <input class="form-check-input query-select"
+                                                       type="checkbox"
+                                                       name="query_item_selected_{{ qi.id }}"
+                                                       id="query_item_{{ qi.id }}"
+                                                       checked>
+                                                <label class="form-check-label" for="query_item_{{ qi.id }}">
+                                                    <strong>{{ qi.product_name }}</strong>
+                                                </label>
+                                            </div>
+                                            <div class="text-muted small">Reason: {{ qi.reason }}</div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="qty-controls">
+                                                <button type="button"
+                                                        class="btn btn-outline-secondary btn-sm qty-btn decrease-query-qty"
+                                                        data-query-id="{{ qi.id }}">
+                                                    <i class="bi bi-dash"></i>
+                                                </button>
+                                                <input type="number"
+                                                       class="form-control query-qty-input"
+                                                       data-query-id="{{ qi.id }}"
+                                                       value="{{ qi.requested_qty }}" min="0">
+                                                <button type="button"
+                                                        class="btn btn-outline-secondary btn-sm qty-btn increase-query-qty"
+                                                        data-query-id="{{ qi.id }}">
+                                                    <i class="bi bi-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mt-2">
+                            <label class="form-label fw-bold">Business Name</label>
+                            <input type="text" name="business_name" id="business-name"
+                                   class="form-control"
+                                   value="{{ query_header.business_name|default_if_none:'' }}">
+                        </div>
+
+                        <div class="mt-2">
+                            <label class="form-label fw-bold">Contact Number</label>
+                            <input type="text" name="contact_number" id="contact-number"
+                                   class="form-control"
+                                   value="{{ query_header.contact_number|default_if_none:'' }}">
+                        </div>
+
+                        <div class="mt-2">
+                            <label class="form-label fw-bold">Description</label>
+                            <textarea name="missed_description" id="missed-description"
+                                      class="form-control" rows="3"
+                                      placeholder="Describe your missed products / queries here...">{% if query_header and query_header.description %}{{ query_header.description }}{% endif %}</textarea>
+                        </div>
+
+                        <button type="button" id="checkout" class="btn btn-success w-100 fw-bold mt-3">
                             <i class="bi bi-check2-circle"></i> Checkout & Submit
                         </button>
                     </form>
+                </div>
+            </div>
+
+            <!-- 2) CART -->
+            <div class="cart-card mb-4">
+                <div class="cart-header">
+                    {% if cart_items %}
+                        Cart (<span id="cart-count">{{ cart_item_count }} items ({{ cart_total_qty }} pcs)</span>)
+                    {% else %}
+                        Cart (<span id="cart-count">0 items (0 pcs)</span>)
+                    {% endif %}
+                </div>
+                <div class="cart-body" id="cart-items">
+                    {% if cart_items %}
+                        {% for ci in cart_items %}
+                            <div class="cart-item">
+                                <div class="name">{{ ci.product.name }}</div>
+                                <div class="d-flex align-items-center">
+                                    <div class="qty-controls">
+                                        <button class="btn btn-outline-secondary btn-sm qty-btn decrease-qty"
+                                                data-product-id="{{ ci.product.id }}">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="number" class="form-control qty-input"
+                                               data-product-id="{{ ci.product.id }}"
+                                               value="{{ ci.quantity }}" min="0">
+                                        <button class="btn btn-outline-secondary btn-sm qty-btn increase-qty"
+                                                data-product-id="{{ ci.product.id }}">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                    <span class="price">₹{{ ci.total_price }}</span>
+                                    <button class="btn btn-outline-danger btn-sm remove-item ms-2"
+                                            data-product-id="{{ ci.product.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No items in cart.</p>
+                    {% endif %}
+                </div>
+                <div class="cart-footer">
+                    Subtotal: ₹<span id="cart-subtotal">{{ cart_subtotal|default:"0.00" }}</span>
                 </div>
             </div>
 
@@ -302,15 +389,22 @@ th.col-stock, td.col-stock { width: 10px; max-width:60px; text-align: center; wh
     </div>
 </div>
 
+<script>
+    const URL_ADD_TO_CART = "{% url 'ajax_add_to_cart' %}";
+    const URL_UPDATE_CART_QTY = "{% url 'ajax_update_cart_qty' %}";
+    const URL_REMOVE_CART_ITEM = "{% url 'ajax_remove_cart_item' %}";
+    const URL_REMOVE_TEMP_QUERY_ITEM = "{% url 'ajax_remove_temp_query_item' %}";
+    const URL_UPDATE_TEMP_QUERY_QTY = "{% url 'ajax_update_temp_query_qty' %}";
+    const URL_SAVE_QUERY_HEADER = "{% url 'ajax_save_query_header' %}";
+    const URL_CHECKOUT = "{% url 'checkout_and_query' %}";
+</script>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function() {
-    let cart = [];
-
-    // Initialize DataTable with custom length options
     var table = $('#productTable').DataTable({
         "pageLength": 25,
         "lengthMenu": [10, 25, 50, 100],
@@ -319,271 +413,357 @@ $(document).ready(function() {
         "searching": true
     });
 
-    // Move the DataTables length control into our header's left slot
     $('.dataTables_length').appendTo('.search-header-container .left-length');
 
-    // Custom search box linked to DataTable
     $('#customSearch').on('keyup', function() {
         table.search(this.value).draw();
-    });
-
-    // Clear search when input is empty
-    $('#customSearch').on('input', function() {
-        if(this.value === '') {
+    }).on('input', function() {
+        if (this.value === '') {
             table.search('').draw();
         }
     });
 
-    /* ---------- CART FUNCTIONS ---------- */
-    function updateCartCount() {
-        const totalItems = cart.length;
-        const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-        $('#cart-count').text(`${totalItems} items (${totalQty} pcs)`);
-    }
-
-    function updateCartUI() {
+    function renderCartAndQueries(data) {
+        // CART
+        let cart = data.cart || [];
         let container = $('#cart-items');
         container.empty();
 
-        if (cart.length === 0) {
+        if (!cart.length) {
             container.html('<p class="text-muted text-center">No items in cart.</p>');
-            $('#cart-subtotal').text('0');
-            updateCartCount();
-            return;
-        }
-
-        let subtotal = 0;
-        [...cart].reverse().forEach(item => {
-            let itemTotal = item.price * item.qty;
-            subtotal += itemTotal;
-            container.append(`
-                <div class="cart-item">
-                    <div class="name">${item.name}</div>
-                    <div class="d-flex align-items-center">
-                        <div class="qty-controls">
-                            <button class="btn btn-outline-secondary btn-sm qty-btn decrease-qty" data-id="${item.id}">
-                                <i class="bi bi-dash"></i>
-                            </button>
-                            <input type="number" class="form-control qty-input" data-id="${item.id}" 
-                                value="${item.qty}" min="1" max="${item.available_quantity}" style="width: 60px;">
-                            <button class="btn btn-outline-secondary btn-sm qty-btn increase-qty" data-id="${item.id}">
-                                <i class="bi bi-plus"></i>
+            $('#cart-subtotal').text('0.00');
+            $('#cart-count').text('0 items (0 pcs)');
+        } else {
+            let totalQty = 0;
+            cart.slice().reverse().forEach(item => {
+                totalQty += item.qty;
+                container.append(`
+                    <div class="cart-item">
+                        <div class="name">${item.name}</div>
+                        <div class="d-flex align-items-center">
+                            <div class="qty-controls">
+                                <button class="btn btn-outline-secondary btn-sm qty-btn decrease-qty" 
+                                        data-product-id="${item.product_id}">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" class="form-control qty-input" 
+                                       data-product-id="${item.product_id}"
+                                       value="${item.qty}" min="0">
+                                <button class="btn btn-outline-secondary btn-sm qty-btn increase-qty" 
+                                        data-product-id="${item.product_id}">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                            <span class="price">₹${item.total_price.toFixed(2)}</span>
+                            <button class="btn btn-outline-danger btn-sm remove-item ms-2"
+                                    data-product-id="${item.product_id}">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </div>
-                        <span class="price">₹${itemTotal.toFixed(2)}</span>
-                        <button class="btn btn-outline-danger btn-sm remove-item ms-2" data-id="${item.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                    </div>
+                `);
+            });
+
+            $('#cart-subtotal').text(parseFloat(data.cart_subtotal).toFixed(2));
+            $('#cart-count').text(`${cart.length} items (${data.cart_total_qty || totalQty} pcs)`);
+        }
+
+        // QUERY
+        let qContainer = $('#query-items-container');
+        qContainer.empty();
+        let queryItems = data.query_items || [];
+
+        queryItems.forEach(q => {
+            qContainer.append(`
+                <div class="query-item">
+                    <button type="button" class="btn-close remove-query-item"
+                            data-query-id="${q.id}"></button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1 me-2">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input query-select"
+                                       type="checkbox"
+                                       name="query_item_selected_${q.id}"
+                                       id="query_item_${q.id}"
+                                       checked>
+                                <label class="form-check-label" for="query_item_${q.id}">
+                                    <strong>${q.product_name}</strong>
+                                </label>
+                            </div>
+                            <div class="text-muted small">Reason: ${q.reason || ''}</div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="qty-controls">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm qty-btn decrease-query-qty"
+                                        data-query-id="${q.id}">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number"
+                                       class="form-control query-qty-input"
+                                       data-query-id="${q.id}"
+                                       value="${q.requested_qty}" min="0">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm qty-btn increase-query-qty"
+                                        data-query-id="${q.id}">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `);
         });
 
-        $('#cart-subtotal').text(subtotal.toFixed(2));
-        updateCartCount();
+        $('#query-count').text(queryItems.length);
+
+        let descEl = $('#missed-description');
+        if (!descEl.val().trim() && queryItems.length > 0) {
+            let lines = queryItems.map(q =>
+                `• ${q.requested_qty} units of ${q.product_name} (Reason: ${q.reason || '-'})`
+            );
+            descEl.val(lines.join('\n'));
+        }
     }
 
-    // Add-to-cart button handler
-    $('#productTable').on('click', '.add-to-cart-btn', function(){
-        let product = {
-            id: $(this).data('product-id'),
-            name: $(this).data('product-name'),
-            price: parseFloat($(this).data('product-price')) || 0,
-            qty: 1,
-            available_quantity: parseInt($(this).data('product-quantity')) || 0
-        };
-
-        // If no stock, route directly to query (do not add 1 to cart)
-        if (product.available_quantity <= 0) {
-            addToQuery(product, 1);
-            return;
-        }
-
-        let existing = cart.find(x => x.id === product.id);
-        if(existing){
-            if(existing.qty < existing.available_quantity){
-                existing.qty += 1;
-            } else {
-                // no stock left, add remainder 1 to query
-                addToQuery(product, 1);
-                return;
-            }
-        } else {
-            cart.push(product);
-        }
-        updateCartUI();
-    });
-
-    // Increase qty button
-    $(document).on('click', '.increase-qty', function(){
-        let id = $(this).data('id');
-        let product = cart.find(x => x.id === id);
-        if(!product) return;
-
-        // If no stock, route directly to query
-        if (product.available_quantity <= 0) {
-            addToQuery(product, 1);
-            return;
-        }
-
-        if(product.qty < product.available_quantity){
-            product.qty += 1;
-            updateCartUI();
-        } else {
-            // desired +1 beyond stock: add remainder to query
-            addToQuery(product, 1);
-        }
-    });
-
-    // Decrease qty button
-    $(document).on('click', '.decrease-qty', function(){
-        let id = $(this).data('id');
-        let product = cart.find(x => x.id === id);
-        if(!product) return;
-        if(product.qty > 1){
-            product.qty -= 1;
-            updateCartUI();
-        } else {
-            cart = cart.filter(x => x.id !== id);
-            updateCartUI();
-        }
-    });
-
-    // Direct qty input change
-    $(document).on('change', '.qty-input', function(){
-        let id = $(this).data('id');
-        let newQty = parseInt($(this).val());
-        if (isNaN(newQty)) newQty = 1;
-        let product = cart.find(x => x.id === id);
-        if(!product){
-            return;
-        }
-
-        // If user sets 0 or negative => treat as query request instead of adding 1 to cart
-        if (newQty <= 0) {
-            // remove the product from cart (if present) and add to query the requested 1 (or treat as request)
-            cart = cart.filter(x => x.id !== id);
-            updateCartUI();
-            addToQuery(product, 1);
-            return;
-        }
-
-        if(newQty <= product.available_quantity){
-            product.qty = newQty;
-            updateCartUI();
-            return;
-        }
-
-        // requested exceeds stock: split into cart (max available) + query (remainder)
-        let remainder = newQty - product.available_quantity;
-        product.qty = product.available_quantity;
-        updateCartUI();
-        addToQuery(product, remainder);
-
-        // reflect actual cart qty in input
-        $(`.qty-input[data-id="${id}"]`).val(product.available_quantity);
-    });
-
-    // Remove item
-    $(document).on('click', '.remove-item', function(){
-        let id = $(this).data('id');
-        cart = cart.filter(x => x.id !== id);
-        updateCartUI();
-    });
-
-    /* ---------- QUERY SECTION ---------- */
-    function updateQueryCount(){
-        $('#query-count').text($('#query-items-container .query-item').length);
+    function csrfToken() {
+        return $('input[name="csrfmiddlewaretoken"]').val();
     }
 
-    $('#add-query-item').click(function(){
-        let idx = $('#query-items-container .query-item').length;
-        $('#query-items-container').append(getQueryHTML(idx));
-        updateQueryCount();
-    });
-
-    $(document).on('click', '.remove-query-item', function(){
-        $(this).closest('.query-item').remove();
-        updateQueryCount();
-    });
-
-    function getQueryHTML(idx){
-        return `
-            <div class="query-item">
-                <button type="button" class="btn-close remove-query-item"></button>
-                <div class="mb-2"><label>Business Name</label>
-                    <input type="text" name="Business_name_${idx}" class="form-control" required>
-                </div>
-                <div class="mb-2"><label>Contact Number</label>
-                    <input type="text" name="contact_number_${idx}" class="form-control" required>
-                </div>
-                <div class="mb-2"><label>Description</label>
-                    <textarea name="description_${idx}" class="form-control" rows="3" required></textarea>
-                </div>
-            </div>
-        `;
+    function handleAjaxError(err) {
+        console.log(err);
+        alert('Error communicating with server.');
     }
 
-    // Add to Query: appends requestedQty and prevents duplicate query entries by product id
-    function addToQuery(product, requestedQty){
-        let queryContainer = $('#query-items-container');
-
-        // Ensure at least one query item exists
-        if (queryContainer.find('.query-item').length === 0) {
-            queryContainer.append(getQueryHTML(0));
-        }
-
-        // Prevent duplicate by checking hidden inputs that track product ids
-        let found = false;
-        queryContainer.find('input[name^="_query_product_id_"]').each(function(){
-            if($(this).val() == product.id){ found = true; return false; }
+    // CART: add
+    $('#productTable').on('click', '.add-to-cart-btn', function() {
+        let productId = $(this).data('product-id');
+        $.ajax({
+            url: URL_ADD_TO_CART,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                product_id: productId,
+                qty: 1
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
         });
+    });
 
-        if(found){
-            alert(`"${product.name}" is already present in queries. Please avoid duplicate queries for the same product.`);
-            return;
-        }
-
-        // Append the remainder to the first query description and add a hidden product id input
-        let descBox = queryContainer.find('textarea[name^="description_"]').first();
-        let currentText = descBox.val() || "";
-        let descText = `•  ${requestedQty} units of ${product.name}\n`;
-        descBox.val(currentText + descText);
-
-        // Add a hidden input (unique name) to track this product id inside that query-item
-        let firstQuery = queryContainer.find('.query-item').first();
-        firstQuery.append(`<input type="hidden" name="_query_product_id_${product.id}" value="${product.id}">`);
-
-        updateQueryCount();
-        alert(`Stock not sufficient. Added ${requestedQty} units of "${product.name}" to queries.`);
-    }
-
-    // Checkout
-    $('#checkout').click(function(){
-        if(cart.length === 0 && $('#query-items-container .query-item').length === 0){
-            alert('Add cart items or queries before checkout!');
-            return;
-        }
-        let formData = new FormData($('#query-form')[0]);
-        formData.append('cart', JSON.stringify(cart));
+    // CART: increase qty
+    $(document).on('click', '.increase-qty', function() {
+        let productId = $(this).data('product-id');
+        let input = $(`.qty-input[data-product-id="${productId}"]`);
+        let currentQty = parseInt(input.val() || 0);
+        let newQty = currentQty + 1;
 
         $.ajax({
-            url: "{% url 'checkout_and_query' %}",
+            url: URL_UPDATE_CART_QTY,
             type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(){
-                alert('✅ Order & Queries submitted successfully!');
-                cart = [];
-                updateCartUI();
-                $('#query-items-container').empty();
-                updateQueryCount();
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                product_id: productId,
+                qty: newQty
             },
-            error: function(err){
-                alert('❌ Error submitting order!');
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // CART: decrease qty
+    $(document).on('click', '.decrease-qty', function() {
+        let productId = $(this).data('product-id');
+        let input = $(`.qty-input[data-product-id="${productId}"]`);
+        let currentQty = parseInt(input.val() || 0);
+        let newQty = currentQty - 1;
+
+        $.ajax({
+            url: URL_UPDATE_CART_QTY,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                product_id: productId,
+                qty: newQty
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // CART: direct qty input
+    $(document).on('change', '.qty-input', function() {
+        let productId = $(this).data('product-id');
+        let newQty = parseInt($(this).val() || 0);
+
+        $.ajax({
+            url: URL_UPDATE_CART_QTY,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                product_id: productId,
+                qty: newQty
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // CART: remove item
+    $(document).on('click', '.remove-item', function() {
+        let productId = $(this).data('product-id');
+        $.ajax({
+            url: URL_REMOVE_CART_ITEM,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                product_id: productId
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // QUERY: remove temp query item
+    $(document).on('click', '.remove-query-item', function() {
+        let queryId = $(this).data('query-id');
+        $.ajax({
+            url: URL_REMOVE_TEMP_QUERY_ITEM,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                query_id: queryId
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // QUERY: increase qty
+    $(document).on('click', '.increase-query-qty', function() {
+        let queryId = $(this).data('query-id');
+        let input = $(`.query-qty-input[data-query-id="${queryId}"]`);
+        let currentQty = parseInt(input.val() || 0);
+        let newQty = currentQty + 1;
+
+        $.ajax({
+            url: URL_UPDATE_TEMP_QUERY_QTY,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                query_id: queryId,
+                qty: newQty
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // QUERY: decrease qty
+    $(document).on('click', '.decrease-query-qty', function() {
+        let queryId = $(this).data('query-id');
+        let input = $(`.query-qty-input[data-query-id="${queryId}"]`);
+        let currentQty = parseInt(input.val() || 0);
+        let newQty = currentQty - 1;
+
+        $.ajax({
+            url: URL_UPDATE_TEMP_QUERY_QTY,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                query_id: queryId,
+                qty: newQty
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // QUERY: direct qty input
+    $(document).on('change', '.query-qty-input', function() {
+        let queryId = $(this).data('query-id');
+        let newQty = parseInt($(this).val() || 0);
+
+        $.ajax({
+            url: URL_UPDATE_TEMP_QUERY_QTY,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                query_id: queryId,
+                qty: newQty
+            },
+            success: function(res) {
+                if (res.success) renderCartAndQueries(res);
+                else alert(res.error || 'Error');
+            },
+            error: handleAjaxError
+        });
+    });
+
+    // QUERY HEADER: auto-save on change
+    $('#business-name, #contact-number, #missed-description').on('blur change', function() {
+        $.ajax({
+            url: URL_SAVE_QUERY_HEADER,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrfToken(),
+                business_name: $('#business-name').val(),
+                contact_number: $('#contact-number').val(),
+                description: $('#missed-description').val()
+            },
+            success: function(res) {
+                // no UI change needed
+            },
+            error: function(err) {
                 console.log(err);
             }
+        });
+    });
+
+    // CHECKOUT
+    $('#checkout').click(function() {
+        $.ajax({
+            url: URL_CHECKOUT,
+            type: 'POST',
+            data: $('#query-form').serialize(),
+            success: function(res) {
+                if (res.success) {
+                    alert('✅ Order & Queries submitted successfully!');
+                    renderCartAndQueries({cart: [], cart_subtotal: 0, cart_total_qty: 0, query_items: []});
+                    $('#query-items-container').empty();
+                    $('#query-count').text('0');
+                    $('#business-name').val('');
+                    $('#contact-number').val('');
+                    $('#missed-description').val('');
+                } else {
+                    alert(res.error || '❌ Error submitting order!');
+                }
+            },
+            error: handleAjaxError
         });
     });
 });

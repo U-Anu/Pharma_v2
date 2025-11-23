@@ -1,70 +1,89 @@
 {% extends 'admin_base.html' %}
-{% block body_block %}
 {% load static %}
+{% block body_block %}
+
 <style>
   .query-image {
       width: 400px;
       height: 400px;
       transition: transform 0.3s ease-in-out;
   }
-  
   .query-image:hover {
-      transform: scale(8); /* Enlarges the image to 2x size on hover */
+      transform: scale(8);
   }
 </style>
-<!-- FontAwesome for icons (make sure it's included in your base template) -->
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
 <div class="container">
     <!-- Top Section with Create Button -->
     <div class="d-flex justify-content-between align-items-center mt-4">
-        <center><h2 class="text-primary">Orders List</h2></center>
-        {% comment %} <a href="{% url 'product_order' %}" class="btn btn-primary">
+        <h2 class="text-primary mb-0">Orders List</h2>
+        {# <a href="{% url 'product_order' %}" class="btn btn-primary">
           <i class="fa fa-plus"></i> To Order
-        </a> {% endcomment %}
-      </div>
+        </a> #}
+    </div>
 
-<div class="users-table table-wrapper mt-4">
-    <table class="posts-table table table-striped table-bordered">
-      <thead>
-        <tr class="users-table-info text-center">
-        <th>Order ID</th>
+    <div class="users-table table-wrapper mt-4">
+        <table class="posts-table table table-striped table-bordered">
+    <thead>
+    <tr class="users-table-info text-center">
+        <th>S.No</th>
+        <th>Order No</th>
         <th>Date</th>
+        <th>Business Name</th>
+        <th>Contact</th>
         <th>Total Quantity</th>
         <th>Total Price</th>
-        <th>Items</th>
         <th>Ordered By</th>
         <th>Status</th>
-        <th>Action</th>
-
+        <th>Actions</th>
     </tr>
 </thead>
+
 <tbody>
-
     {% for order in orders %}
-    <tr>
-        <td>{{ order.id }}</td>
-        <td>{{ order.created_at }}</td>
-        <td>{{ order.total_quantity }}</td>
-        <td>{{ order.total_price }}</td>
-        
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ order.order_no }}</td>
+            <td>{{ order.created_at|date:"d-m-Y H:i" }}</td>
 
-        <td>
-            <ul>
-                {% for item in order.items.all %}
-                    <li>{{ item.product.name }} - Qty: {{ item.quantity }}, Price: {{ item.total_price }}</li>
-                {% endfor %}
-            </ul>
-        </td>
-        <td>{{ order.created_by }}</td>
-        <td>{{ order.status }}</td>
-        <td>
-            <a href="{% url 'order_update' order.id %}" class="btn btn-primary btn-sm">
-                <i class="fa fa-edit"></i> Update</a>
-        
-        </td>
-    </tr>
+            {# Business name & contact come from Query model #}
+            <td>
+                {% if order.queries.first %}
+                    {{ order.queries.first.Business_name|default:"-" }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+
+            <td>
+                {% if order.queries.first %}
+                    {{ order.queries.first.contact_number|default:"-" }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+
+            <td>{{ order.total_quantity }}</td>
+            <td>{{ order.total_price }}</td>
+
+            <td>{{ order.created_by }}</td>
+
+            <td>{{ order.get_status_display }}</td>
+
+            <td class="text-center">
+                <a href="{% url 'order_invoice' order.id %}"
+                   class="btn btn-sm btn-secondary mb-1">
+                    <i class="fa fa-file-invoice"></i> Invoice
+                </a>
+
+            </td>
+        </tr>
     {% endfor %}
 </tbody>
-</table>
+        </table>
+    </div>
+</div>
+
 {% endblock %}

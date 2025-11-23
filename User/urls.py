@@ -6,7 +6,7 @@ from .views import *
 urlpatterns = [
 # path("user-orders/", user_order_list, name="user_order_list"),
 
-    path('orders/', user_order_list, name='user_order_list'),
+    # path('orders/', user_order_list, name='user_order_list'),
     path('admin_orders/', admin_order_list, name='admin_orders'),
     path('order/<int:order_id>/', order_detail, name='order_detail'),
     path("user-query-list/", user_query_list, name="user_query_list"),
@@ -38,6 +38,8 @@ urlpatterns = [
     path('create/', create_order, name='create_order'),
     path('add-to-temp/', add_to_temp, name='add_to_temp'),
     path('remove-temp-item/', remove_temp_item, name='remove_temp_item'),
+    
+    path("orders/<int:pk>/invoice/", order_invoice, name="order_invoice"),
 
 
 
@@ -51,5 +53,14 @@ urlpatterns = [
     path('create/', create_order, name='create_order'),
     path('add-to-temp/', add_to_temp, name='add_to_temp'),
     path('remove-temp-item/', remove_temp_item, name='remove_temp_item'),
+    
+    
+     path('ajax/add-to-cart/', ajax_add_to_cart, name='ajax_add_to_cart'),
+    path('ajax/update-cart-qty/', ajax_update_cart_qty, name='ajax_update_cart_qty'),
+    path('ajax/remove-cart-item/', ajax_remove_cart_item, name='ajax_remove_cart_item'),
+
+    path('ajax/remove-temp-query-item/', ajax_remove_temp_query_item, name='ajax_remove_temp_query_item'),
+    path('ajax/update-temp-query-qty/', ajax_update_temp_query_qty, name='ajax_update_temp_query_qty'),
+    path('ajax/save-query-header/', ajax_save_query_header, name='ajax_save_query_header'),
 
 ]
