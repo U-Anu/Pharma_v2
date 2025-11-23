@@ -22,34 +22,223 @@ from django.db.models import Q
 #     """ List all orders with related items """
 #     orders = Order.objects.prefetch_related("items__product").filter(created_by_id=request.user.id)
 #     return render(request, "user/user_orders_list.html", {"orders": orders})
+
+
+# def admin_order_list(request):
+#     """List all orders with related items, with filters for customer name and date range."""
+#     orders = Order.objects.prefetch_related("items__product").all()
+
+#     # Get filter values
+#     customer = request.GET.get("customer", "").strip()
+#     start_date = request.GET.get("start_date", "")
+#     end_date = request.GET.get("end_date", "")
+
+#     # 🔹 Filter by customer name (first OR last)
+#     if customer:
+#         orders = orders.filter(
+#             Q(created_by__first_name__icontains=customer) |
+#             Q(created_by__last_name__icontains=customer)
+#         )
+
+#     # 🔹 Filter by date range
+#     if start_date:
+#         orders = orders.filter(created_at__date__gte=parse_date(start_date))
+#     if end_date:
+#         orders = orders.filter(created_at__date__lte=parse_date(end_date))
+
+#     # Optional: sort newest first
+#     orders = orders.order_by("-created_at")
+
+#     return render(request, "users_orders_list.html", {"orders": orders})
+
 def admin_order_list(request):
     """List all orders with related items, with filters for customer name and date range."""
-    orders = Order.objects.prefetch_related("items__product").all()
+    orders = (
+        Order.objects
+        .select_related("created_by")
+        .prefetch_related("items__product", "queries")  # queries = related_name on Query.order
+        .all()
+    )
 
-    # Get filter values
+    # Filters
     customer = request.GET.get("customer", "").strip()
     start_date = request.GET.get("start_date", "")
     end_date = request.GET.get("end_date", "")
 
-    # 🔹 Filter by customer name (first OR last)
     if customer:
         orders = orders.filter(
             Q(created_by__first_name__icontains=customer) |
             Q(created_by__last_name__icontains=customer)
         )
 
-    # 🔹 Filter by date range
     if start_date:
         orders = orders.filter(created_at__date__gte=parse_date(start_date))
     if end_date:
         orders = orders.filter(created_at__date__lte=parse_date(end_date))
 
-    # Optional: sort newest first
     orders = orders.order_by("-created_at")
 
     return render(request, "users_orders_list.html", {"orders": orders})
 
 
+def admin_order_issue(request, order_id):
+    order = get_object_or_404(
+        Order.objects.prefetch_related(
+            "items__product",
+            "queries__items",
+        ),
+        pk=order_id
+    )
+
+    errors = []
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # ------------- ACTION 1: PACK SELECTED ORDER ITEMS -------------
+        if action == "issue_items":
+            selected_ids = []
+            for key in request.POST.keys():
+                if key.startswith("order_item_"):
+                    try:
+                        selected_ids.append(int(key.split("_")[-1]))
+                    except ValueError:
+                        pass
+
+            items = OrderItem.objects.filter(order=order, id__in=selected_ids)
+
+            for item in items:
+                field_name = f"issue_qty_{item.id}"
+                try:
+                    issue_qty = int(request.POST.get(field_name, "0"))
+                except ValueError:
+                    errors.append(f"Invalid quantity for item {item.product_name}.")
+                    continue
+
+                ordered_qty = item.quantity
+
+                if issue_qty > ordered_qty:
+                    errors.append(
+                        f"Item {item.product_name}: Issue qty ({issue_qty}) cannot be greater than ordered qty ({ordered_qty})."
+                    )
+                elif issue_qty < ordered_qty:
+                    errors.append(
+                        f"Item {item.product_name}: Issue qty ({issue_qty}) cannot be less than ordered qty ({ordered_qty})."
+                    )
+                else:
+                    # Valid, mark as packed
+                    item.status = "packed"
+                    item.save()
+
+            # If no errors, optionally update order status if all items packed
+            if not errors:
+                if not order.items.exclude(status="packed").exists():
+                    order.status = "packed"
+                    order.save()
+
+        # ------------- ACTION 2: CONVERT SELECTED QUERY ITEMS -------------
+        elif action == "convert_query_items":
+            selected_ids = []
+            for key in request.POST.keys():
+                if key.startswith("query_item_"):
+                    try:
+                        selected_ids.append(int(key.split("_")[-1]))
+                    except ValueError:
+                        pass
+
+            qitems = QueryItem.objects.filter(query__order=order, id__in=selected_ids)
+
+            for qi in qitems:
+                field_name = f"query_issue_qty_{qi.id}"
+                try:
+                    issue_qty = int(request.POST.get(field_name, "0"))
+                except ValueError:
+                    errors.append(f"Invalid quantity for query item {qi.product_name}.")
+                    continue
+
+                if issue_qty <= 0:
+                    errors.append(f"Query item {qi.product_name}: Issue qty must be > 0.")
+                    continue
+
+                if issue_qty > qi.pending_qty and qi.pending_qty > 0:
+                    errors.append(
+                        f"Query item {qi.product_name}: Issue qty ({issue_qty}) cannot be greater than pending qty ({qi.pending_qty})."
+                    )
+                    continue
+
+                # Find or create corresponding OrderItem
+                # Match on product if present, else product_name
+                order_item = None
+                if qi.product:
+                    order_item, created = OrderItem.objects.get_or_create(
+                        order=order,
+                        product=qi.product,
+                        defaults={
+                            "product_name": qi.product.name,
+                            "product_no": getattr(qi.product, "product_id", ""),
+                            "quantity": 0,
+                            "total_price": Decimal("0.00"),
+                            "status": "packed",  # directly packed
+                        },
+                    )
+                else:
+                    order_item, created = OrderItem.objects.get_or_create(
+                        order=order,
+                        product=None,
+                        product_name=qi.product_name,
+                        defaults={
+                            "product_no": "",
+                            "quantity": 0,
+                            "total_price": Decimal("0.00"),
+                            "status": "packed",
+                        },
+                    )
+
+                # Update quantities & price
+                order_item.quantity += issue_qty
+                # If you have price in product, use it; else keep old
+                unit_price = getattr(qi.product, "price", None) if qi.product else None
+                if unit_price is None and order_item.quantity > 0:
+                    # Keep existing average
+                    pass
+                else:
+                    order_item.total_price = (unit_price or Decimal("0")) * order_item.quantity
+
+                order_item.status = "packed"
+                order_item.save()
+
+                # Update QueryItem (we'll delete on full issue)
+                qi.issued_qty += issue_qty
+                qi.save()
+                if qi.pending_qty == 0:
+                    qi.delete()
+
+            # Recalculate order totals
+            if not errors:
+                all_items = order.items.all()
+                order.total_quantity = sum(i.quantity for i in all_items)
+                order.total_price = sum(i.total_price for i in all_items)
+                order.total_amount = order.total_price  # if same
+                order.save()
+
+        # After POST (either action), reload with updated data
+        # (fall through to render below)
+
+    # Prepare data for GET / after POST
+    pending_items = order.items.exclude(status="packed")
+    packed_items = order.items.filter(status="packed")
+
+    queries = order.queries.prefetch_related("items").all()
+    query_items = QueryItem.objects.filter(query__order=order)
+
+    return render(request, "order_issue.html", {
+        "order": order,
+        "pending_items": pending_items,
+        "packed_items": packed_items,
+        "queries": queries,
+        "query_items": query_items,
+        "errors": errors,
+    })
 
 
 # def user_order_list(request):

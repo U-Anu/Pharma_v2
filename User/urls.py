@@ -5,7 +5,7 @@ from Pharmacy_ECW import settings
 from .views import *
 urlpatterns = [
 # path("user-orders/", user_order_list, name="user_order_list"),
-
+    path("admin/orders/<int:order_id>/issue/", admin_order_issue, name="admin_order_issue"),
     # path('orders/', user_order_list, name='user_order_list'),
     path('admin_orders/', admin_order_list, name='admin_orders'),
     path('order/<int:order_id>/', order_detail, name='order_detail'),
