@@ -22,39 +22,231 @@ from django.db.models import Q
 #     """ List all orders with related items """
 #     orders = Order.objects.prefetch_related("items__product").filter(created_by_id=request.user.id)
 #     return render(request, "user/user_orders_list.html", {"orders": orders})
+
+
+# def admin_order_list(request):
+#     """List all orders with related items, with filters for customer name and date range."""
+#     orders = Order.objects.prefetch_related("items__product").all()
+
+#     # Get filter values
+#     customer = request.GET.get("customer", "").strip()
+#     start_date = request.GET.get("start_date", "")
+#     end_date = request.GET.get("end_date", "")
+
+#     # 🔹 Filter by customer name (first OR last)
+#     if customer:
+#         orders = orders.filter(
+#             Q(created_by__first_name__icontains=customer) |
+#             Q(created_by__last_name__icontains=customer)
+#         )
+
+#     # 🔹 Filter by date range
+#     if start_date:
+#         orders = orders.filter(created_at__date__gte=parse_date(start_date))
+#     if end_date:
+#         orders = orders.filter(created_at__date__lte=parse_date(end_date))
+
+#     # Optional: sort newest first
+#     orders = orders.order_by("-created_at")
+
+#     return render(request, "users_orders_list.html", {"orders": orders})
+
 def admin_order_list(request):
     """List all orders with related items, with filters for customer name and date range."""
-    orders = Order.objects.prefetch_related("items__product").all()
+    orders = (
+        Order.objects
+        .select_related("created_by")
+        .prefetch_related("items__product", "queries")  # queries = related_name on Query.order
+        .all()
+    )
 
-    # Get filter values
+    # Filters
     customer = request.GET.get("customer", "").strip()
     start_date = request.GET.get("start_date", "")
     end_date = request.GET.get("end_date", "")
 
-    # 🔹 Filter by customer name (first OR last)
     if customer:
         orders = orders.filter(
             Q(created_by__first_name__icontains=customer) |
             Q(created_by__last_name__icontains=customer)
         )
 
-    # 🔹 Filter by date range
     if start_date:
         orders = orders.filter(created_at__date__gte=parse_date(start_date))
     if end_date:
         orders = orders.filter(created_at__date__lte=parse_date(end_date))
 
-    # Optional: sort newest first
     orders = orders.order_by("-created_at")
 
     return render(request, "users_orders_list.html", {"orders": orders})
 
-def user_order_list(request):
-    """ List all orders with related items """
-    orders = Order.objects.prefetch_related("items__product").filter(created_by_id=request.user.id)
-    orders = orders.order_by("-created_at")
 
-    return render(request, "user/users_orders_list.html", {"orders": orders})
+def admin_order_issue(request, order_id):
+    order = get_object_or_404(
+        Order.objects.prefetch_related(
+            "items__product",
+            "queries__items",
+        ),
+        pk=order_id
+    )
+
+    errors = []
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # ------------- ACTION 1: PACK SELECTED ORDER ITEMS -------------
+        if action == "issue_items":
+            selected_ids = []
+            for key in request.POST.keys():
+                if key.startswith("order_item_"):
+                    try:
+                        selected_ids.append(int(key.split("_")[-1]))
+                    except ValueError:
+                        pass
+
+            items = OrderItem.objects.filter(order=order, id__in=selected_ids)
+
+            for item in items:
+                field_name = f"issue_qty_{item.id}"
+                try:
+                    issue_qty = int(request.POST.get(field_name, "0"))
+                except ValueError:
+                    errors.append(f"Invalid quantity for item {item.product_name}.")
+                    continue
+
+                ordered_qty = item.quantity
+
+                if issue_qty > ordered_qty:
+                    errors.append(
+                        f"Item {item.product_name}: Issue qty ({issue_qty}) cannot be greater than ordered qty ({ordered_qty})."
+                    )
+                elif issue_qty < ordered_qty:
+                    errors.append(
+                        f"Item {item.product_name}: Issue qty ({issue_qty}) cannot be less than ordered qty ({ordered_qty})."
+                    )
+                else:
+                    # Valid, mark as packed
+                    item.status = "packed"
+                    item.save()
+
+            # If no errors, optionally update order status if all items packed
+            if not errors:
+                if not order.items.exclude(status="packed").exists():
+                    order.status = "packed"
+                    order.save()
+
+        # ------------- ACTION 2: CONVERT SELECTED QUERY ITEMS -------------
+        elif action == "convert_query_items":
+            selected_ids = []
+            for key in request.POST.keys():
+                if key.startswith("query_item_"):
+                    try:
+                        selected_ids.append(int(key.split("_")[-1]))
+                    except ValueError:
+                        pass
+
+            qitems = QueryItem.objects.filter(query__order=order, id__in=selected_ids)
+
+            for qi in qitems:
+                field_name = f"query_issue_qty_{qi.id}"
+                try:
+                    issue_qty = int(request.POST.get(field_name, "0"))
+                except ValueError:
+                    errors.append(f"Invalid quantity for query item {qi.product_name}.")
+                    continue
+
+                if issue_qty <= 0:
+                    errors.append(f"Query item {qi.product_name}: Issue qty must be > 0.")
+                    continue
+
+                if issue_qty > qi.pending_qty and qi.pending_qty > 0:
+                    errors.append(
+                        f"Query item {qi.product_name}: Issue qty ({issue_qty}) cannot be greater than pending qty ({qi.pending_qty})."
+                    )
+                    continue
+
+                # Find or create corresponding OrderItem
+                # Match on product if present, else product_name
+                order_item = None
+                if qi.product:
+                    order_item, created = OrderItem.objects.get_or_create(
+                        order=order,
+                        product=qi.product,
+                        defaults={
+                            "product_name": qi.product.name,
+                            "product_no": getattr(qi.product, "product_id", ""),
+                            "quantity": 0,
+                            "total_price": Decimal("0.00"),
+                            "status": "packed",  # directly packed
+                        },
+                    )
+                else:
+                    order_item, created = OrderItem.objects.get_or_create(
+                        order=order,
+                        product=None,
+                        product_name=qi.product_name,
+                        defaults={
+                            "product_no": "",
+                            "quantity": 0,
+                            "total_price": Decimal("0.00"),
+                            "status": "packed",
+                        },
+                    )
+
+                # Update quantities & price
+                order_item.quantity += issue_qty
+                # If you have price in product, use it; else keep old
+                unit_price = getattr(qi.product, "price", None) if qi.product else None
+                if unit_price is None and order_item.quantity > 0:
+                    # Keep existing average
+                    pass
+                else:
+                    order_item.total_price = (unit_price or Decimal("0")) * order_item.quantity
+
+                order_item.status = "packed"
+                order_item.save()
+
+                # Update QueryItem (we'll delete on full issue)
+                qi.issued_qty += issue_qty
+                qi.save()
+                if qi.pending_qty == 0:
+                    qi.delete()
+
+            # Recalculate order totals
+            if not errors:
+                all_items = order.items.all()
+                order.total_quantity = sum(i.quantity for i in all_items)
+                order.total_price = sum(i.total_price for i in all_items)
+                order.total_amount = order.total_price  # if same
+                order.save()
+
+        # After POST (either action), reload with updated data
+        # (fall through to render below)
+
+    # Prepare data for GET / after POST
+    pending_items = order.items.exclude(status="packed")
+    packed_items = order.items.filter(status="packed")
+
+    queries = order.queries.prefetch_related("items").all()
+    query_items = QueryItem.objects.filter(query__order=order)
+
+    return render(request, "order_issue.html", {
+        "order": order,
+        "pending_items": pending_items,
+        "packed_items": packed_items,
+        "queries": queries,
+        "query_items": query_items,
+        "errors": errors,
+    })
+
+
+# def user_order_list(request):
+#     """ List all orders with related items """
+#     orders = Order.objects.prefetch_related("items__product").filter(created_by_id=request.user.id)
+#     orders = orders.order_by("-created_at")
+
+#     return render(request, "user/users_orders_list.html", {"orders": orders})
 
 def order_detail(request, order_id):
     """ Show details of a specific order """
@@ -208,14 +400,11 @@ from django.shortcuts import render
 
 
 
+@login_required
 def user_product_list(request):
-    form=QueryForm()
+    form = QueryForm()
     user = request.user
     user_category = getattr(user, 'user_category', None)
-    print(f"User: {user}, User Category: {user_category}")
-    if not user.is_authenticated or not user_category:
-        # Optional: redirect or show message
-        print("User is not authenticated or does not have a user category.")
 
     products = Product.objects.all().select_related('product_type')
 
@@ -240,10 +429,222 @@ def user_product_list(request):
             product.retailer_margin = None  # Add this line
             product.retailer_margin_percent = None
 
+            # load temp cart & temp queries for this user
+    # Temp cart + queries + header
+    cart_items = TempCartItem.objects.filter(user=user).select_related('product')
+    query_items = TempQueryItem.objects.filter(user=user).select_related('product')
+    query_header = TempQueryHeader.objects.filter(user=user).first()
+
+    cart_subtotal = sum(ci.total_price for ci in cart_items) if cart_items else 0
+    cart_item_count = cart_items.count()
+    cart_total_qty = sum(ci.quantity for ci in cart_items) if cart_items else 0
+
+
     return render(request, 'customer/user_Product_list.html', {
         'products': products,
-        'form':form
+        'form':form,
+        'cart_items': cart_items,
+        'query_items': query_items,
+        'query_header': query_header,
+        'cart_subtotal': cart_subtotal,
+        'cart_item_count': cart_item_count,
+        'cart_total_qty': cart_total_qty,
     })
+
+def _add_to_temp_query(user, product, requested_qty, reason=None):
+    if requested_qty <= 0:
+        return
+    q_item, created = TempQueryItem.objects.get_or_create(
+        user=user,
+        product=product,
+        defaults={
+            'product_name': product.name,
+            'requested_qty': 0,
+            'reason': reason or 'OUT_OF_STOCK'
+        }
+    )
+    q_item.requested_qty += requested_qty
+    if reason:
+        q_item.reason = reason
+    q_item.save()
+    
+    
+    
+    
+from django.views.decorators.http import require_POST
+
+
+
+@require_POST
+@login_required
+def ajax_add_to_cart(request):
+    user = request.user
+    product_id = request.POST.get('product_id')
+    qty = int(request.POST.get('qty', 1))
+
+    product = get_object_or_404(Product, id=product_id)
+    available = int(getattr(product, 'quantity', 0))
+
+    # No stock -> everything to missed products
+    if available <= 0:
+        _add_to_temp_query(user, product, qty, reason="OUT_OF_STOCK")
+        return _cart_and_query_response(user)
+
+    cart_item, created = TempCartItem.objects.get_or_create(
+        user=user,
+        product=product,
+        defaults={'unit_price': product.price, 'quantity': 0}
+    )
+
+    desired_total_qty = cart_item.quantity + qty
+
+    if desired_total_qty <= available:
+        cart_item.quantity = desired_total_qty
+        cart_item.unit_price = product.price
+        cart_item.save()
+    else:
+        remainder = desired_total_qty - available
+        cart_item.quantity = available
+        cart_item.unit_price = product.price
+        cart_item.save()
+        _add_to_temp_query(user, product, remainder, reason="PARTIAL_STOCK")
+
+    return _cart_and_query_response(user)
+
+
+
+@require_POST
+@login_required
+def ajax_remove_cart_item(request):
+    user = request.user
+    product_id = request.POST.get('product_id')
+    product = get_object_or_404(Product, id=product_id)
+
+    TempCartItem.objects.filter(user=user, product=product).delete()
+    return _cart_and_query_response(user)
+
+
+def _cart_and_query_response(user):
+    cart_items = TempCartItem.objects.filter(user=user).select_related('product')
+    query_items = TempQueryItem.objects.filter(user=user).select_related('product')
+
+    cart_list = []
+    subtotal = Decimal('0.00')
+    total_qty = 0
+    for ci in cart_items:
+        subtotal += ci.total_price
+        total_qty += ci.quantity
+        cart_list.append({
+            'product_id': ci.product.id,
+            'name': ci.product.name,
+            'qty': ci.quantity,
+            'available_quantity': int(getattr(ci.product, 'quantity', 0)),
+            'unit_price': float(ci.unit_price),
+            'total_price': float(ci.total_price),
+        })
+
+    query_list = []
+    for qi in query_items:
+        query_list.append({
+            'id': qi.id,
+            'product_id': qi.product.id if qi.product else None,
+            'product_name': qi.product_name,
+            'requested_qty': qi.requested_qty,
+            'reason': qi.reason,
+        })
+
+    return JsonResponse({
+        'success': True,
+        'cart': cart_list,
+        'cart_subtotal': float(subtotal),
+        'cart_total_qty': total_qty,
+        'cart_item_count': len(cart_list),
+        'query_items': query_list,
+    })
+@require_POST
+@login_required
+def ajax_remove_temp_query_item(request):
+    user = request.user
+    query_id = request.POST.get('query_id')
+    TempQueryItem.objects.filter(user=user, id=query_id).delete()
+    return _cart_and_query_response(user)
+
+
+
+@require_POST
+@login_required
+def ajax_update_temp_query_qty(request):
+    user = request.user
+    query_id = request.POST.get('query_id')
+    qty = int(request.POST.get('qty', 0))
+
+    try:
+        tq = TempQueryItem.objects.get(user=user, id=query_id)
+    except TempQueryItem.DoesNotExist:
+        return _cart_and_query_response(user)
+
+    if qty <= 0:
+        tq.delete()
+    else:
+        tq.requested_qty = qty
+        tq.save()
+
+    return _cart_and_query_response(user)
+
+
+@require_POST
+@login_required
+def ajax_save_query_header(request):
+    user = request.user
+    business_name = request.POST.get('business_name', '').strip()
+    contact_number = request.POST.get('contact_number', '').strip()
+    description = request.POST.get('description', '').strip()
+
+    header, created = TempQueryHeader.objects.get_or_create(user=user)
+    header.business_name = business_name
+    header.contact_number = contact_number
+    header.description = description
+    header.save()
+
+    return JsonResponse({'success': True})
+
+
+@require_POST
+@login_required
+def ajax_update_cart_qty(request):
+    user = request.user
+    product_id = request.POST.get('product_id')
+    qty = int(request.POST.get('qty', 0))
+
+    product = get_object_or_404(Product, id=product_id)
+    available = int(getattr(product, 'quantity', 0))
+
+    try:
+        cart_item = TempCartItem.objects.get(user=user, product=product)
+    except TempCartItem.DoesNotExist:
+        if qty > 0:
+            request.POST = request.POST.copy()
+            request.POST['qty'] = qty
+            return ajax_add_to_cart(request)
+        return _cart_and_query_response(user)
+
+    if qty <= 0:
+        _add_to_temp_query(user, product, cart_item.quantity, reason="QTY_ZERO")
+        cart_item.delete()
+        return _cart_and_query_response(user)
+
+    if qty <= available:
+        cart_item.quantity = qty
+        cart_item.unit_price = product.price
+        cart_item.save()
+        return _cart_and_query_response(user)
+
+    remainder = qty - available
+    cart_item.quantity = available
+    cart_item.unit_price = product.price
+    cart_item.save()
+    _add_to_temp_query(user, product, remainder, reason="PARTIAL_STOCK")
+    return _cart_and_query_response(user)
 
 
 # def checkout_and_query(request):
@@ -317,85 +718,200 @@ def user_product_list(request):
 from django.views.decorators.csrf import csrf_exempt
 
 
+# @csrf_exempt
+# @login_required
+# def checkout_and_query(request):
+#     if request.method == 'POST':
+#         try:
+#             user = request.user
+#             cart_data = request.POST.get('cart')
+#             queries = []
+
+#             # --- 1. Cart Order Handling ---
+#             order = None
+#             if cart_data:
+#                 cart = json.loads(cart_data)
+#                 if cart:
+#                     total_price = sum(item['price'] * item['qty'] for item in cart)
+#                     total_quantity = sum(item['qty'] for item in cart)
+#                     order = Order.objects.create(
+#                         total_price=total_price,
+#                         total_amount=total_price,
+#                         total_quantity=total_quantity,
+#                         status='ordered',
+#                         created_by=user,
+#                         updated_by=user
+#                     )
+
+#                     for item in cart:
+#                         product = Product.objects.get(id=item['id'])
+#                         quantity = int(item['qty'])
+#                         item_total = Decimal(item['price']) * quantity
+
+#                         OrderItem.objects.create(
+#                             order=order,
+#                             product=product,
+#                             product_name=product.name,
+#                             product_no=product.product_id,
+#                             quantity=quantity,
+#                             total_price=item_total,
+#                             created_by=user,
+#                             updated_by=user,
+#                             MRP=product.MRP,
+#                             user_price=product.price,
+#                             discount=product.discount,
+#                             GST=product.GST,
+#                             batch=product.batch,
+#                         )
+
+#                         # Reduce stock
+#                         if hasattr(product, 'quantity'):
+#                             product.quantity -= quantity
+#                             product.save()
+
+#             # --- 2. Query Form Handling ---
+#             for key in request.POST:
+#                 if key.startswith('Business_name_'):
+#                     index = key.split('_')[-1]
+#                     business_name = request.POST.get(f'Business_name_{index}')
+#                     contact_number = request.POST.get(f'contact_number_{index}')
+#                     description = request.POST.get(f'description_{index}')
+
+#                     q = Query.objects.create(
+#                         created_by=user,
+#                         Business_name=business_name,
+#                         contact_number=contact_number,
+#                         description=description,
+#                     )
+#                     queries.append(q.id)
+
+#             return JsonResponse({
+#                 'success': True,
+#                 'order_id': order.id if order else None,
+#                 'queries': queries,
+#                 'message': 'Order and Queries submitted successfully.'
+#             })
+
+#         except Exception as e:
+#             print("Error:", e)
+#             return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+#     return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
+
 @csrf_exempt
 @login_required
 def checkout_and_query(request):
-    if request.method == 'POST':
-        try:
-            user = request.user
-            cart_data = request.POST.get('cart')
-            queries = []
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
 
-            # --- 1. Cart Order Handling ---
+    user = request.user
+
+    try:
+        # ---- 1. Temp cart -> Order ----
+        temp_cart = TempCartItem.objects.filter(user=user).select_related('product')
+        if not temp_cart.exists():
             order = None
-            if cart_data:
-                cart = json.loads(cart_data)
-                if cart:
-                    total_price = sum(item['price'] * item['qty'] for item in cart)
-                    total_quantity = sum(item['qty'] for item in cart)
-                    order = Order.objects.create(
-                        total_price=total_price,
-                        total_amount=total_price,
-                        total_quantity=total_quantity,
-                        status='ordered',
-                        created_by=user,
-                        updated_by=user
-                    )
+        else:
+            total_price = sum(ci.total_price for ci in temp_cart)
+            total_quantity = sum(ci.quantity for ci in temp_cart)
 
-                    for item in cart:
-                        product = Product.objects.get(id=item['id'])
-                        quantity = int(item['qty'])
-                        item_total = Decimal(item['price']) * quantity
+            order = Order.objects.create(
+                total_price=total_price,
+                total_amount=total_price,
+                total_quantity=total_quantity,
+                status='ordered',
+                created_by=user,
+                updated_by=user
+            )
 
-                        OrderItem.objects.create(
-                            order=order,
-                            product=product,
-                            product_name=product.name,
-                            product_no=product.product_id,
-                            quantity=quantity,
-                            total_price=item_total,
-                            created_by=user,
-                            updated_by=user,
-                            MRP=product.MRP,
-                            user_price=product.price,
-                            discount=product.discount,
-                            GST=product.GST,
-                            batch=product.batch,
-                        )
+            for ci in temp_cart:
+                product = ci.product
+                quantity = ci.quantity
+                item_total = ci.total_price
 
-                        # Reduce stock
-                        if hasattr(product, 'quantity'):
-                            product.quantity -= quantity
-                            product.save()
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    product_name=product.name,
+                    product_no=product.product_id,
+                    quantity=quantity,
+                    total_price=item_total,
+                    created_by=user,
+                    updated_by=user,
+                    MRP=product.MRP,
+                    user_price=product.price,
+                    discount=product.discount,
+                    GST=product.GST,
+                    batch=product.batch,
+                )
 
-            # --- 2. Query Form Handling ---
-            for key in request.POST:
-                if key.startswith('Business_name_'):
-                    index = key.split('_')[-1]
-                    business_name = request.POST.get(f'Business_name_{index}')
-                    contact_number = request.POST.get(f'contact_number_{index}')
-                    description = request.POST.get(f'description_{index}')
+                if hasattr(product, 'quantity'):
+                    product.quantity = max(0, product.quantity - quantity)
+                    product.save()
 
-                    q = Query.objects.create(
-                        created_by=user,
-                        Business_name=business_name,
-                        contact_number=contact_number,
-                        description=description,
-                    )
-                    queries.append(q.id)
+            temp_cart.delete()
 
-            return JsonResponse({
-                'success': True,
-                'order_id': order.id if order else None,
-                'queries': queries,
-                'message': 'Order and Queries submitted successfully.'
-            })
+        # ---- 2. Temp header + TempQueryItem -> Query + QueryItem ----
+        temp_queries = TempQueryItem.objects.filter(user=user)
 
-        except Exception as e:
-            print("Error:", e)
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        # Update header from POST (latest values)
+        business_name = request.POST.get('business_name', '').strip()
+        contact_number = request.POST.get('contact_number', '').strip()
+        description = request.POST.get('missed_description', '').strip()
 
-    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
+        header, _ = TempQueryHeader.objects.get_or_create(user=user)
+        if business_name:
+            header.business_name = business_name
+        if contact_number:
+            header.contact_number = contact_number
+        if description:
+            header.description = description
+        header.save()
+
+        # Which temp query items selected via checkbox?
+        selected_ids = []
+        for key in request.POST.keys():
+            if key.startswith('query_item_selected_'):
+                try:
+                    selected_ids.append(int(key.split('_')[-1]))
+                except ValueError:
+                    continue
+
+        selected_temp_queries = temp_queries.filter(id__in=selected_ids)
+
+        if selected_temp_queries.exists():
+            query_header = Query.objects.create(
+                order=order,
+                created_by=user,
+                updated_by=user,
+                Business_name=header.business_name or '',
+                contact_number=header.contact_number or '',
+                description=header.description or 'Missed products / queries from checkout',
+            )
+
+            for tq in selected_temp_queries:
+                QueryItem.objects.create(
+                    query=query_header,
+                    product=tq.product,
+                    product_name=tq.product_name,
+                    requested_qty=tq.requested_qty,
+                    issued_qty=0,
+                    status='pending',
+                )
+
+        # Clear temp header & temp queries
+        TempQueryHeader.objects.filter(user=user).delete()
+        temp_queries.delete()
+
+        return JsonResponse({
+            'success': True,
+            'order_id': order.id if order else None,
+            'message': 'Order and Queries submitted successfully.'
+        })
+
+    except Exception as e:
+        print("Error:", e)
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 #good codec
 # def user_product_list(request):
@@ -520,10 +1036,45 @@ def place_order(request):
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 
+# def order_list(request):
+#     """ List all orders with related items """
+#     orders = Order.objects.prefetch_related("items__product").all()
+#     return render(request, "productss/orders_list.html", {"orders": orders})
+
+
+
+
 def order_list(request):
-    """ List all orders with related items """
-    orders = Order.objects.prefetch_related("items__product").all()
+    orders = (
+        Order.objects
+        .select_related('created_by')
+        .prefetch_related('items__product', 'queries')
+        .all()
+    )
     return render(request, "productss/orders_list.html", {"orders": orders})
+
+# products/views.py
+
+def order_invoice(request, pk):
+    """
+    Show order header, items, and any related Query + QueryItems
+    """
+ # only if not already imported
+
+    order = get_object_or_404(
+        Order.objects.prefetch_related(
+            "items__product",
+            "queries__items",   # QueryItem has related_name='items'
+        ),
+        pk=pk
+    )
+
+    queries = order.queries.all()  # because Query.order has related_name='queries'
+
+    return render(request, "productss/order_invoice.html", {
+        "order": order,
+        "queries": queries,
+    })
 
 
 def recent_order_list(request):

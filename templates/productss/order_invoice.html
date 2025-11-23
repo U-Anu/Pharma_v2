@@ -1,0 +1,181 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body_block %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-primary mb-0">
+            Invoice - Order #{{ order.id }}{% if order.order_no %} ({{ order.order_no }}){% endif %}
+        </h2>
+        <a href="{% url 'order_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-arrow-left"></i> Back to Orders
+        </a>
+    </div>
+
+    <!-- Order Header -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-1">Order Details</h5>
+                    <p class="mb-1"><strong>Order ID:</strong> {{ order.id }}</p>
+                    <p class="mb-1"><strong>Order No:</strong> {{ order.order_no }}</p>
+                    <p class="mb-1"><strong>Date:</strong> {{ order.created_at|date:"d-m-Y H:i" }}</p>
+                    <p class="mb-1"><strong>Status:</strong> {{ order.get_status_display }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="card-title mb-1">Customer / User</h5>
+                    <p class="mb-1"><strong>Created By:</strong> {{ order.created_by }}</p>
+                    {% if order.created_by and order.created_by.email %}
+                        <p class="mb-1"><strong>Email:</strong> {{ order.created_by.email }}</p>
+                    {% endif %}
+                    {% if order.created_by and order.created_by.mobile %}
+                        <p class="mb-1"><strong>Phone:</strong> {{ order.created_by.mobile }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <div class="row mb-0">
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>Total Quantity:</strong> {{ order.total_quantity }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>Total Price:</strong> {{ order.total_price }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>Total Amount:</strong> {{ order.total_amount }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Order Items</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-striped table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>Batch</th>
+                        <th>MRP</th>
+                        <th>User Price</th>
+                        <th>Discount</th>
+                        <th>GST</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                {{ item.product_name|default:item.product.name }}
+                                {% if item.product and item.product.product_id %}
+                                    <br><small class="text-muted">Code: {{ item.product.product_id }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.batch }}</td>
+                            <td>{{ item.MRP }}</td>
+                            <td>{{ item.user_price }}</td>
+                            <td>{{ item.discount }}</td>
+                            <td>{{ item.GST }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.total_price }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">No items found for this order.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Queries & Query Items -->
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Order Queries / Missed Products</h5>
+            {% if queries %}
+                <span class="badge bg-primary">{{ queries|length }} query(ies)</span>
+            {% else %}
+                <span class="badge bg-secondary">No queries</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if queries %}
+                {% for q in queries %}
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <h6 class="mb-1">Query #{{ q.id }}</h6>
+                                <small class="text-muted">
+                                    Submitted: {{ q.submitted_at|date:"d-m-Y H:i" }}
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <p class="mb-1"><strong>Business Name:</strong> {{ q.Business_name|default:"-" }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-1"><strong>Contact Number:</strong> {{ q.contact_number|default:"-" }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-1"><strong>Created By:</strong> {{ q.created_by }}</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <p class="mb-1"><strong>Description:</strong></p>
+                            <p class="mb-2">{{ q.description|linebreaksbr }}</p>
+                        </div>
+
+                        {% if q.items.all %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Product</th>
+                                            <th>Requested Qty</th>
+                                            <th>Issued Qty</th>
+                                            <th>Pending Qty</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for qi in q.items.all %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ qi.product_name }}</td>
+                                                <td>{{ qi.requested_qty }}</td>
+                                                <td>{{ qi.issued_qty }}</td>
+                                                <td>{{ qi.pending_qty }}</td>
+                                                <td>{{ qi.get_status_display }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">No query items recorded.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">No queries available for this order.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

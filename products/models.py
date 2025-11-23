@@ -297,6 +297,13 @@ class OrderBilling(models.Model):
 
 
 class Query(models.Model):
+    order = models.ForeignKey(
+        'Order',              # same file-la irukkura Order model
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='queries'
+    )
     description = models.TextField()
     Business_name = models.CharField(max_length=100,null=True,blank=True)
     contact_number = models.CharField(max_length=15, null=True, blank=True)
@@ -306,6 +313,119 @@ class Query(models.Model):
     def __str__(self):
         return f"Query {self.created_by}"
 
+
+class TempCartItem(models.Model):
+    user = models.ForeignKey(
+        'UserManagement.User',
+        on_delete=models.CASCADE,
+        related_name='temp_cart_items'
+    )
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+
+    def save(self, *args, **kwargs):
+        self.total_price = (self.unit_price or Decimal('0')) * self.quantity
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user} - {self.product} x {self.quantity}"
+
+
+
+class QueryItem(models.Model):
+    """
+    Final saved missed-product items linked to Query.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('issued', 'Issued'),
+        ('partial', 'Partially Issued'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    query = models.ForeignKey(
+        Query,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    product_name = models.CharField(max_length=255)
+
+    requested_qty = models.PositiveIntegerField(default=0)
+    issued_qty = models.PositiveIntegerField(default=0)
+    pending_qty = models.PositiveIntegerField(default=0)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        self.pending_qty = max(0, self.requested_qty - self.issued_qty)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.product_name} - {self.status} ({self.pending_qty} pending)"
+    
+    
+    
+class TempQueryItem(models.Model):
+    """
+    Missed products per user (temp table).
+    """
+    user = models.ForeignKey(
+        'UserManagement.User',
+        on_delete=models.CASCADE,
+        related_name='temp_query_items'
+    )
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, blank=True)
+    product_name = models.CharField(max_length=255)
+    requested_qty = models.PositiveIntegerField(default=0)
+    reason = models.CharField(max_length=255, blank=True, null=True)  # OUT_OF_STOCK, PARTIAL_STOCK, QTY_ZERO
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+
+    def __str__(self):
+        return f"{self.user} - {self.product_name} ({self.requested_qty})"
+    
+    
+class TempQueryHeader(models.Model):
+    """
+    Temp header for queries: Business name, contact, description; one per user.
+    """
+    user = models.OneToOneField(
+        'UserManagement.User',
+        on_delete=models.CASCADE,
+        related_name='temp_query_header'
+    )
+    business_name = models.CharField(max_length=100, blank=True, null=True)
+    contact_number = models.CharField(max_length=15, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"TempQueryHeader for {self.user}"   
+    
+    
 class ProductVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     variant_name = models.CharField(max_length=100)  # e.g., "500mg", "100ml", etc.
