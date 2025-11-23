@@ -11,5 +11,6 @@ admin.site.register(Order)
 admin.site.register(TempCartItem)
 admin.site.register(TempQueryItem)
 admin.site.register(TempQueryHeader)
-
+admin.site.register(Query)
+admin.site.register(QueryItem)
 

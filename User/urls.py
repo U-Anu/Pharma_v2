@@ -27,8 +27,6 @@ urlpatterns = [
     path('invoice/<int:order_id>/',invoice, name='invoice'),
 
 
-
-
     path('customer_order/', customer_order_list, name='customer_order_list'),
     # path('customer_order/create/', customer_order_create, name='customer_order_create'),
     path('customer_order/update/<int:pk>/', customer_order_update, name='customer_order_update'),
@@ -40,6 +38,7 @@ urlpatterns = [
     path('remove-temp-item/', remove_temp_item, name='remove_temp_item'),
     
     path("orders/<int:pk>/invoice/", order_invoice, name="order_invoice"),
+    path("admin_orders/<int:pk>/invoice/", admin_order_invoice, name="admin_order_invoice"),
 
 
 

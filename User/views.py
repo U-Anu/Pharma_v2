@@ -59,7 +59,6 @@ def admin_order_list(request):
         .prefetch_related("items__product", "queries")  # queries = related_name on Query.order
         .all()
     )
-
     # Filters
     customer = request.GET.get("customer", "").strip()
     start_date = request.GET.get("start_date", "")
@@ -1042,8 +1041,6 @@ def place_order(request):
 #     return render(request, "productss/orders_list.html", {"orders": orders})
 
 
-
-
 def order_list(request):
     orders = (
         Order.objects
@@ -1072,6 +1069,27 @@ def order_invoice(request, pk):
     queries = order.queries.all()  # because Query.order has related_name='queries'
 
     return render(request, "productss/order_invoice.html", {
+        "order": order,
+        "queries": queries,
+    })
+
+
+def admin_order_invoice(request, pk):
+    """
+    Show order header, items, and any related Query + QueryItems
+    """
+
+    order = get_object_or_404(
+        Order.objects.prefetch_related(
+            "items__product",
+            "queries__items",   # QueryItem has related_name='items'
+        ),
+        pk=pk
+    )
+
+    queries = order.queries.all()  # because Query.order has related_name='queries'
+
+    return render(request, "productss/admin_order_invoice.html", {
         "order": order,
         "queries": queries,
     })
@@ -1578,6 +1596,7 @@ def customer_order_delete(request, pk):
         return redirect('customer_order_list')
     except Exception as e:
         messages.error(request, f"Error deleting status: {e}")
+
 
 @login_required
 def invoice(request, order_id):
