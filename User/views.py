@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from UserManagement.models import *
 import json
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.db.models import Q, F
 from .forms import *
@@ -401,6 +401,8 @@ from django.shortcuts import render
 
 @login_required
 def user_product_list(request):
+    username = request.session['first_name'] +' '+request.session['last_name'] 
+    print('username',username)
     form = QueryForm()
     user = request.user
     user_category = getattr(user, 'user_category', None)
@@ -448,6 +450,7 @@ def user_product_list(request):
         'cart_subtotal': cart_subtotal,
         'cart_item_count': cart_item_count,
         'cart_total_qty': cart_total_qty,
+        'username':username
     })
 
 def _add_to_temp_query(user, product, requested_qty, reason=None):
@@ -1617,5 +1620,43 @@ def invoice(request, order_id):
     }
     return render(request, "customer/invoice.html", context)
 
+from django.shortcuts import get_object_or_404, render
 
+def order_note_slip(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    # order.items is the related_name from OrderItem
+    return render(request, 'user/order_note_slip.html', {
+        'order': order,
+        'items': order.items.all(),
+    })
 
+def download_note_slip(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    items = order.items.all()
+
+    lines = []
+    lines.append(f"NOTE SLIP - {order.order_no}")
+    lines.append("")
+    lines.append(f"Date: {order.created_at.strftime('%d-%m-%Y %H:%M')}")
+    lines.append(f"Total Quantity: {order.total_quantity}")
+    lines.append(f"Total Price: ₹{order.total_price}")
+    lines.append("")
+    lines.append("Products:")
+    lines.append("----------")
+
+    for i, item in enumerate(items, start=1):
+        name = item.product_name or (item.product.name if item.product else "Unknown")
+        lines.append(f"{i}. {name}  |  Qty: {item.quantity}")
+
+    lines.append("")
+    lines.append("Notes:")
+    lines.append("- Please verify quantities and product details.")
+    lines.append("- This slip is for internal reference only.")
+    lines.append("- Contact office in case of any discrepancy.")
+
+    content = "\n".join(lines)
+
+    filename = f"NoteSlip_{order.order_no}.txt"
+    response = HttpResponse(content, content_type='text/plain')
+    response["Content-Disposition"] = f'attachment; filename=\"{filename}\"'
+    return response

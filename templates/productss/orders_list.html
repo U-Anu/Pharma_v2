@@ -72,13 +72,18 @@
 
             <td>{{ order.get_status_display }}</td>
 
-            <td class="text-center">
-                <a href="{% url 'order_invoice' order.id %}"
-                   class="btn btn-sm btn-secondary mb-1">
-                    <i class="fa fa-file-invoice"></i> Invoice
-                </a>
+          <td class="text-center">
+    <a href="{% url 'order_invoice' order.id %}"
+       class="btn btn-sm btn-secondary mb-1">
+        <i class="fa fa-file-invoice"></i> Invoice
+    </a>
 
-            </td>
+     <a href="{% url 'order_note_slip' order.id %}"
+       class="btn btn-sm btn-info mb-1" target="_blank">
+        <i class="fa fa-sticky-note"></i> Note Slip
+    </a>
+</td>
+
         </tr>
     {% endfor %}
 </tbody>

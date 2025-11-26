@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Note Slip - {{ order.order_no }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            margin: 20px;
+        }
+        .slip-container {
+            border: 1px solid #333;
+            padding: 15px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .slip-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .slip-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .slip-meta {
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #555;
+            padding: 4px 6px;
+            text-align: left;
+        }
+        th {
+            background: #f2f2f2;
+        }
+        .notes {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .notes-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 11px;
+            text-align: right;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        .btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            border: 1px solid #333;
+            background: #eee;
+            cursor: pointer;
+            text-decoration: none;
+            color: #000;
+            border-radius: 3px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print" style="text-align:right; margin-bottom:10px;">
+    <button class="btn" onclick="window.print()">Print</button>
+    <a href="{% url 'download_note_slip' order.id %}" class="btn">
+        Download Notes
+    </a>
+</div>
+
+<div class="slip-container">
+    <div class="slip-header">
+        <h2>NOTE SLIP</h2>
+        <div>Order No: <strong>{{ order.order_no }}</strong></div>
+        <div>Date: {{ order.created_at|date:"d-m-Y H:i" }}</div>
+    </div>
+
+    <div class="slip-meta">
+    
+        <div>Total Quantity: {{ order.total_quantity }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:40px;">S.No</th>
+                <th>Product Name</th>
+                <th style="width:80px;">Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.product_name}}</td>
+                    <td>{{ item.quantity }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align:center;">No items found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="notes">
+        <div class="notes-title">Notes:</div>
+        <div>
+            - Please verify quantities and product details.<br>
+            - This slip is for internal reference only.<br>
+            - Contact office in case of any discrepancy.
+        </div>
+    </div>
+
+    
+</div>
+
+</body>
+</html>

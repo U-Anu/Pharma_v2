@@ -239,7 +239,22 @@ th.col-stock, td.col-stock {
                                 <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
                                     {{ product.composition_name }}
                                 </td>
-                                <td class="col-price">₹{{ product.price }}</td>
+
+                               <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
+    ₹{{ product.price }}<br>
+
+    <span style="font-size: 0.95em;">
+        {% if product.free %}
+            (Free)
+        {% elif product.scheme %}
+            {{ product.scheme }}(Scheme)
+        {% elif product.discount %}
+            -{{ product.discount }}%(Discount)
+        {% endif %}
+    </span>
+</td>
+
+
                                 <td class="col-stock">{{ product.quantity }}</td>
                                 <td>
                                     <button class="btn btn-sm btn-primary add-to-cart-btn"
