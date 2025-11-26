@@ -25,6 +25,8 @@ urlpatterns = [
     path("orders-update/<int:pk>/", order_update, name="order_update"),
     path('place_order/',place_order, name='place_order'),
     path('invoice/<int:order_id>/',invoice, name='invoice'),
+    path('orders/<int:pk>/note-slip/', order_note_slip, name='order_note_slip'),
+    path('orders/<int:pk>/note-slip/download/', download_note_slip, name='download_note_slip'),
 
 
     path('customer_order/', customer_order_list, name='customer_order_list'),

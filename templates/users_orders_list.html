@@ -78,22 +78,35 @@
 
                         <td>{{ order.get_status_display }}</td>
 
-                        <td class="text-center">
-                            <a href="{% url 'admin_order_invoice' order.id %}"
-                               class="btn btn-sm btn-secondary mb-1">
-                                <i class="fa fa-file-invoice"></i> Invoice
-                            </a>
+                       <td class="text-center">
 
-                            <a href="{% url 'admin_order_issue' order.id %}"
-                               class="btn btn-sm btn-warning mb-1">
-                                <i class="fa fa-box"></i> Issue / Pack
-                            </a>
+    <a href="{% url 'admin_order_invoice' order.id %}"
+       class="btn btn-sm btn-secondary mb-1"
+       data-bs-toggle="tooltip" title="Invoice">
+        <i class="fa fa-file-invoice"></i>
+    </a>
 
-                            <a href="{% url 'order_update' order.id %}"
-                               class="btn btn-sm btn-primary mb-1">
-                                <i class="fa fa-edit"></i> Update
-                            </a>
-                        </td>
+    <a href="{% url 'order_note_slip' order.id %}"
+       class="btn btn-sm btn-info mb-1"
+       target="_blank"
+       data-bs-toggle="tooltip" title="Note Slip">
+        <i class="fa fa-sticky-note"></i>
+    </a>
+
+    <a href="{% url 'admin_order_issue' order.id %}"
+       class="btn btn-sm btn-warning mb-1"
+       data-bs-toggle="tooltip" title="Issue Stock">
+        <i class="fa fa-box"></i>
+    </a>
+
+    <a href="{% url 'order_update' order.id %}"
+       class="btn btn-sm btn-primary mb-1"
+       data-bs-toggle="tooltip" title="Edit Order">
+        <i class="fa fa-edit"></i>
+    </a>
+
+</td>
+
                     </tr>
                 {% empty %}
                     <tr>

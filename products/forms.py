@@ -138,5 +138,8 @@ class ProductForm(forms.ModelForm):
             'expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'MRP': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter MRP'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter price'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter quantity'}),
+            'quantity': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter quantity '}),
+            'free': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter free '}),
+            'discount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter dicount'}),
+            'scheme': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter scheme'}),
         }

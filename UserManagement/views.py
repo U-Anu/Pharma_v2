@@ -43,7 +43,8 @@ def login(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user_name=User.objects.get(email=username)
-            request.session['name']=user_name.first_name
+            request.session['first_name']=user_name.first_name
+            request.session['last_name']=user_name.last_name
             user = authenticate(request, username=username, password=password)
             print("user===========",user)
             if user is not None:

@@ -74,6 +74,7 @@ class Product(models.Model):
     user_price = models.DecimalField(max_digits=10, decimal_places=2,blank=True, null=True)
     quantity = models.IntegerField(blank=True, null=True)
     GST = models.IntegerField(blank=True, null=True)
+    free = models.CharField(max_length=25,blank=True, null=True)
     discount = models.IntegerField(blank=True, null=True)
     scheme = models.CharField(max_length=50,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
