@@ -4,15 +4,32 @@
 
 <!-- FontAwesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
 <style>
-  .wrap-text {
-    white-space: normal;
-    word-wrap: break-word;
-    word-break: break-word;
-    max-width: 200px; /* adjust size */
-}
+    /* Force table to align properly */
+    table {
+        table-layout: fixed;   /* Makes columns uniform */
+        width: 100%;
+    }
+
+    /* Wrap long text cleanly */
+    .wrap-text {
+        white-space: normal;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    /* Optional: control width for better alignment */
+    .col-name { width: 15%; }
+    .col-email { width: 18%; }
+    .col-phone { width: 13%; }
+    .col-category { width: 10%; }
+    .col-address { width: 30%; }
+    .col-actions { width: 14%; }
 </style>
+
 <div class="container">
+
   <!-- Top Section with Create Button -->
   <div class="d-flex justify-content-between align-items-center mt-4">
     <h2 class="text-primary text-center w-100">Users List</h2>
@@ -25,34 +42,38 @@
     <table class="posts-table table table-striped table-bordered">
       <thead>
         <tr class="users-table-info text-center">
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone Number</th>
-          <th>Category</th>
-          <th>Address</th>
-          <th>Actions</th>
-        
+          <th class="col-name">Name</th>
+          <th class="col-email">Email</th>
+          <th class="col-phone">Phone Number</th>
+          <th class="col-category">Category</th>
+          <th class="col-address">Address</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </thead>
+
       <tbody>
         {% for admin in admin %}
         <tr>
-          <td>{{ admin.first_name }} {{ admin.last_name }}</td>
-          <td>{{ admin.email }}</td>
-          <td>{{ admin.phone_number }}</td>
-          <td>{{ admin.user_category }}</td>
-<td style="word-break: break-all; max-width: 200px;">
-    {{ admin.address }}
-</td>
-<td>
-    <a href="{% url 'user_delete' admin.id %}" class="btn btn-danger">Delete</a>
-</td>
-            
+          <td class="col-name">{{ admin.first_name }} {{ admin.last_name }}</td>
+          <td class="col-email">{{ admin.email }}</td>
+          <td class="col-phone">{{ admin.phone_number }}</td>
+          <td class="col-category">{{ admin.user_category }}</td>
+
+          <td class="wrap-text col-address">
+              {{ admin.address }}
+          </td>
+
+          <td class="col-actions text-center">
+              <a href="{% url 'user_delete' admin.id %}" class="btn btn-danger btn-sm">
+                  Delete
+              </a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
 </div>
 
 {% endblock %}
