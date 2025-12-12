@@ -63,7 +63,7 @@ def admin_order_list(request):
     customer = request.GET.get("customer", "").strip()
     start_date = request.GET.get("start_date", "")
     end_date = request.GET.get("end_date", "")
-
+    print("orders",orders)
     if customer:
         orders = orders.filter(
             Q(created_by__first_name__icontains=customer) |
@@ -76,6 +76,8 @@ def admin_order_list(request):
         orders = orders.filter(created_at__date__lte=parse_date(end_date))
 
     orders = orders.order_by("-created_at")
+    for order in orders:
+        print("order.queries.count()",order.status)
 
     return render(request, "users_orders_list.html", {"orders": orders})
 
@@ -815,7 +817,7 @@ def checkout_and_query(request):
             order = None
         else:
             total_price = sum(ci.total_price for ci in temp_cart)
-            total_quantity = sum(ci.quantity for ci in temp_cart)
+            total_quantity = len(temp_cart)
 
             order = Order.objects.create(
                 total_price=total_price,
@@ -1043,13 +1045,13 @@ def place_order(request):
 #     orders = Order.objects.prefetch_related("items__product").all()
 #     return render(request, "productss/orders_list.html", {"orders": orders})
 
-
 def order_list(request):
     orders = (
         Order.objects
         .select_related('created_by')
         .prefetch_related('items__product', 'queries')
         .all()
+        .order_by('-created_at')   # newest first
     )
     return render(request, "productss/orders_list.html", {"orders": orders})
 
@@ -1348,7 +1350,7 @@ def place_order(request):
 
             # Create Order
             order = Order.objects.create(
-                total_quantity=data.get('total_quantity', sum(item['quantity'] for item in data['items'])),
+                total_quantity = data.get('total_quantity', len(data['items'])),
                 total_price=data['total_price'],
                 total_amount=data['total_price'],
                 status='ordered',
@@ -1607,7 +1609,7 @@ def invoice(request, order_id):
     order_items = OrderItem.objects.filter(order=order)
     user=get_object_or_404(User,pk=order.created_by.id)
     subtotal = sum(item.total_price for item in order_items)
-    total_quantity = sum(item.quantity for item in order_items)
+    total_quantity = len(order_items)
     # Optional: calculate savings, taxes, etc. if needed
 
     context = {
@@ -1636,6 +1638,7 @@ def download_note_slip(request, pk):
 
     lines = []
     lines.append(f"NOTE SLIP - {order.order_no}")
+    lines.append(f"User - {order.created_by.get_full_name()}")
     lines.append("")
     lines.append(f"Date: {order.created_at.strftime('%d-%m-%Y %H:%M')}")
     lines.append(f"Total Quantity: {order.total_quantity}")

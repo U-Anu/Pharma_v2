@@ -39,8 +39,8 @@
                     <th>Order No</th>
                     <th>Date</th>
                     <th>Business Name</th>
-                    <th>Contact</th>
-                    <th>Total Quantity</th>
+                    {% comment %} <th>Contact</th> {% endcomment %}
+                    {% comment %} <th>Total Quantity</th> {% endcomment %}
                     <th>Total Price</th>
                     <th>Ordered By</th>
                     <th>Status</th>
@@ -50,7 +50,19 @@
 
             <tbody>
                 {% for order in orders %}
-                    <tr>
+                    <tr
+                        {% if order.status == "ordered" %}
+                            class="table-warning"
+                        {% elif order.status == "billed" %}
+                            class="table-primary text-white"
+                        {% elif order.status == "delivered" %}
+                            class="table-success text-white"
+                        {% elif order.status == "packed" %}
+                            class="table-danger text-white"
+                        {% else %}
+                            class="table-secondary text-white"
+                        {% endif %}
+                    >
                         <td>{{ forloop.counter }}</td>
                         <td>{{ order.order_no }}</td>
                         <td>{{ order.created_at|date:"d-m-Y H:i" }}</td>
@@ -63,49 +75,63 @@
                             {% endif %}
                         </td>
 
-                        <td>
+                        {% comment %} <td>
                             {% if order.queries.first %}
                                 {{ order.queries.first.contact_number|default:"-" }}
                             {% else %}
                                 -
                             {% endif %}
-                        </td>
+                        </td> {% endcomment %}
 
-                        <td>{{ order.total_quantity }}</td>
+                        {% comment %} <td>{{ order.total_quantity }}</td> {% endcomment %}
                         <td>{{ order.total_price }}</td>
 
                         <td>{{ order.created_by }}</td>
 
-                        <td>{{ order.get_status_display }}</td>
+                        <td>
+                            {% if order.status == "ordered" %}
+                                <span class="badge bg-warning text-dark">Ordered</span>
 
-                       <td class="text-center">
+                            {% elif order.status == "billed" %}
+                                <span class="badge bg-primary">Billed</span>
 
-    <a href="{% url 'admin_order_invoice' order.id %}"
-       class="btn btn-sm btn-secondary mb-1"
-       data-bs-toggle="tooltip" title="Invoice">
-        <i class="fa fa-file-invoice"></i>
-    </a>
+                            {% elif order.status == "delivered" %}
+                                <span class="badge bg-success">Delivered</span>
 
-    <a href="{% url 'order_note_slip' order.id %}"
-       class="btn btn-sm btn-info mb-1"
-       target="_blank"
-       data-bs-toggle="tooltip" title="Note Slip">
-        <i class="fa fa-sticky-note"></i>
-    </a>
+                            {% elif order.status == "packed" %}
+                                <span class="badge bg-danger">Packed</span>
 
-    <a href="{% url 'admin_order_issue' order.id %}"
-       class="btn btn-sm btn-warning mb-1"
-       data-bs-toggle="tooltip" title="Issue Stock">
-        <i class="fa fa-box"></i>
-    </a>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                            {% endif %}
+                        </td>
 
-    <a href="{% url 'order_update' order.id %}"
-       class="btn btn-sm btn-primary mb-1"
-       data-bs-toggle="tooltip" title="Edit Order">
-        <i class="fa fa-edit"></i>
-    </a>
+                        <td class="text-center">
 
-</td>
+                            <a href="{% url 'order_note_slip' order.id %}"
+                               class="btn btn-sm btn-info mb-1"
+                               target="_blank"
+                               data-bs-toggle="tooltip" title="Note Slip">
+                                <i class="fa fa-sticky-note"></i>
+                            </a>
+
+                            <a href="{% url 'admin_order_issue' order.id %}"
+                               class="btn btn-sm btn-warning mb-1"
+                               data-bs-toggle="tooltip" title="Issue Stock">
+                                <i class="fa fa-box"></i>
+                            </a>
+
+                            <a href="{% url 'order_update' order.id %}"
+                               class="btn btn-sm btn-primary mb-1"
+                               data-bs-toggle="tooltip" title="Edit Order">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                        <a href="{% url 'order_delete' order.id %}"
+                               class="btn btn-sm btn-danger mb-1"
+                               data-bs-toggle="tooltip" title="Delete Order">
+                                <i class="fa fa-trash"></i>
+                            </a>
+                        </td>
 
                     </tr>
                 {% empty %}

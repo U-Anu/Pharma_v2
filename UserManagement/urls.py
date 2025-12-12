@@ -7,6 +7,8 @@ urlpatterns = [
     path('admin_signup/', admin_signup, name='admin_signup'),
     path('admin_list/', admin_list, name='admin_list'),
     path('user_list/', user_list, name='user_list'),
+    path('user_delete/<pk>/', user_delete, name='user_delete'),
+    path('order_delete/<pk>/', order_delete, name='order_delete'),
 
     path('', index, name='index'),
     path('admin_dash/', admin_dash, name='admin_dash'),
@@ -20,7 +22,6 @@ urlpatterns = [
     path('user_pending_view/<int:pk>/',user_pending_view,name='user_pending_view'),
     path('approve_user/<int:temp_user_id>/',approve_user,name='approve_user'),
     
-
     path('point_allocations/', point_allocation_list, name='point_allocation_list'),
     path('point_allocations_user/', point_allocation_list_user, name='point_allocation_list_user'),
     path('point_allocations/create/', point_allocation_create, name='point_allocation_create'),
