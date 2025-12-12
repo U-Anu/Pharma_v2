@@ -41,7 +41,9 @@
           <td>{{ admin.email }}</td>
           <td>{{ admin.phone_number }}</td>
           <td>{{ admin.user_category }}</td>
-<td class="wrap-text">{{ admin.address }}</td>
+<td style="word-break: break-all; max-width: 200px;">
+    {{ admin.address }}
+</td>
 <td>
     <a href="{% url 'user_delete' admin.id %}" class="btn btn-danger">Delete</a>
 </td>
