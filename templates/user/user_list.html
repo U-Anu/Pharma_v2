@@ -2,78 +2,86 @@
 {% block body_block %}
 {% load static %}
 
-<!-- FontAwesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
 <style>
-    /* Force table to align properly */
-    table {
-        table-layout: fixed;   /* Makes columns uniform */
+    .users-table {
+        overflow-x: auto;
+    }
+    
+    .posts-table {
+        min-width: 1000px; /* Ensures minimum width for all columns */
+        table-layout: fixed;
         width: 100%;
     }
 
-    /* Wrap long text cleanly */
-    .wrap-text {
-        white-space: normal;
-        word-wrap: break-word;
-        word-break: break-word;
+    /* Force text wrapping in all cells */
+    .posts-table td, .posts-table th {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        vertical-align: top;
+        padding: 8px;
     }
 
-    /* Optional: control width for better alignment */
-    .col-name { width: 15%; }
-    .col-email { width: 18%; }
-    .col-phone { width: 13%; }
-    .col-category { width: 10%; }
-    .col-address { width: 30%; }
-    .col-actions { width: 14%; }
+    /* Adjusted column widths for better distribution */
+    .col-name { width: 15%; min-width: 120px; }
+    .col-email { width: 20%; min-width: 150px; }
+    .col-phone { width: 12%; min-width: 100px; }
+    .col-category { width: 8%; min-width: 80px; }
+    .col-address { 
+        width: 30%; 
+        min-width: 200px;
+        max-width: 200px; /* Limits address column width */
+    }
+    .col-actions { 
+        width: 10%; 
+        min-width: 100px;
+        white-space: nowrap; /* Prevents button from wrapping */
+    }
+
+    /* Ensure address column wraps properly */
+    .address-cell {
+        max-height: 100px;
+        overflow-y: auto;
+    }
 </style>
 
 <div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <h2 class="text-primary text-center w-100">Users List</h2>
+        <a href="{% url 'admin_signup' %}" class="btn btn-primary">Create</a>
+    </div>
 
-  <!-- Top Section with Create Button -->
-  <div class="d-flex justify-content-between align-items-center mt-4">
-    <h2 class="text-primary text-center w-100">Users List</h2>
-    <a href="{% url 'admin_signup' %}" class="btn btn-primary">
-       Create
-    </a>
-  </div>
+    <div class="users-table table-wrapper mt-4">
+        <table class="posts-table table table-striped table-bordered">
+            <thead>
+                <tr class="users-table-info text-center">
+                    <th class="col-name">Name</th>
+                    <th class="col-email">Email</th>
+                    <th class="col-phone">Phone Number</th>
+                    <th class="col-category">Category</th>
+                    <th class="col-address">Address</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
 
-  <div class="users-table table-wrapper mt-4">
-    <table class="posts-table table table-striped table-bordered">
-      <thead>
-        <tr class="users-table-info text-center">
-          <th class="col-name">Name</th>
-          <th class="col-email">Email</th>
-          <th class="col-phone">Phone Number</th>
-          <th class="col-category">Category</th>
-          <th class="col-address">Address</th>
-          <th class="col-actions">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for admin in admin %}
-        <tr>
-          <td class="col-name">{{ admin.first_name }} {{ admin.last_name }}</td>
-          <td class="col-email">{{ admin.email }}</td>
-          <td class="col-phone">{{ admin.phone_number }}</td>
-          <td class="col-category">{{ admin.user_category }}</td>
-
-          <td class="wrap-text col-address">
-              {{ admin.address }}
-          </td>
-
-          <td class="col-actions text-center">
-              <a href="{% url 'user_delete' admin.id %}" class="btn btn-danger btn-sm">
-                  Delete
-              </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
+            <tbody>
+                {% for admin in admin %}
+                <tr>
+                    <td class="col-name">{{ admin.first_name }} {{ admin.last_name }}</td>
+                    <td class="col-email">{{ admin.email }}</td>
+                    <td class="col-phone">{{ admin.phone_number }}</td>
+                    <td class="col-category">{{ admin.user_category }}</td>
+                    <td class="col-address address-cell">{{ admin.address }}</td>
+                    <td class="col-actions text-center">
+                        <a href="{% url 'user_delete' admin.id %}" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {% endblock %}
