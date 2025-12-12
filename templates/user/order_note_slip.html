@@ -84,12 +84,13 @@
     <div class="slip-header">
         <h2>NOTE SLIP</h2>
         <div>Order No: <strong>{{ order.order_no }}</strong></div>
+        <div>Order By: <strong>{{ order.created_by }}</strong></div>
         <div>Date: {{ order.created_at|date:"d-m-Y H:i" }}</div>
     </div>
 
     <div class="slip-meta">
     
-        <div>Total Quantity: {{ order.total_quantity }}</div>
+        <div>Total Items: {{ order.total_quantity }}</div>
     </div>
 
     <table>

@@ -306,3 +306,53 @@ from django.contrib.auth import logout
 def logout_view(request):
     logout(request)
     return redirect('login')  
+
+
+@login_required
+def user_update(request, pk):
+    try:
+        country = get_object_or_404(User, pk=pk)
+        if request.method == 'POST':
+            form = UserCreationForm(request.POST, instance=country)
+            if form.is_valid():
+                try:
+                    country = form.save(commit=False)
+                    country.updated_by = request.user
+                    country.save()
+                    messages.success(request, "User updated successfully!")
+                    return redirect('user_list')
+                except Exception as e:
+                    messages.error(request, f"Error updating user: {e}")
+        else:
+            form = UserCreationForm(instance=country)
+        return render(request, 'master/country_form.html', {'form': form})
+    except Exception as e:
+        messages.error(request, f"Error fetching countries: {e}")
+        return redirect('user_list')
+
+@login_required
+def user_delete(request, pk):
+    try:
+        country = get_object_or_404(User, pk=pk)
+        print("country=========",country)
+
+        country.delete()
+        messages.success(request, "Country deleted successfully!")
+        return redirect('user_list')
+    except Exception as e:
+        messages.error(request, f"Error fetching countries: {e}")
+        return redirect('user_list')
+
+
+@login_required
+def order_delete(request, pk):
+    try:
+        country = get_object_or_404(Order, pk=pk)
+        print("order=========",country)
+
+        country.delete()
+        print("Country deleted successfully!")
+        return redirect('admin_orders')
+    except Exception as e:
+        messages.error(request, f"Error fetching countries: {e}")
+        return redirect('admin_orders')
