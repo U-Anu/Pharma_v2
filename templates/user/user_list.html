@@ -4,7 +4,14 @@
 
 <!-- FontAwesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
+<style>
+  .wrap-text {
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    max-width: 200px; /* adjust size */
+}
+</style>
 <div class="container">
   <!-- Top Section with Create Button -->
   <div class="d-flex justify-content-between align-items-center mt-4">
@@ -34,7 +41,7 @@
           <td>{{ admin.email }}</td>
           <td>{{ admin.phone_number }}</td>
           <td>{{ admin.user_category }}</td>
-          <td>{{ admin.address }}</td>
+<td class="wrap-text">{{ admin.address }}</td>
 <td>
     <a href="{% url 'user_delete' admin.id %}" class="btn btn-danger">Delete</a>
 </td>
