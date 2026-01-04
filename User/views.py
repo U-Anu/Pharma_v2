@@ -489,8 +489,8 @@ from django.shortcuts import render
 
 @login_required
 def user_product_list(request):
-    # username = request.session['first_name'] +' '+request.session['last_name'] 
-    # print('username',username)
+    username = request.session['first_name'] +' '+request.session['last_name'] 
+    print('username',username)
     form = QueryForm()
     user = request.user
     user_category = getattr(user, 'user_category', None)
