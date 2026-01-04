@@ -33,6 +33,9 @@
                 <div class="col-md-4">
                     <p class="mb-1"><strong>Order No:</strong> {{ order.order_no }}</p>
                     <p class="mb-1"><strong>Date:</strong> {{ order.created_at|date:"d-m-Y H:i" }}</p>
+                    <p class="mb-1"><strong>Order No:</strong> {{  order.queries.first.Business_name  }}</p>
+
+
                 </div>
                 <div class="col-md-4">
                     <p class="mb-1"><strong>Total Qty:</strong> {{ order.total_quantity }}</p>
@@ -81,7 +84,7 @@
                                                class="pending-item-checkbox">
                                     </td>
                                     <td>{{ forloop.counter }}</td>
-                                    <td>{{ item.product_name|default:item.product.name }}</td>
+                                    <td>{{ item.product_name}}</td>
                                     <td>{{ item.quantity }}</td>
                                     <td style="max-width:100px;">
                                         <input type="number"
@@ -190,7 +193,8 @@
                                                class="query-item-checkbox">
                                     </td>
                                     <td>{{ forloop.counter }}</td>
-                                    <td>{{ qi.product_name }}</td>
+                                    <td>{{ qi.product_name }}</td>                                    
+                                    <td>{{ order.queries.first.Business_name }}</td>
                                     <td>{{ qi.requested_qty }}</td>
                                     <td>{{ qi.pending_qty }}</td>
                                     <td style="max-width:100px;">

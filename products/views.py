@@ -1279,11 +1279,31 @@ def user_category_markup_delete(request, pk):
 
     return render(request, "user/product_list.html", {"products": products})
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.db.models import Q
+from .models import Product
+import re
 
 @login_required
 def admin_product_list(request):
-    products = Product.objects.all() 
+    products = Product.objects.all()
+    query = request.GET.get("q")
 
-    return render(request, "products/product_list.html", {"products": products})
+    if query:
+        # Normalize input
+        query = query.lower()
 
+        # Remove special characters except numbers & letters
+        tokens = re.findall(r"[a-zA-Z0-9]+", query)
 
+        # Apply AND logic across tokens
+        for token in tokens:
+            products = products.filter(
+                Q(name__icontains=token) |
+                Q(composition_name__icontains=token)
+            )
+
+    return render(request, "products/product_list.html", {
+        "products": products
+    })

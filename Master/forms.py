@@ -3,11 +3,11 @@ from .models import *
 
 class StatusForm(forms.ModelForm):
     class Meta:
-        model = Status
+        model = UserMemo
         exclude = ['created_by', 'updated_by', 'created_at', 'updated_at']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter status name'}),
-            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter description'}),
+             'user': forms.Select(attrs={'class': 'form-control'}), 
+            'description': forms.TextInput(attrs={'class': 'form-control','rows': 3, 'placeholder': 'Enter description'}),
         }
 
 class CertificationStatusForm(forms.ModelForm):

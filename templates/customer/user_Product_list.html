@@ -218,7 +218,7 @@ th.col-stock, td.col-stock {
                                     </div>
                                 </th>
                                 <th>Composition</th>
-                                <th class="col-price">Price</th>
+                                {% comment %} <th class="col-price">Price</th> {% endcomment %}
                                 <th class="col-stock">Stock</th>
                                 <th style="width: 60px;">Add</th>
                             </tr>
@@ -240,7 +240,7 @@ th.col-stock, td.col-stock {
                                     {{ product.composition_name }}
                                 </td>
 
-                               <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
+                               {% comment %} <td style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
     ₹{{ product.price }}<br>
 
     <span style="font-size: 0.95em;">
@@ -252,7 +252,7 @@ th.col-stock, td.col-stock {
             -{{ product.discount }}%(Discount)
         {% endif %}
     </span>
-</td>
+</td> {% endcomment %}
 
 
                                 <td class="col-stock">{{ product.quantity }}</td>

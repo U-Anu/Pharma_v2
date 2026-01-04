@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 
+from User.models import CustomerOrder, OrderItemMain
 from products.models import Order, OrderItem, Product, Query
 from .forms import *
 from .models import *
@@ -21,6 +22,10 @@ from collections import defaultdict
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from products.models import *
+
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.db import transaction
 
 
 def unique_id(pre, last_id):
@@ -312,8 +317,9 @@ def logout_view(request):
 def user_update(request, pk):
     try:
         country = get_object_or_404(User, pk=pk)
+        print("country=========",country)
         if request.method == 'POST':
-            form = UserCreationForm(request.POST, instance=country)
+            form = CustomUserCreationForm(request.POST, instance=country)
             if form.is_valid():
                 try:
                     country = form.save(commit=False)
@@ -324,8 +330,8 @@ def user_update(request, pk):
                 except Exception as e:
                     messages.error(request, f"Error updating user: {e}")
         else:
-            form = UserCreationForm(instance=country)
-        return render(request, 'master/country_form.html', {'form': form})
+            form = CustomUserCreationForm(instance=country)
+        return render(request, 'user/user_form.html', {'form': form})
     except Exception as e:
         messages.error(request, f"Error fetching countries: {e}")
         return redirect('user_list')
@@ -343,16 +349,36 @@ def user_delete(request, pk):
         messages.error(request, f"Error fetching countries: {e}")
         return redirect('user_list')
 
-
 @login_required
 def order_delete(request, pk):
     try:
-        country = get_object_or_404(Order, pk=pk)
-        print("order=========",country)
+        with transaction.atomic():
 
-        country.delete()
-        print("Country deleted successfully!")
+            order = get_object_or_404(Order, pk=pk)
+            order_items = OrderItem.objects.filter(order=order)
+
+            for item in order_items:
+                ordered_qty = item.quantity
+
+                product = Product.objects.filter(
+                    name=item.product_name
+                ).first()
+                print("product=========",product)
+                if not product:
+                    raise Exception(f"Product not found: {item.product_name}")
+
+                product.quantity = (product.quantity or 0) + ordered_qty
+                product.save()
+
+            order_items.delete()
+            order.delete()
+
+        messages.success(
+            request,
+            "Order deleted and product quantity restored successfully!"
+        )
         return redirect('admin_orders')
+
     except Exception as e:
-        messages.error(request, f"Error fetching countries: {e}")
+        messages.error(request, f"Error deleting order: {e}")
         return redirect('admin_orders')

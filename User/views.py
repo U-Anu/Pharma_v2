@@ -51,33 +51,117 @@ from django.db.models import Q
 
 #     return render(request, "users_orders_list.html", {"orders": orders})
 
+# def admin_order_list(request):
+#     """List all orders with related items, with filters for customer name and date range."""
+#     orders = (
+#         Order.objects
+#         .select_related("created_by")
+#         .prefetch_related("items__product", "queries")  # queries = related_name on Query.order
+#         .all()
+#     )
+#     # Filters
+#     customer = request.GET.get("customer", "").strip()
+#     start_date = request.GET.get("start_date", "")
+#     end_date = request.GET.get("end_date", "")
+#     print("orders",orders)
+#     if customer:
+#         orders = orders.filter(
+#             Q(created_by__first_name__icontains=customer) |
+#             Q(created_by__last_name__icontains=customer)
+#         )
+
+#     if start_date:
+#         orders = orders.filter(created_at__date__gte=parse_date(start_date))
+#     if end_date:
+#         orders = orders.filter(created_at__date__lte=parse_date(end_date))
+
+#     orders = orders.order_by("-created_at")
+#     for order in orders:
+#         print("order.queries.count()",order.status)
+
+#     return render(request, "users_orders_list.html", {"orders": orders})
+
+# from django.db.models import Q
+# from django.utils.dateparse import parse_date
+
+# def admin_order_list(request):
+#     orders = (
+#         Order.objects
+#         .select_related("created_by")
+#         .prefetch_related("items__product", "queries")
+#         .all()
+#     )
+
+#     # Filters
+#     customer = request.GET.get("customer", "").strip()
+#     product = request.GET.get("product", "").strip()
+#     start_date = request.GET.get("start_date", "")
+#     end_date = request.GET.get("end_date", "")
+
+#     if customer:
+#         orders = orders.filter(
+#             Q(created_by__first_name__icontains=customer) |
+#             Q(created_by__last_name__icontains=customer)
+#         )
+
+#     if product:
+#         orders = orders.filter(
+#             Q(items__product_name__icontains=product) |
+#             Q(items__product__name__icontains=product)  # optional if Product has name field
+#         )
+
+#     if start_date:
+#         orders = orders.filter(created_at__date__gte=parse_date(start_date))
+
+#     if end_date:
+#         orders = orders.filter(created_at__date__lte=parse_date(end_date))
+
+#     orders = orders.distinct().order_by("-created_at")
+
+#     return render(request, "users_orders_list.html", {"orders": orders})
+
+from django.db.models import Q
+from django.utils.dateparse import parse_date
+
 def admin_order_list(request):
-    """List all orders with related items, with filters for customer name and date range."""
     orders = (
         Order.objects
         .select_related("created_by")
-        .prefetch_related("items__product", "queries")  # queries = related_name on Query.order
+        .prefetch_related(
+            "items__product",
+            "queries__items__product",
+            "queries"
+        )
         .all()
     )
-    # Filters
+
     customer = request.GET.get("customer", "").strip()
+    product = request.GET.get("product", "").strip()
     start_date = request.GET.get("start_date", "")
     end_date = request.GET.get("end_date", "")
-    print("orders",orders)
+
     if customer:
         orders = orders.filter(
             Q(created_by__first_name__icontains=customer) |
             Q(created_by__last_name__icontains=customer)
         )
 
+    # 🔥 PRODUCT FILTER (OrderItem + QueryItem)
+    if product:
+        orders = orders.filter(
+            Q(items__product_name__icontains=product) |
+            Q(items__product__name__icontains=product) |
+            Q(queries__items__product_name__icontains=product) |
+            Q(queries__items__product__name__icontains=product)
+        )
+
     if start_date:
         orders = orders.filter(created_at__date__gte=parse_date(start_date))
+
     if end_date:
         orders = orders.filter(created_at__date__lte=parse_date(end_date))
 
-    orders = orders.order_by("-created_at")
-    for order in orders:
-        print("order.queries.count()",order.status)
+    orders = orders.distinct().order_by("-created_at")
 
     return render(request, "users_orders_list.html", {"orders": orders})
 
@@ -230,6 +314,8 @@ def admin_order_issue(request, order_id):
     packed_items = order.items.filter(status="packed")
 
     queries = order.queries.prefetch_related("items").all()
+    for query in queries:
+        print("queries",query.Business_name)
     query_items = QueryItem.objects.filter(query__order=order)
 
     return render(request, "order_issue.html", {
@@ -403,8 +489,8 @@ from django.shortcuts import render
 
 @login_required
 def user_product_list(request):
-    username = request.session['first_name'] +' '+request.session['last_name'] 
-    print('username',username)
+    # username = request.session['first_name'] +' '+request.session['last_name'] 
+    # print('username',username)
     form = QueryForm()
     user = request.user
     user_category = getattr(user, 'user_category', None)
@@ -452,7 +538,7 @@ def user_product_list(request):
         'cart_subtotal': cart_subtotal,
         'cart_item_count': cart_item_count,
         'cart_total_qty': cart_total_qty,
-        'username':username
+        # 'username':username
     })
 
 def _add_to_temp_query(user, product, requested_qty, reason=None):
@@ -1590,18 +1676,53 @@ def customer_order_update(request, pk):
         form = CustomerOrderForm(instance=status)
     return render(request, 'user/customer_order_form.html', {'form': form})
 
+# @login_required
+# def customer_order_delete(request, pk):
+#     try:
+#         status = get_object_or_404(OrderItemMain, pk=pk)
+#         order = get_object_or_404(CustomerOrder, pk=status.order)
+#         status.delete()
+#         order.delete()
+#         messages.success(request, "Status deleted successfully!")
+#         return redirect('customer_order_list')
+#     except Exception as e:
+#         messages.error(request, f"Error deleting status: {e}")
+
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.db import transaction
+
 @login_required
 def customer_order_delete(request, pk):
     try:
-        status = get_object_or_404(OrderItemMain, pk=pk)
-        order = get_object_or_404(CustomerOrder, pk=status.order)
-        status.delete()
-        order.delete()
-        messages.success(request, "Status deleted successfully!")
-        return redirect('customer_order_list')
-    except Exception as e:
-        messages.error(request, f"Error deleting status: {e}")
+        with transaction.atomic():
+            order_item = get_object_or_404(OrderItemMain, pk=pk)
+            order = get_object_or_404(CustomerOrder, pk=order_item.order.id)
 
+            product = order_item.product_name
+            print("product",product)
+            ordered_qty = order_item.quantity
+            print("ordered_qty",ordered_qty)
+            for product in Product.objects.filter(name=product):
+
+            # ✅ Restore product quantity
+                product.quantity += ordered_qty
+                product.save()
+                print("product quantity restored",product.quantity,product.name)
+
+            # ✅ Delete order item
+            order_item.delete()
+
+            # ✅ Optional: delete order only if no items left
+            if not OrderItemMain.objects.filter(order=order).exists():
+                order.delete()
+
+        messages.success(request, "Order deleted and product quantity restored successfully!")
+        return redirect('customer_order_list')
+
+    except Exception as e:
+        messages.error(request, f"Error deleting order: {e}")
+        return redirect('customer_order_list')
 
 @login_required
 def invoice(request, order_id):
@@ -1622,23 +1743,28 @@ def invoice(request, order_id):
     }
     return render(request, "customer/invoice.html", context)
 
-from django.shortcuts import get_object_or_404, render
 
 def order_note_slip(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    # order.items is the related_name from OrderItem
+
+    # SAFE: returns None if no Query exists
+    query = Query.objects.filter(order=order).first()
+
     return render(request, 'user/order_note_slip.html', {
         'order': order,
         'items': order.items.all(),
+        'query': query,   
     })
 
 def download_note_slip(request, pk):
     order = get_object_or_404(Order, pk=pk)
     items = order.items.all()
-
+    query=Query.objects.get(order=order)
+    print("query",query)
     lines = []
     lines.append(f"NOTE SLIP - {order.order_no}")
-    lines.append(f"User - {order.created_by.get_full_name()}")
+    lines.append(f"User - {order.created_by}")
+    lines.append(f"Business Name - {query.Business_name}")
     lines.append("")
     lines.append(f"Date: {order.created_at.strftime('%d-%m-%Y %H:%M')}")
     lines.append(f"Total Quantity: {order.total_quantity}")

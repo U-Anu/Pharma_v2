@@ -1,0 +1,32 @@
+{% extends "admin_base.html" %}
+{% block body_block %}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">User Memo Details</h5>
+        </div>
+
+        <div class="card-body">
+            <p><strong>Description:</strong></p>
+            <p class="text-muted">{{ memo.description }}</p>
+
+            <hr>
+
+            <p><strong>User:</strong> {{ memo.user }}</p>
+            <p><strong>Created By:</strong> {{ memo.created_by }}</p>
+            <p><strong>Updated By:</strong> {{ memo.updated_by }}</p>
+
+            <p><strong>Created At:</strong> {{ memo.created_at|date:"d M Y, h:i A" }}</p>
+            <p><strong>Updated At:</strong> {{ memo.updated_at|date:"d M Y, h:i A" }}</p>
+        </div>
+
+        <div class="card-footer text-end">
+            <a href="{% url 'status_list' %}" class="btn btn-secondary btn-sm">
+                Back
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
