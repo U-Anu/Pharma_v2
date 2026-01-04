@@ -8,6 +8,7 @@ urlpatterns = [
     path('admin_list/', admin_list, name='admin_list'),
     path('user_list/', user_list, name='user_list'),
     path('user_delete/<pk>/', user_delete, name='user_delete'),
+    path('user_update/<pk>/', user_update, name='user_update'),
     path('order_delete/<pk>/', order_delete, name='order_delete'),
 
     path('', index, name='index'),

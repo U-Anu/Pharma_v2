@@ -84,6 +84,7 @@
     <div class="slip-header">
         <h2>NOTE SLIP</h2>
         <div>Order No: <strong>{{ order.order_no }}</strong></div>
+        <div>Business name: <strong>{{ query.Business_name|default:"-" }}</strong></div>
         <div>Order By: <strong>{{ order.created_by }}</strong></div>
         <div>Date: {{ order.created_at|date:"d-m-Y H:i" }}</div>
     </div>

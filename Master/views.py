@@ -81,7 +81,7 @@ def dashboard(request):
 
 def status_list(request):
     try:
-        statuses = Status.objects.all()
+        statuses = UserMemo.objects.all()
         return render(request, 'master/status_list.html', {'statuses': statuses})
     except Exception as e:
         messages.error(request, f"Error fetching statuses: {e}")
@@ -104,9 +104,27 @@ def status_create(request):
         form = StatusForm()
     return render(request, 'master/status_form.html', {'form': form})
 
+
+@login_required
+def user_memo_create(request,user_id):
+    if request.method == 'POST':
+        form = StatusForm(request.POST)
+        if form.is_valid():
+            try:
+                status = form.save(commit=False)
+                status.created_by = request.user  
+                status.save()
+                messages.success(request, "Status added successfully!")
+                return redirect('admin_orders')
+            except Exception as e:
+                messages.error(request, f"Error creating status: {e}")
+    else:
+        form = StatusForm(initial={'user':user_id})
+    return render(request, 'master/status_form.html', {'form': form})
+
 @login_required
 def status_update(request, pk):
-    status = get_object_or_404(Status, pk=pk)
+    status = get_object_or_404(UserMemo, pk=pk)
     if request.method == 'POST':
         form = StatusForm(request.POST, instance=status)
         if form.is_valid():
@@ -125,12 +143,22 @@ def status_update(request, pk):
 @login_required
 def status_delete(request, pk):
     try:
-        status = get_object_or_404(Status, pk=pk)
+        status = get_object_or_404(UserMemo, pk=pk)
         status.delete()
         messages.success(request, "Status deleted successfully!")
         return redirect('status_list')
     except Exception as e:
         messages.error(request, f"Error deleting status: {e}")
+
+@login_required
+def user_memo_detail(request, pk):
+    memo = get_object_or_404(UserMemo, user__id=pk)
+
+    return render(
+        request,
+        "master/user_memo_detail.html",
+        {"memo": memo}
+    )
 ####################################################################
 
 # Certification Views

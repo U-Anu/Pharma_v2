@@ -1,13 +1,13 @@
 from django.db import models
 # Create your models here.
 
-class Status(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.CharField(max_length=3)
+class UserMemo(models.Model):
+    user = models.ForeignKey('UserManagement.User',related_name='memos',null=True,on_delete=models.CASCADE)
+    description = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)  # When the  record was created
     updated_at = models.DateTimeField(auto_now=True)  # When the  record was last updated 
-    created_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_created_by',null=True,on_delete=models.CASCADE)
-    updated_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_updated_by',null=True,on_delete=models.CASCADE)
+    created_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_UserMemocreated_by',null=True,on_delete=models.CASCADE)
+    updated_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_UserMemoupdated_by',null=True,on_delete=models.CASCADE)
     def __str__(self):
         return self.name
     

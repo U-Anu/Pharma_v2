@@ -5,6 +5,8 @@ urlpatterns = [
     # Status URLs
     path('status/', status_list, name='status_list'),
     path('status/create/', status_create, name='status_create'),
+    path('user_memo/create/<int:user_id>/', user_memo_create, name='user_memo_create'),
+    path('user_memo/detail/<int:pk>/', user_memo_detail, name='user_memo_detail'),
     path('status/update/<int:pk>/', status_update, name='status_update'),
     path('status/delete/<int:pk>/', status_delete, name='status_delete'),
 

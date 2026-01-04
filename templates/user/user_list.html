@@ -2,21 +2,22 @@
 {% block body_block %}
 {% load static %}
 
+<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
 <style>
     .users-table {
         overflow-x: auto;
     }
-    
+
     .posts-table {
-        min-width: 1000px; /* Ensures minimum width for all columns */
+        min-width: 1000px;
         table-layout: fixed;
         width: 100%;
     }
 
-    /* Force text wrapping in all cells */
-    .posts-table td, .posts-table th {
+    .posts-table td,
+    .posts-table th {
         white-space: normal !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
@@ -24,33 +25,57 @@
         padding: 8px;
     }
 
-    /* Adjusted column widths for better distribution */
     .col-name { width: 15%; min-width: 120px; }
     .col-email { width: 20%; min-width: 150px; }
     .col-phone { width: 12%; min-width: 100px; }
     .col-category { width: 8%; min-width: 80px; }
-    .col-address { 
-        width: 30%; 
+    .col-address {
+        width: 30%;
         min-width: 200px;
-        max-width: 200px; /* Limits address column width */
+        max-width: 200px;
     }
-    .col-actions { 
-        width: 10%; 
+    .col-actions {
+        width: 10%;
         min-width: 100px;
-        white-space: nowrap; /* Prevents button from wrapping */
+        white-space: nowrap;
     }
 
-    /* Ensure address column wraps properly */
     .address-cell {
         max-height: 100px;
         overflow-y: auto;
+    }
+
+    /* ICON STYLES */
+    .action-icon {
+        font-size: 16px;
+        margin: 0 6px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .edit-icon {
+        color: #0d6efd;
+    }
+
+    .edit-icon:hover {
+        color: #084298;
+    }
+
+    .delete-icon {
+        color: #dc3545;
+    }
+
+    .delete-icon:hover {
+        color: #a71d2a;
     }
 </style>
 
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mt-4">
         <h2 class="text-primary text-center w-100">Users List</h2>
-        <a href="{% url 'admin_signup' %}" class="btn btn-primary">Create</a>
+        <a href="{% url 'admin_signup' %}" class="btn btn-primary">
+            <i class="fa fa-plus"></i> Create
+        </a>
     </div>
 
     <div class="users-table table-wrapper mt-4">
@@ -69,13 +94,50 @@
             <tbody>
                 {% for admin in admin %}
                 <tr>
-                    <td class="col-name">{{ admin.first_name }} {{ admin.last_name }}</td>
-                    <td class="col-email">{{ admin.email }}</td>
-                    <td class="col-phone">{{ admin.phone_number }}</td>
-                    <td class="col-category">{{ admin.user_category }}</td>
-                    <td class="col-address address-cell">{{ admin.address }}</td>
+                    <td class="col-name">
+                        {{ admin.first_name }} {{ admin.last_name }}
+                    </td>
+                    <td class="col-email">
+                        {{ admin.email }}
+                    </td>
+                    <td class="col-phone">
+                        {{ admin.phone_number }}
+                    </td>
+                    <td class="col-category text-center">
+                        {{ admin.user_category }}
+                    </td>
+                    <td class="col-address address-cell">
+                        {{ admin.address }}
+                    </td>
                     <td class="col-actions text-center">
-                        <a href="{% url 'user_delete' admin.id %}" class="btn btn-danger btn-sm">Delete</a>
+                         <a href="{% url 'user_memo_detail' admin.id %}"
+   class="action-icon memo-icon"
+   title="View Memo"
+   aria-label="View Memo">
+    <i class="fa-solid fa-clipboard"></i>
+</a>
+
+
+                        <!-- EDIT ICON -->
+                        <a href="{% url 'user_update' admin.id %}"
+                           class="action-icon edit-icon"
+                           title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+
+                        <!-- DELETE ICON -->
+                        <a href="{% url 'user_delete' admin.id %}"
+                           class="action-icon delete-icon"
+                           title="Delete"
+                           onclick="return confirm('Are you sure you want to delete this user?');">
+                            <i class="fa-solid fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        No users found
                     </td>
                 </tr>
                 {% endfor %}
