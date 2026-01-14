@@ -129,6 +129,7 @@ class ProductForm(forms.ModelForm):
         model = Product
         exclude = ['created_by', 'updated_by', 'created_at']
         widgets = {
+            'product_id': forms.TextInput(attrs={'type': 'hidden'}),
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter product name'}),
             'form': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter product form'}),
             'company': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter company name'}),
@@ -136,7 +137,9 @@ class ProductForm(forms.ModelForm):
             'product_type': forms.Select(attrs={'class': 'form-control'}),
             'composition_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter composition name'}),
             'expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'MRP': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter MRP'}),
+            'MRP': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter pack size'}),
+            'pack_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter MRP'}),
+            'GST': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter GST'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter price'}),
             'quantity': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter quantity '}),
             'free': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter free '}),

@@ -71,6 +71,8 @@
                                 <th>#</th>
                                 <th>Product</th>
                                 <th>Ordered Qty</th>
+                                <th>Expiry Date</th>
+                                <th>Batch</th>
                                 <th>Issue Qty</th>
                                 <th>Status</th>
                             </tr>
@@ -86,6 +88,8 @@
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ item.product_name}}</td>
                                     <td>{{ item.quantity }}</td>
+                                    <td>{{ item.expiry_date }}</td>
+                                    <td>{{ item.batch }}</td>
                                     <td style="max-width:100px;">
                                         <input type="number"
                                                name="issue_qty_{{ item.id }}"

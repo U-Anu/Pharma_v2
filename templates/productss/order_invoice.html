@@ -63,6 +63,7 @@
                         <th>#</th>
                         <th>Product</th>
                         <th>Batch</th>
+                        <th>Expiry Date</th>
                         <th>MRP</th>
                         <th>User Price</th>
                         <th>Discount</th>
@@ -82,6 +83,7 @@
                                 {% endif %}
                             </td>
                             <td>{{ item.batch }}</td>
+                            <td>{{ item.expiry_date }}</td>
                             <td>{{ item.MRP }}</td>
                             <td>{{ item.user_price }}</td>
                             <td>{{ item.discount }}</td>

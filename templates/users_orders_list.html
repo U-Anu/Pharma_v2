@@ -124,7 +124,7 @@
 
                     <!-- ACTIONS -->
                     <td class="text-center">
-                   {% if order.created_by.memos.exists %}
+                   {% comment %} {% if order.created_by.memos.exists %}
     <!-- View Memo -->
     <a href="{% url 'user_memo_detail' order.created_by.id %}"
        class="btn btn-sm btn-success mb-1"
@@ -139,7 +139,7 @@
        title="Add Memo">
         <i class="fa-solid fa-plus"></i>
     </a>
-{% endif %}
+{% endif %} {% endcomment %}
 
 
                         

@@ -1,6 +1,5 @@
 from django.urls import path
 from django.conf.urls.static import static
-
 from Pharmacy_ECW import settings
 from .views import *
 urlpatterns = [
@@ -27,7 +26,6 @@ urlpatterns = [
     path('products/create/', product_create, name='product_create'),
     path('products/update/<int:pk>/', product_update, name='product_update'),
     path('products/delete/<int:pk>/', product_delete, name='product_delete'),
-
     path('upload/', upload_products, name='upload_products'),
 
     path("query_list/", query_list, name="query_list"),
@@ -53,11 +51,7 @@ urlpatterns = [
     path('user-category-markup/<int:pk>/edit/', user_category_markup_edit, name='user_category_markup_edit'),
     path('user-category-markup/<int:pk>/delete/', user_category_markup_delete, name='user_category_markup_delete'),
     path("products/<int:product_id>/markups/",product_markups, name="product_markups"),
-
-
-
     path('user-category/<int:pk>/margin/create/', user_category_margin_create_or_update, name='user_category_margin_create_or_update'),
-
 
 ]
 
