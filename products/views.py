@@ -1421,110 +1421,101 @@ from django.shortcuts import render
 from django.db.models import Q
 from .models import Product
 import re
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.db.models import Q
+from .models import Product
+import re
 
 @login_required
 def admin_product_list(request):
     try:
-        # Get all products safely
-        products = Product.objects.all()
-        
-        # Filter out invalid products first (empty or non-numeric IDs)
-        valid_products = []
-        for product in products:
-            try:
-                # Try to access the ID to validate it
-                if product.id and str(product.id).strip():  # Check if ID exists and is not empty
-                    # Try to convert to int to ensure it's numeric
-                    int(str(product.id).strip())
-                    valid_products.append(product.id)
-                else:
-                    print(f"Skipping product with invalid ID: {product.name}")
-            except (ValueError, TypeError, AttributeError) as e:
-                print(f"Skipping product with invalid ID format: {product.name}, Error: {e}")
-                continue
-        
-        # Get valid products from database
-        products = Product.objects.filter(id__in=valid_products)
-        
+        # Use a safer approach - get all products and filter in Python
         query = request.GET.get("q")
         filter_missing = request.GET.get("filter") == "missing"
-        sort_by = request.GET.get("sort", "missing_first")
-        sort_order = request.GET.get("order", "desc")
         
-        # Filter by search query
+        # Build query safely
         if query:
             query = query.lower()
             tokens = re.findall(r"[a-zA-Z0-9]+", query)
             
-            # Apply AND logic across tokens
+            # Start with all products
+            products = Product.objects.all()
+            
+            # Apply filters safely
             for token in tokens:
                 products = products.filter(
                     Q(name__icontains=token) |
                     Q(composition_name__icontains=token)
                 )
+        else:
+            products = Product.objects.all()
         
-        # Convert to list for processing and add missing fields flag
-        product_list = list(products)
+        # Process products safely
+        product_list = []
         
-        # Calculate missing fields flag for each product
+        for product in products:
+            try:
+                # Try to access all needed attributes
+                # This will fail if the product has invalid data
+                product_id = product.id
+                product_name = product.name
+                
+                # Only add to list if we can access basic attributes
+                product_list.append(product)
+                
+            except (ValueError, AttributeError, TypeError) as e:
+                print(f"Skipping invalid product (ID error): {e}")
+                continue
+        
+        # Now process the valid products
         for product in product_list:
-            # Check if any of these fields are missing/empty
-            has_missing = (
-                not product.product_type or 
-                str(product.product_type).strip() == '' or
-                product.price is None or
-                product.pack_size is None or
-                product.GST is None
-            )
-            product.has_missing_fields = has_missing
+            try:
+                # Check for missing fields
+                product_type = product.product_type
+                price = product.price
+                pack_size = product.pack_size
+                gst = product.GST
+                
+                has_missing = (
+                    not product_type or 
+                    str(product_type).strip() == '' or
+                    price is None or
+                    pack_size is None or
+                    gst is None
+                )
+                product.has_missing_fields = has_missing
+            except Exception as e:
+                print(f"Error processing product fields: {e}")
+                product.has_missing_fields = False
         
         # Filter to show only missing fields if requested
         if filter_missing:
             product_list = [p for p in product_list if p.has_missing_fields]
         
-        # Apply sorting in Python
-        reverse_order = (sort_order == "desc")
-        
-        if sort_by == "name":
-            product_list.sort(key=lambda x: (x.name or "").lower(), reverse=reverse_order)
-        elif sort_by == "price":
-            product_list.sort(key=lambda x: x.price or 0, reverse=reverse_order)
-        elif sort_by == "quantity":
-            product_list.sort(key=lambda x: x.quantity or 0, reverse=reverse_order)
-        else:  # Default: sort by missing fields first
-            # For missing fields first: True (1) should come before False (0)
-            # When reverse=True, we want has_missing_fields=True (1) first
-            product_list.sort(
-                key=lambda x: (
-                    not x.has_missing_fields,  # False (0) for missing, True (1) for not missing
-                    (x.name or "").lower()
-                ),
-                reverse=True  # Always reverse to get missing fields first
-            )
+        # Sort: products with missing fields first, then by name
+        product_list.sort(
+            key=lambda x: (
+                not x.has_missing_fields,
+                (x.name or "").lower()
+            ), 
+            reverse=True
+        )
         
         return render(request, "products/product_list.html", {
             "products": product_list,
             "filter_missing": filter_missing,
-            "sort_by": sort_by,
-            "sort_order": sort_order,
-            "current_query": query or "",
-            "total_count": len(product_list),
-            "missing_count": sum(1 for p in product_list if p.has_missing_fields)
+            "current_query": query or ""
         })
         
     except Exception as e:
         import traceback
-        error_msg = f"Error loading products: {str(e)}"
-        print(f"Error in admin_product_list: {error_msg}")
+        print(f"Unexpected error: {str(e)}")
         print(traceback.format_exc())
         
         return render(request, "products/product_list.html", {
             "products": [],
-            "error": error_msg,
             "filter_missing": False,
-            "sort_by": "missing_first",
-            "sort_order": "desc",
             "current_query": "",
-            "total_count": 0,
-            "missing_count": 0
+            "error": "An error occurred while loading products"
         })
