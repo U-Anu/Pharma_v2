@@ -1387,25 +1387,102 @@ from django.db.models import Q
 from .models import Product
 import re
 
+# @login_required
+# def admin_product_list(request):
+#     products = Product.objects.all()
+#     query = request.GET.get("q")
+
+#     if query:
+#         # Normalize input
+#         query = query.lower()
+
+#         # Remove special characters except numbers & letters
+#         tokens = re.findall(r"[a-zA-Z0-9]+", query)
+
+#         # Apply AND logic across tokens
+#         for token in tokens:
+#             products = products.filter(
+#                 Q(name__icontains=token) |
+#                 Q(composition_name__icontains=token)
+#             ).order_by('created_at')
+
+#     return render(request, "products/product_list.html", {
+#         "products": products
+#     })
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.db.models import Q
+from .models import Product
+import re
+from django.db.models import Case, When, Value, IntegerField
+
 @login_required
 def admin_product_list(request):
     products = Product.objects.all()
     query = request.GET.get("q")
+    filter_missing = request.GET.get("filter") == "missing"
+    
+    # Get sorting parameters
+    sort_by = request.GET.get("sort", "missing_first")  # Default: missing first
+    sort_order = request.GET.get("order", "desc")  # Default: descending
 
     if query:
         # Normalize input
         query = query.lower()
-
-        # Remove special characters except numbers & letters
         tokens = re.findall(r"[a-zA-Z0-9]+", query)
-
-        # Apply AND logic across tokens
         for token in tokens:
             products = products.filter(
                 Q(name__icontains=token) |
                 Q(composition_name__icontains=token)
-            ).order_by('created_at')
+            )
 
+    # Annotate with missing fields flag
+    products = products.annotate(
+        has_missing_fields=Case(
+            When(
+                Q(product_type__isnull=True) | 
+                Q(product_type='') |
+                Q(price__isnull=True) |
+                Q(pack_size__isnull=True) |
+                Q(GST__isnull=True),
+                then=Value(1)
+            ),
+            default=Value(0),
+            output_field=IntegerField()
+        )
+    )
+
+    # Filter to show only missing fields if requested
+    if filter_missing:
+        products = products.filter(has_missing_fields=1)
+    
+    # Apply sorting
+    if sort_by == "name":
+        if sort_order == "desc":
+            products = products.order_by('-name')
+        else:
+            products = products.order_by('name')
+    elif sort_by == "price":
+        if sort_order == "desc":
+            products = products.order_by('-price')
+        else:
+            products = products.order_by('price')
+    elif sort_by == "quantity":
+        if sort_order == "desc":
+            products = products.order_by('-quantity')
+        else:
+            products = products.order_by('quantity')
+    else:  # Default: sort by missing fields first
+        if sort_order == "asc":
+            products = products.order_by('has_missing_fields', 'name')
+        else:
+            products = products.order_by('-has_missing_fields', 'name')
+    
     return render(request, "products/product_list.html", {
-        "products": products
+        "products": products,
+        "filter_missing": filter_missing,
+        "sort_by": sort_by,
+        "sort_order": sort_order,
+        "current_query": query
     })
