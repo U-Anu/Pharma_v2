@@ -81,6 +81,22 @@ class Product(models.Model):
     created_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_created',null=True,on_delete=models.CASCADE)
     updated_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_updated',null=True,on_delete=models.CASCADE)
 
+    def save(self, *args, **kwargs):
+        if not self.product_id:
+            last_product = Product.objects.filter(
+                product_id__startswith='PRD'
+            ).order_by('-id').first()
+
+            if last_product and last_product.product_id:
+                last_number = int(last_product.product_id.replace('PRD', ''))
+                new_number = last_number + 1
+            else:
+                new_number = 1
+
+            self.product_id = f"PRD{new_number:04d}"  # PRD0006
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -259,6 +275,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
     product_name = models.CharField(max_length=255,blank=True,null=True)
     product_no = models.CharField(max_length=255,blank=True,null=True)
+    expiry_date = models.DateField(default=timezone.now)
     batch=models.CharField(max_length=255,blank=True, null=True)
     MRP = models.DecimalField(max_digits=10, decimal_places=2,blank=True, null=True)
     GST = models.IntegerField(blank=True, null=True)

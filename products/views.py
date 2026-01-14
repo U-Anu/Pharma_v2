@@ -733,65 +733,167 @@ def delete_all_products(request):
 
 
 
-
+@login_required
 def update_all_products(request):
-    """ Upload or update products from an Excel file and overwrite the quantity """
+    """Upload or update products from an Excel file and overwrite the quantity"""
+    print('---update_all_products called---')
     if request.method == 'POST':
         form = ProductUploadForm(request.POST, request.FILES)
         if form.is_valid():
             excel_file = request.FILES['file']
+            
             try:
                 df = pd.read_excel(excel_file)
-
-                # Ensure required columns exist
-                required_columns = ["Product", "Form", "Company", "Batch", "Expiry (MM/YY)", 
-                                    "MRP (Rs)", "Price-to_Retailer (Rs)", "Stock Age"]
+                df.columns = df.columns.str.strip()
+                
+                # Strip string columns to avoid trailing spaces
+                for col in df.select_dtypes(include='object').columns:
+                    df[col] = df[col].map(lambda x: x.strip() if isinstance(x, str) else x)
+                
+                print('---DataFrame Columns---', df.columns.tolist())
+                # Required columns check
+                required_columns = [
+                    "Product", "Form", "Company", "Batch", "Expiry (MM/YY)", 
+                    "MRP (Rs)", "Price-to_Retailer (Rs)",  "Units per Pack", "No of Packs", "Sale GST %"
+                ]
                 missing_columns = [col for col in required_columns if col not in df.columns]
-
                 if missing_columns:
                     messages.error(request, f"Missing columns: {', '.join(missing_columns)}")
+                    print('---Missing Columns---', missing_columns)
                     return render(request, 'productss/productss_upload.html', {'form': form})
-
-                # Convert Expiry Date safely
+                
+                # Convert expiry date and validate
                 df['Expiry (MM/YY)'] = pd.to_datetime(df['Expiry (MM/YY)'], format='%m/%y', errors='coerce')
-                df['Expiry (MM/YY)'] = df['Expiry (MM/YY)'].dt.strftime('%Y-%m-01')  # Normalize to first of month
-
+                if df['Expiry (MM/YY)'].isnull().any():
+                    messages.error(request, "One or more expiry dates are invalid. Please use MM/YY format.")
+                    return render(request, 'productss/productss_upload.html', {'form': form})
+                
                 # Convert Stock Age to Integer
-                df['Stock Age'] = pd.to_numeric(df['Stock Age'], errors='coerce').fillna(0).astype(int)
-
+                df['No of Packs'] = pd.to_numeric(df['No of Packs'], errors='coerce').fillna(0).astype(int)
+                df['Units per Pack'] = pd.to_numeric(df['Units per Pack'], errors='coerce').fillna(0).astype(int)
+                df['GST %'] = pd.to_numeric(df['Sale GST %'], errors='coerce').fillna(0).astype(int)
+                
                 # Ensure Price Columns are Numeric
                 df['MRP (Rs)'] = pd.to_numeric(df['MRP (Rs)'], errors='coerce').fillna(0)
                 df['Price-to_Retailer (Rs)'] = pd.to_numeric(df['Price-to_Retailer (Rs)'], errors='coerce').fillna(0)
-
-                # Begin transaction to ensure atomic operations
+                
+                updated_count = 0
+                created_count = 0
+                
                 with transaction.atomic():
                     for _, row in df.iterrows():
-                        # Check for existing product based on Name, MRP, Company, and Expiry Date
-                        product, created = Product.objects.update_or_create(
+                        # Check if product exists with same batch, expiry, and MRP
+                        product = Product.objects.filter(
                             name=row['Product'],
-                            MRP=row['MRP (Rs)'],
                             company=row['Company'],
+                            batch=row['Batch'],
                             expiry_date=row['Expiry (MM/YY)'],
-                            defaults={
-                                'form': row['Form'],
-                                'batch': row['Batch'],
-                                'price': row['Price-to_Retailer (Rs)'],
-                                'quantity': row['Stock Age'],  # Overwrites quantity
-                                'updated_by': request.user
-                            }
-                        )
-
-                messages.success(request, "Products updated successfully!")
-                return redirect('upload')
-
+                            MRP=row['MRP (Rs)']
+                        ).first()
+                        
+                        if product:
+                            # Update existing product quantity only (overwrite)
+                            product.quantity = row['No of Packs']
+                            product.updated_by = request.user
+                            
+                            # Also update price if different
+                            if product.price != row['Price-to_Retailer (Rs)']:
+                                product.price = row['Price-to_Retailer (Rs)']
+                            
+                            product.save()
+                            updated_count += 1
+                        else:
+                            # Get composition for product if exists
+                            composition = Composition.objects.filter(product_name=row['Product']).first()
+                            composition_value = composition.composition_name if composition else None
+                            
+                            if composition:
+                                product_type_name = composition.product_type
+                                product_type_obj = ProductType.objects.filter(name=product_type_name).first()
+                                if not product_type_obj:
+                                    raise Exception(f"Product type '{product_type_name}' not found in ProductType table.")
+                                product_type_id = product_type_obj.pk
+                            else:
+                                product_type_id = None
+                            
+                            # Create new product with all details
+                            new_product_id = generate_next_product_id()
+                            product = Product.objects.create(
+                                product_id=new_product_id,
+                                name=row['Product'],
+                                form=row['Form'],
+                                company=row['Company'],
+                                batch=row['Batch'],
+                                expiry_date=row['Expiry (MM/YY)'],
+                                MRP=row['MRP (Rs)'],
+                                price=row['Price-to_Retailer (Rs)'],
+                                quantity=row['No of Packs'],
+                                composition_name=composition_value,
+                                product_type_id=product_type_id,
+                                created_by=request.user,
+                                updated_by=request.user
+                            )
+                            created_count += 1
+                            
+                            # Safety: ensure product saved properly before FK related creation
+                            product.refresh_from_db()
+                            
+                            # Calculate margins
+                            owner_margin_percent = Decimal('15.00')
+                            price = Decimal(row['Price-to_Retailer (Rs)'])
+                            mrp = Decimal(row['MRP (Rs)'])
+                            
+                            owner_margin_amount = (price * owner_margin_percent / 100).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                            owner_selling_price = (price + owner_margin_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                            retailer_margin = (mrp - owner_selling_price).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                            retailer_margin_percent = ((retailer_margin / mrp) * 100).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) if mrp else Decimal('0.00')
+                            
+                            override_margin_block = owner_selling_price > mrp
+                            
+                            # Create ProductPricingDetail
+                            ProductPricingDetail.objects.create(
+                                product=product,
+                                owner_margin_percent=owner_margin_percent,
+                                owner_margin_amount=owner_margin_amount,
+                                owner_selling_price=owner_selling_price,
+                                retailer_margin=retailer_margin,
+                                retailer_margin_percent=retailer_margin_percent,
+                                override_margin_block=override_margin_block
+                            )
+                            
+                            # Create UserCategoryProductMarkup entries for all user categories
+                            user_categories = UserCategory.objects.all()
+                            for user_category in user_categories:
+                                UserCategoryProductMarkup.objects.get_or_create(
+                                    user_category=user_category,
+                                    product=product,
+                                    defaults={
+                                        'owner_margin_percent': owner_margin_percent,
+                                        'owner_margin_amount': owner_margin_amount,
+                                        'owner_selling_price': owner_selling_price,
+                                        'retailer_margin':retailer_margin,
+                                        'retailer_margin_percent': retailer_margin_percent,
+                                        'override_margin_block': override_margin_block
+                                    }
+                                )
+                            print('---New Product Created:', product.name)
+                            print('---Owner Selling Price:', updated_count)
+                messages.success(request, f"Update successful! {created_count} products created, {updated_count} products updated (quantity overwritten).")
+                return redirect('upload_products')
+            
             except Exception as e:
                 messages.error(request, f"Error processing file: {str(e)}")
-
+                # Log the error for debugging
+                import traceback
+                print(f"Error: {str(e)}")
+                print(traceback.format_exc())
+        
+        else:
+            messages.error(request, "Invalid form submission.")
     else:
         form = ProductUploadForm()
-
+    
     return render(request, 'productss/productss_upload.html', {'form': form})
-
 
 from django.http import HttpResponse
 
@@ -1302,7 +1404,7 @@ def admin_product_list(request):
             products = products.filter(
                 Q(name__icontains=token) |
                 Q(composition_name__icontains=token)
-            )
+            ).order_by('created_at')
 
     return render(request, "products/product_list.html", {
         "products": products

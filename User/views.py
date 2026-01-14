@@ -487,58 +487,105 @@ from django.shortcuts import render
 
 
 
+# @login_required
+# def user_product_list(request):
+#     username = request.session['first_name'] +' '+request.session['last_name'] 
+#     print('username',username)
+#     form = QueryForm()
+#     user = request.user
+#     user_category = getattr(user, 'user_category', None)
+
+#     products = Product.objects.all().select_related('product_type')
+
+#     # Get markup data for all products for this user category
+#     markups = UserCategoryProductMarkup.objects.filter(
+#         user_category=user_category,
+#         product__in=products
+#     ).select_related('product')
+
+#     product_markup_map = {markup.product.id: markup for markup in markups}
+
+#     for product in products:
+#         markup = product_markup_map.get(product.id)
+#         if markup:
+#             product.display_price = markup.owner_selling_price
+#             product.owner_selling_price = markup.owner_selling_price
+#             product.retailer_margin = markup.retailer_margin  # Add this line
+#             product.retailer_margin_percent = markup.retailer_margin_percent
+#         else:
+#             product.display_price = None
+#             product.owner_selling_price = None
+#             product.retailer_margin = None  # Add this line
+#             product.retailer_margin_percent = None
+
+#             # load temp cart & temp queries for this user
+#     # Temp cart + queries + header
+#     cart_items = TempCartItem.objects.filter(user=user).select_related('product')
+#     query_items = TempQueryItem.objects.filter(user=user).select_related('product')
+#     query_header = TempQueryHeader.objects.filter(user=user).first()
+
+#     cart_subtotal = sum(ci.total_price for ci in cart_items) if cart_items else 0
+#     cart_item_count = cart_items.count()
+#     cart_total_qty = sum(ci.quantity for ci in cart_items) if cart_items else 0
+
+
+#     return render(request, 'customer/user_Product_list.html', {
+#         'products': products,
+#         'form':form,
+#         'cart_items': cart_items,
+#         'query_items': query_items,
+#         'query_header': query_header,
+#         'cart_subtotal': cart_subtotal,
+#         'cart_item_count': cart_item_count,
+#         'cart_total_qty': cart_total_qty,
+#         # 'username':username
+#     })
+
 @login_required
 def user_product_list(request):
-    username = request.session['first_name'] +' '+request.session['last_name'] 
-    print('username',username)
-    form = QueryForm()
     user = request.user
     user_category = getattr(user, 'user_category', None)
 
-    products = Product.objects.all().select_related('product_type')
+    products = Product.objects.all()
 
-    # Get markup data for all products for this user category
+    # ✅ Category list from Product.form
+    categories = (
+        Product.objects
+        .exclude(form__isnull=True)
+        .exclude(form__exact='')
+        .values_list('form', flat=True)
+        .distinct()
+        .order_by('form')
+    )
+    print("categories", categories)
+    # markup logic (unchanged)
     markups = UserCategoryProductMarkup.objects.filter(
         user_category=user_category,
         product__in=products
     ).select_related('product')
 
-    product_markup_map = {markup.product.id: markup for markup in markups}
+    product_markup_map = {m.product.id: m for m in markups}
 
     for product in products:
         markup = product_markup_map.get(product.id)
         if markup:
             product.display_price = markup.owner_selling_price
-            product.owner_selling_price = markup.owner_selling_price
-            product.retailer_margin = markup.retailer_margin  # Add this line
-            product.retailer_margin_percent = markup.retailer_margin_percent
         else:
             product.display_price = None
-            product.owner_selling_price = None
-            product.retailer_margin = None  # Add this line
-            product.retailer_margin_percent = None
 
-            # load temp cart & temp queries for this user
-    # Temp cart + queries + header
     cart_items = TempCartItem.objects.filter(user=user).select_related('product')
     query_items = TempQueryItem.objects.filter(user=user).select_related('product')
     query_header = TempQueryHeader.objects.filter(user=user).first()
 
-    cart_subtotal = sum(ci.total_price for ci in cart_items) if cart_items else 0
-    cart_item_count = cart_items.count()
-    cart_total_qty = sum(ci.quantity for ci in cart_items) if cart_items else 0
-
-
     return render(request, 'customer/user_Product_list.html', {
         'products': products,
-        'form':form,
+        'categories': categories,   # 👈 list of forms
         'cart_items': cart_items,
         'query_items': query_items,
         'query_header': query_header,
-        'cart_subtotal': cart_subtotal,
-        'cart_item_count': cart_item_count,
-        'cart_total_qty': cart_total_qty,
-        # 'username':username
+        'cart_subtotal': sum(ci.total_price for ci in cart_items),
+        'cart_item_count': cart_items.count(),
+        'cart_total_qty': sum(ci.quantity for ci in cart_items),
     })
 
 def _add_to_temp_query(user, product, requested_qty, reason=None):
@@ -933,6 +980,7 @@ def checkout_and_query(request):
                     discount=product.discount,
                     GST=product.GST,
                     batch=product.batch,
+                    expiry_date=product.expiry_date,
                 )
 
                 if hasattr(product, 'quantity'):
@@ -1158,7 +1206,8 @@ def order_invoice(request, pk):
     )
 
     queries = order.queries.all()  # because Query.order has related_name='queries'
-
+    print('---queries---',queries)
+    print('---order---',order)
     return render(request, "productss/order_invoice.html", {
         "order": order,
         "queries": queries,
@@ -1775,7 +1824,7 @@ def download_note_slip(request, pk):
 
     for i, item in enumerate(items, start=1):
         name = item.product_name or (item.product.name if item.product else "Unknown")
-        lines.append(f"{i}. {name}  |  Qty: {item.quantity}")
+        lines.append(f"{i}. {name}  |  Expiry: {item.expiry_date} |  Batch: {item.batch}  |  Qty: {item.quantity}")
 
     lines.append("")
     lines.append("Notes:")

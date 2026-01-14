@@ -99,6 +99,8 @@
             <tr>
                 <th style="width:40px;">S.No</th>
                 <th>Product Name</th>
+                <th>Batch</th>
+                <th>Expiry Date</th>
                 <th style="width:80px;">Quantity</th>
             </tr>
         </thead>
@@ -107,6 +109,8 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ item.product_name}}</td>
+                    <td>{{ item.batch}}</td>
+                    <td>{{ item.expiry_date}}</td>
                     <td>{{ item.quantity }}</td>
                 </tr>
             {% empty %}
