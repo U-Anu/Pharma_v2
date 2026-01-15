@@ -935,6 +935,12 @@ from django.views.decorators.csrf import csrf_exempt
 
 #     return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
 
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+
 @csrf_exempt
 @login_required
 def checkout_and_query(request):
@@ -944,89 +950,88 @@ def checkout_and_query(request):
     user = request.user
 
     try:
-        # ---- 1. Temp cart -> Order ----
-        temp_cart = TempCartItem.objects.filter(user=user).select_related('product')
-        if not temp_cart.exists():
+        with transaction.atomic():
+
+            # -------------------------------
+            # 1. TEMP CART → ORDER
+            # -------------------------------
+            temp_cart = TempCartItem.objects.filter(user=user).select_related('product')
+
             order = None
-        else:
-            total_price = sum(ci.total_price for ci in temp_cart)
-            total_quantity = len(temp_cart)
+            if temp_cart.exists():
+                total_price = sum(ci.total_price for ci in temp_cart)
+                total_quantity = sum(ci.quantity for ci in temp_cart)
 
-            order = Order.objects.create(
-                total_price=total_price,
-                total_amount=total_price,
-                total_quantity=total_quantity,
-                status='ordered',
-                created_by=user,
-                updated_by=user
-            )
-
-            for ci in temp_cart:
-                product = ci.product
-                quantity = ci.quantity
-                item_total = ci.total_price
-
-                OrderItem.objects.create(
-                    order=order,
-                    product=product,
-                    product_name=product.name,
-                    product_no=product.product_id,
-                    quantity=quantity,
-                    total_price=item_total,
+                order = Order.objects.create(
+                    total_price=total_price,
+                    total_amount=total_price,
+                    total_quantity=total_quantity,
+                    status='ordered',
                     created_by=user,
-                    updated_by=user,
-                    MRP=product.MRP,
-                    user_price=product.price,
-                    discount=product.discount,
-                    GST=product.GST,
-                    batch=product.batch,
-                    expiry_date=product.expiry_date,
+                    updated_by=user
                 )
 
-                if hasattr(product, 'quantity'):
-                    product.quantity = max(0, product.quantity - quantity)
-                    product.save()
+                for ci in temp_cart:
+                    product = ci.product
 
-            temp_cart.delete()
+                    OrderItem.objects.create(
+                        order=order,
+                        product=product,
+                        product_name=product.name,
+                        product_no=product.product_id,
+                        quantity=ci.quantity,
+                        total_price=ci.total_price,
+                        created_by=user,
+                        updated_by=user,
+                        MRP=product.MRP,
+                        user_price=product.price,
+                        discount=product.discount,
+                        GST=product.GST,
+                        batch=product.batch,
+                        expiry_date=product.expiry_date,
+                    )
 
-        # ---- 2. Temp header + TempQueryItem -> Query + QueryItem ----
-        temp_queries = TempQueryItem.objects.filter(user=user)
+                    # Reduce stock safely
+                    if hasattr(product, 'quantity') and product.quantity is not None:
+                        product.quantity = max(0, product.quantity - ci.quantity)
+                        product.save()
 
-        # Update header from POST (latest values)
-        business_name = request.POST.get('business_name', '').strip()
-        contact_number = request.POST.get('contact_number', '').strip()
-        description = request.POST.get('missed_description', '').strip()
+                temp_cart.delete()
 
-        header, _ = TempQueryHeader.objects.get_or_create(user=user)
-        if business_name:
+            # -------------------------------
+            # 2. TEMP QUERY → QUERY
+            # -------------------------------
+            temp_queries = TempQueryItem.objects.filter(user=user)
+
+            business_name = request.POST.get('business_name', '').strip()
+            contact_number = request.POST.get('contact_number', '').strip()
+            description = request.POST.get(
+                'missed_description',
+                'Missed products / queries from checkout'
+            ).strip()
+
+            # Save temp header (optional but OK)
+            header, _ = TempQueryHeader.objects.get_or_create(user=user)
             header.business_name = business_name
-        if contact_number:
             header.contact_number = contact_number
-        if description:
             header.description = description
-        header.save()
+            header.save()
 
-        # Which temp query items selected via checkbox?
-        selected_ids = []
-        for key in request.POST.keys():
-            if key.startswith('query_item_selected_'):
-                try:
-                    selected_ids.append(int(key.split('_')[-1]))
-                except ValueError:
-                    continue
+            # ✅ BEST PRACTICE checkbox handling
+            selected_ids = request.POST.getlist('selected_queries')
+            selected_temp_queries = temp_queries.filter(id__in=selected_ids)
 
-        selected_temp_queries = temp_queries.filter(id__in=selected_ids)
-
-        if selected_temp_queries.exists():
+            # ✅ ALWAYS create Query header
             query_header = Query.objects.create(
                 order=order,
                 created_by=user,
                 updated_by=user,
-                Business_name=header.business_name or '',
-                contact_number=header.contact_number or '',
-                description=header.description or 'Missed products / queries from checkout',
+                Business_name=business_name,
+                contact_number=contact_number,
+                description=description,
             )
 
+            # Create QueryItems ONLY if selected
             for tq in selected_temp_queries:
                 QueryItem.objects.create(
                     query=query_header,
@@ -1037,19 +1042,139 @@ def checkout_and_query(request):
                     status='pending',
                 )
 
-        # Clear temp header & temp queries
-        TempQueryHeader.objects.filter(user=user).delete()
-        temp_queries.delete()
+            # -------------------------------
+            # 3. CLEANUP
+            # -------------------------------
+            TempQueryHeader.objects.filter(user=user).delete()
+            temp_queries.delete()
 
         return JsonResponse({
             'success': True,
             'order_id': order.id if order else None,
-            'message': 'Order and Queries submitted successfully.'
+            'query_id': query_header.id,
+            'message': 'Order and query submitted successfully.'
         })
 
     except Exception as e:
-        print("Error:", e)
+        print("CHECKOUT ERROR:", e)
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+# @csrf_exempt  -----------RECENT
+# @login_required
+# def checkout_and_query(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
+
+#     user = request.user
+
+#     try:
+#         # ---- 1. Temp cart -> Order ----
+#         temp_cart = TempCartItem.objects.filter(user=user).select_related('product')
+#         if not temp_cart.exists():
+#             order = None
+#         else:
+#             total_price = sum(ci.total_price for ci in temp_cart)
+#             total_quantity = len(temp_cart)
+
+#             order = Order.objects.create(
+#                 total_price=total_price,
+#                 total_amount=total_price,
+#                 total_quantity=total_quantity,
+#                 status='ordered',
+#                 created_by=user,
+#                 updated_by=user
+#             )
+
+#             for ci in temp_cart:
+#                 product = ci.product
+#                 quantity = ci.quantity
+#                 item_total = ci.total_price
+
+#                 OrderItem.objects.create(
+#                     order=order,
+#                     product=product,
+#                     product_name=product.name,
+#                     product_no=product.product_id,
+#                     quantity=quantity,
+#                     total_price=item_total,
+#                     created_by=user,
+#                     updated_by=user,
+#                     MRP=product.MRP,
+#                     user_price=product.price,
+#                     discount=product.discount,
+#                     GST=product.GST,
+#                     batch=product.batch,
+#                     expiry_date=product.expiry_date,
+#                 )
+
+#                 if hasattr(product, 'quantity'):
+#                     product.quantity = max(0, product.quantity - quantity)
+#                     product.save()
+
+#             temp_cart.delete()
+
+#         # ---- 2. Temp header + TempQueryItem -> Query + QueryItem ----
+#         temp_queries = TempQueryItem.objects.filter(user=user)
+
+#         # Update header from POST (latest values)
+#         business_name = request.POST.get('business_name', '').strip()
+#         contact_number = request.POST.get('contact_number', '').strip()
+#         description = request.POST.get('missed_description', '').strip()
+#         print('description',description,business_name,contact_number)
+#         header, _ = TempQueryHeader.objects.get_or_create(user=user)
+#         if business_name:
+#             header.business_name = business_name
+#         if contact_number:
+#             header.contact_number = contact_number
+#         if description:
+#             header.description = description
+#         header.save()
+#         print('header',header.business_name,header.contact_number,header.description)
+#         # Which temp query items selected via checkbox?
+#         selected_ids = []
+#         for key in request.POST.keys():
+#             if key.startswith('query_item_selected_'):
+#                 try:
+#                     selected_ids.append(int(key.split('_')[-1]))
+#                 except ValueError:
+#                     continue
+
+#         selected_temp_queries = temp_queries.filter(id__in=selected_ids)
+#         print('selected_temp_queries',selected_temp_queries)
+#         if selected_temp_queries.exists():
+#             query_header = Query.objects.create(
+#                 order=order,
+#                 created_by=user,
+#                 updated_by=user,
+#                 Business_name=business_name or '',
+#                 contact_number=contact_number or '',
+#                 description=description or 'Missed products / queries from checkout',
+#             )
+
+#             for tq in selected_temp_queries:
+#                 QueryItem.objects.create(
+#                     query=query_header,
+#                     product=tq.product,
+#                     product_name=tq.product_name,
+#                     requested_qty=tq.requested_qty,
+#                     issued_qty=0,
+#                     status='pending',
+#                 )
+
+#         # Clear temp header & temp queries
+#         TempQueryHeader.objects.filter(user=user).delete()
+#         temp_queries.delete()
+
+#         return JsonResponse({
+#             'success': True,
+#             'order_id': order.id if order else None,
+#             'message': 'Order and Queries submitted successfully.'
+#         })
+
+#     except Exception as e:
+#         print("Error:", e)
+#         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 #good codec
 # def user_product_list(request):
@@ -1804,37 +1929,56 @@ def order_note_slip(request, pk):
         'items': order.items.all(),
         'query': query,   
     })
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 
 def download_note_slip(request, pk):
     order = get_object_or_404(Order, pk=pk)
     items = order.items.all()
-    query=Query.objects.get(order=order)
-    print("query",query)
+    query = Query.objects.filter(order=order).first()
+
     lines = []
-    lines.append(f"NOTE SLIP - {order.order_no}")
-    lines.append(f"User - {order.created_by}")
-    lines.append(f"Business Name - {query.Business_name}")
+
+    # ---------- COMPANY HEADER ----------
+    lines.append("SRI LAKSHMI AGENCY")
+    lines.append("=" * 40)
+    lines.append("NOTE SLIP")
+    lines.append("=" * 40)
+
+    # ---------- ORDER INFO ----------
+    lines.append(f"Order No      : {order.order_no}")
+    lines.append(f"Business Name : {query.Business_name if query else '-'}")
+    lines.append(f"Ordered By    : {order.created_by}")
+    lines.append(f"Date          : {order.created_at.strftime('%d-%m-%Y %H:%M')}")
+    lines.append(f"Total Items   : {order.total_quantity}")
     lines.append("")
-    lines.append(f"Date: {order.created_at.strftime('%d-%m-%Y %H:%M')}")
-    lines.append(f"Total Quantity: {order.total_quantity}")
-    lines.append(f"Total Price: ₹{order.total_price}")
-    lines.append("")
-    lines.append("Products:")
-    lines.append("----------")
+
+    # ---------- ITEMS ----------
+    lines.append("ITEM DETAILS")
+    lines.append("-" * 40)
+    lines.append("No  Product Name                 Batch     Exp   Qty")
+    lines.append("-" * 40)
 
     for i, item in enumerate(items, start=1):
-        name = item.product_name or (item.product.name if item.product else "Unknown")
-        lines.append(f"{i}. {name}  |  Expiry: {item.expiry_date} |  Batch: {item.batch}  |  Qty: {item.quantity}")
+        name = (item.product_name or "").ljust(28)[:28]
+        batch = (item.batch or "-").ljust(8)[:8]
+        expiry = item.expiry_date.strftime("%m/%y") if item.expiry_date else "--/--"
+        qty = str(item.quantity).rjust(3)
 
+        lines.append(f"{str(i).ljust(3)} {name} {batch} {expiry}  {qty}")
+
+    lines.append("-" * 40)
+
+    # ---------- NOTES ----------
     lines.append("")
-    lines.append("Notes:")
-    lines.append("- Please verify quantities and product details.")
-    lines.append("- This slip is for internal reference only.")
-    lines.append("- Contact office in case of any discrepancy.")
+    lines.append("NOTES")
+    lines.append("- Verify quantities and product details.")
+    lines.append("- For internal reference only.")
+    lines.append("- Contact office in case of discrepancy.")
 
     content = "\n".join(lines)
 
     filename = f"NoteSlip_{order.order_no}.txt"
-    response = HttpResponse(content, content_type='text/plain')
-    response["Content-Disposition"] = f'attachment; filename=\"{filename}\"'
+    response = HttpResponse(content, content_type="text/plain")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response

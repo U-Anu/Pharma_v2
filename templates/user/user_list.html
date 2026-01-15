@@ -110,12 +110,12 @@
                         {{ admin.address }}
                     </td>
                     <td class="col-actions text-center">
-                         <a href="{% url 'user_memo_detail' admin.id %}"
+                         {% comment %} <a href="{% url 'user_memo_detail' admin.id %}"
    class="action-icon memo-icon"
    title="View Memo"
    aria-label="View Memo">
     <i class="fa-solid fa-clipboard"></i>
-</a>
+</a> {% endcomment %}
 
 
                         <!-- EDIT ICON -->

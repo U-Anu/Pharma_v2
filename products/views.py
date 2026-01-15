@@ -518,18 +518,193 @@ def order_update(request,pk):
         form = OrderForm(instance=order)
     return render(request, 'productss/order_form.html', {'form': form})
 
-
-
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q, Count, Sum
+from django.contrib import messages
+from django.shortcuts import render
+from django.db import models
 
 @login_required
 def query_list(request):
+    """
+    View to list all queries with filtering options
+    """
     try:
-        queries = Query.objects.all()
-        return render(request, 'productss/query_list.html', {'queries': queries})
-    except Exception as e:
-        messages.error(request, f"Error fetching queries: {e}")
-        return render(request, 'productss/query_list.html', {'queries': []})  
+        # Get the base queryset - exclude queries with no items
+        queries = Query.objects.select_related(
+            "created_by"
+        ).annotate(
+            total_items=Count("items", distinct=True),
+            total_requested=Sum(
+                "items__requested_qty",
+                filter=Q(items__requested_qty__isnull=False)
+            ),
+            total_pending=Sum(
+                "items__pending_qty",
+                filter=Q(items__pending_qty__isnull=False)
+            ),
+        ).filter(
+            total_items__gt=0  # Exclude queries with no items
+        ).distinct()
+        
+        # Debug: Print initial query count
+        print(f"Initial query count (with items): {queries.count()}")
+        
+        # Get filter parameters
+        business = request.GET.get("business", "").strip()
+        contact = request.GET.get("contact", "").strip()
+        created_by = request.GET.get("created_by", "").strip()
+        product = request.GET.get("product", "").strip()
 
+        # Apply filters
+        if business:
+            queries = queries.filter(Business_name__icontains=business)
+            print(f"After business filter: {queries.count()}")
+        
+        if contact:
+            queries = queries.filter(contact_number__icontains=contact)
+            print(f"After contact filter: {queries.count()}")
+        
+        if created_by:
+            # Try multiple fields - adjust based on your User model
+            queries = queries.filter(
+                Q(created_by__first_name__icontains=created_by) |
+                Q(created_by__last_name__icontains=created_by) |
+                Q(created_by__email__icontains=created_by)
+            )
+            print(f"After created_by filter: {queries.count()}")
+        if product:
+            queries = queries.filter(
+                Q(items__product_name__icontains=product) |
+                Q(items__product__name__icontains=product)
+            )
+
+        # Order the results
+        queries = queries.order_by("-submitted_at")
+        
+        # Debug: Print final results
+        print(f"Final query count: {queries.count()}")
+        if queries.exists():
+            for i, query in enumerate(queries[:3]):  # Show first 3 for debug
+                created_by_name = "Unknown"
+                if query.created_by:
+                    try:
+                        if hasattr(query.created_by, 'get_full_name'):
+                            created_by_name = query.created_by.get_full_name()
+                        elif hasattr(query.created_by, 'email'):
+                            created_by_name = query.created_by.email
+                        elif hasattr(query.created_by, 'first_name'):
+                            created_by_name = query.created_by.first_name
+                        else:
+                            created_by_name = str(query.created_by)
+                    except:
+                        created_by_name = str(query.created_by)
+                
+                print(f"Query {i+1}: ID={query.id}, Business={query.Business_name}, "
+                      f"Items={query.total_items or 0}, "
+                      f"Requested={query.total_requested or 0}, "
+                      f"Pending={query.total_pending or 0}")
+        
+        # Create context
+        context = {
+            "queries": queries,
+            "filter_business": business,
+            "filter_contact": contact,
+            "filter_created_by": created_by,
+        }
+        
+        return render(
+            request,
+            "productss/query_list.html",
+            context
+        )
+        
+    except Exception as e:
+        # Log the error for debugging
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error in query_list view: {e}")
+        print(f"Traceback: {error_details}")
+        
+        messages.error(
+            request, 
+            f"Error fetching queries: {str(e)}. Please check the logs for details."
+        )
+        
+        # Return empty queryset on error
+        return render(
+            request,
+            "productss/query_list.html",
+            {
+                "queries": Query.objects.none(),
+                "filter_business": "",
+                "filter_contact": "",
+                "filter_created_by": "",
+            }
+        )
+
+@login_required
+def query_items_view(request, query_id):
+    """
+    View to show all items for a specific query
+    """
+    try:
+        # Get the query with its items
+        query = get_object_or_404(
+            Query.objects.select_related('created_by'),
+            id=query_id
+        )
+        
+        # Get all items for this query
+        items = QueryItem.objects.filter(query=query).select_related('product')
+        
+        # Calculate totals
+        total_requested = items.aggregate(
+            total=Sum('requested_qty', default=0)
+        )['total'] or 0
+        
+        total_issued = items.aggregate(
+            total=Sum('issued_qty', default=0)
+        )['total'] or 0
+        
+        total_pending = items.aggregate(
+            total=Sum('pending_qty', default=0)
+        )['total'] or 0
+        
+        # Get status counts
+        status_counts = items.values('status').annotate(
+            count=Count('id')
+        )
+        
+        # Prepare status summary
+        status_summary = {
+            'pending': 0,
+            'issued': 0,
+            'partial': 0,
+            'cancelled': 0,
+        }
+        for status in status_counts:
+            status_summary[status['status']] = status['count']
+        
+        context = {
+            'query': query,
+            'items': items,
+            'total_requested': total_requested,
+            'total_issued': total_issued,
+            'total_pending': total_pending,
+            'status_summary': status_summary,
+            'has_items': items.exists(),
+        }
+        
+        return render(request, 'productss/query_items.html', context)
+        
+    except Query.DoesNotExist:
+        messages.error(request, "Query not found.")
+        return redirect('query_list')
+    except Exception as e:
+        messages.error(request, f"Error loading query items: {str(e)}")
+        return redirect('query_list')
+    
 @login_required
 def query_create(request):
     if request.method == 'POST':
@@ -1078,14 +1253,17 @@ def product_update(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
+        print('---product form---',form.is_valid())
         if form.is_valid():
             try:
                 product = form.save(commit=False)
                 product.updated_by = request.user  
                 product.save()
+                print('---product updated---')
                 messages.success(request, "Product updated successfully!")
-                return redirect('product_list')
+                return redirect('admin_product_list')
             except Exception as e:
+                print('---error updating product---',e)
                 messages.error(request, f"Error updating product: {e}")
     else:
         form = ProductForm(instance=product)
@@ -1440,7 +1618,7 @@ def admin_product_list(request):
             tokens = re.findall(r"[a-zA-Z0-9]+", query)
             
             # Start with all products
-            products = Product.objects.all()
+            products = Product.objects.all().order_by('created_at')
             
             # Apply filters safely
             for token in tokens:

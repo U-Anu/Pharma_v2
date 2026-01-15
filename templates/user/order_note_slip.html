@@ -2,135 +2,156 @@
 <html>
 <head>
     <title>Note Slip - {{ order.order_no }}</title>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Segoe UI", Arial, sans-serif;
             font-size: 13px;
-            margin: 20px;
+            background: #fff;
+            color: #222;
         }
-        .slip-container {
-            border: 1px solid #333;
-            padding: 15px;
-            max-width: 700px;
-            margin: 0 auto;
+
+        .page {
+            max-width: 720px;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            padding: 20px;
         }
-        .slip-header {
+
+        .header {
             text-align: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
             margin-bottom: 15px;
         }
-        .slip-header h2 {
-            margin: 0;
-            font-size: 18px;
+
+        .agency-name {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
-        .slip-meta {
-            margin-bottom: 10px;
+
+        .slip-title {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             font-size: 12px;
+            margin-bottom: 12px;
+            gap: 4px 10px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
-            margin-bottom: 15px;
-        }
-        th, td {
-            border: 1px solid #555;
-            padding: 4px 6px;
-            text-align: left;
-        }
-        th {
-            background: #f2f2f2;
-        }
-        .notes {
-            margin-top: 10px;
             font-size: 12px;
         }
-        .notes-title {
-            font-weight: bold;
+
+        th {
+            text-align: left;
+            background: #f6f6f6;
+            border-bottom: 1px solid #ccc;
+            padding: 6px;
+        }
+
+        td {
+            padding: 6px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .notes {
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .notes strong {
+            display: block;
             margin-bottom: 4px;
         }
-        .footer {
-            margin-top: 20px;
-            font-size: 11px;
+
+        .actions {
             text-align: right;
+            margin-bottom: 10px;
         }
-        @media print {
-            .no-print {
-                display: none;
-            }
-        }
+
         .btn {
-            padding: 4px 10px;
             font-size: 12px;
-            border: 1px solid #333;
-            background: #eee;
+            padding: 5px 10px;
+            border: 1px solid #444;
+            background: #fff;
             cursor: pointer;
             text-decoration: none;
             color: #000;
-            border-radius: 3px;
             margin-left: 5px;
+        }
+
+        @media print {
+            .actions {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div class="no-print" style="text-align:right; margin-bottom:10px;">
+<div class="actions">
     <button class="btn" onclick="window.print()">Print</button>
-    <a href="{% url 'download_note_slip' order.id %}" class="btn">
-        Download Notes
-    </a>
+    <a href="{% url 'download_note_slip' order.id %}" class="btn">Download</a>
 </div>
 
-<div class="slip-container">
-    <div class="slip-header">
-        <h2>NOTE SLIP</h2>
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="agency-name">SRI LAKSHMI AGENCY</div>
+        <div class="slip-title">NOTE SLIP</div>
         <div>Order No: <strong>{{ order.order_no }}</strong></div>
-        <div>Business name: <strong>{{ query.Business_name|default:"-" }}</strong></div>
-        <div>Order By: <strong>{{ order.created_by }}</strong></div>
-        <div>Date: {{ order.created_at|date:"d-m-Y H:i" }}</div>
     </div>
 
-    <div class="slip-meta">
-    
-        <div>Total Items: {{ order.total_quantity }}</div>
+    <!-- META -->
+    <div class="meta">
+        <div><strong>Business:</strong> {{ query.Business_name|default:"-" }}</div>
+        <div><strong>Date:</strong> {{ order.created_at|date:"d-m-Y H:i" }}</div>
+        <div><strong>Ordered By:</strong> {{ order.created_by }}</div>
+        <div><strong>Total Items:</strong> {{ order.total_quantity }}</div>
     </div>
 
+    <!-- ITEMS -->
     <table>
         <thead>
             <tr>
-                <th style="width:40px;">S.No</th>
-                <th>Product Name</th>
+                <th>#</th>
+                <th>Product</th>
                 <th>Batch</th>
-                <th>Expiry Date</th>
-                <th style="width:80px;">Quantity</th>
+                <th>Expiry</th>
+                <th>Qty</th>
             </tr>
         </thead>
         <tbody>
             {% for item in items %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ item.product_name}}</td>
-                    <td>{{ item.batch}}</td>
-                    <td>{{ item.expiry_date}}</td>
-                    <td>{{ item.quantity }}</td>
-                </tr>
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.batch }}</td>
+                <td>{{ item.expiry_date|date:"m/y" }}</td>
+                <td>{{ item.quantity }}</td>
+            </tr>
             {% empty %}
-                <tr>
-                    <td colspan="3" style="text-align:center;">No items found.</td>
-                </tr>
+            <tr>
+                <td colspan="5" style="text-align:center;color:#888;">
+                    No items found
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <div class="notes">
-        <div class="notes-title">Notes:</div>
-        <div>
-            - Please verify quantities and product details.<br>
-            - This slip is for internal reference only.<br>
-            - Contact office in case of any discrepancy.
-        </div>
-    </div>
 
-    
+
 </div>
 
 </body>

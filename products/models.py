@@ -82,7 +82,8 @@ class Product(models.Model):
     updated_by=models.ForeignKey('UserManagement.User',related_name='%(class)s_updated',null=True,on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        if not self.product_id:
+        # Generate product_id ONLY on creation
+        if self.pk is None and not self.product_id:
             last_product = Product.objects.filter(
                 product_id__startswith='PRD'
             ).order_by('-id').first()
@@ -93,9 +94,10 @@ class Product(models.Model):
             else:
                 new_number = 1
 
-            self.product_id = f"PRD{new_number:04d}"  # PRD0006
+            self.product_id = f"PRD{new_number:04d}"  # PRD0001
 
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return self.name

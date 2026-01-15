@@ -1,80 +1,196 @@
 {% extends 'admin_base.html' %}
-{% block body_block %}
 {% load static %}
-<style>
-  .query-image {
-      width: 400px;
-      height: 400px;
-      transition: transform 0.3s ease-in-out;
-  }
-  
-  .query-image:hover {
-      transform: scale(8); /* Enlarges the image to 2x size on hover */
-  }
-</style>
-<!-- FontAwesome for icons (make sure it's included in your base template) -->
+{% block body_block %}
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-<div class="container">
-  
-  <!-- Top Section with Create Button -->
-  <div class="d-flex justify-content-between align-items-center mt-4">
-    <center><h2 class="text-primary">user query List</h2></center>
-    <a href="{% url 'query_create' %}" class="btn btn-primary">
-      <i class="fa fa-plus"></i> Create query
-    </a>
-  </div>
+<style>
+/* ---------- PAGE ---------- */
+.page-title {
+    font-weight: 600;
+}
 
-  <div class="users-table table-responsive table-wrapper mt-4">
-    <table class="posts-table table table-striped table-bordered">
-      <thead>
-        <tr class="users-table-info text-center">
-            <th class="bg-primary text-white">Business Name</th>
-            <th class="bg-primary text-white">Contact</th>
-            <th class="bg-primary text-white">Description</th>
-            <th class="bg-primary text-white">Image</th>
-            <th class="bg-primary text-white">Generic</th>
-            <th class="bg-primary text-white">Same Brand</th>
-            <th class="bg-primary text-white">Order by</th>
-            <th class="bg-primary text-white">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for State in queries %}
-        <tr>
-            <td>{{ State.Business_name }}</td>
-            <td>{{ State.contact_number }}</td>
-            <td>{{ State.description }}</td>
-            <!-- Add this CSS in your <head> or stylesheet -->
-<!-- Modified HTML with hover effect -->
-<td>
-  <div class="image-hover-container">
-    {% if State.Product_image %}
-      <img 
-          src="{{ State.Product_image.url }}" 
-          alt="Query Image" 
-          class="query-image"
-          onmousemove="showZoomPreview(event, '{{ State.Product_image.url }}')"
-          onmouseout="hideZoomPreview()"
-      >
-      <div id="zoomPreview" class="zoom-preview"></div>
-    {% else %}
-      No Image
-    {% endif %}
-            <td>{{ State.generic }}</td>
-            <td>{{ State.same_brand }}</td>
-            <td>{{ State.created_by }}</td>
+/* ---------- FILTER CARD ---------- */
+.filter-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
 
-  </div>
-</td>
-            <td>
-                <a href="{% url 'query_update' State.id %}" class="btn btn-primary btn-sm">
-                    <i class="fa fa-edit"></i> Update</a>
-                <a href="{% url 'query_delete' State.id %}" class="btn btn-danger btn-sm">
-                    <i class="fa fa-trash"></i> Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+/* ---------- TABLE ---------- */
+.orders-table {
+    background: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.orders-table thead {
+    background: #f8f9fa;
+}
+
+.orders-table th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.orders-table td {
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.orders-table tbody tr {
+    cursor: pointer;
+}
+
+.orders-table tbody tr:hover {
+    filter: brightness(0.98);
+}
+
+/* ---------- STATUS BADGE ---------- */
+.badge-status {
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    border-radius: 20px;
+}
+</style>
+
+<div class="container mt-4">
+
+    <h4 class="page-title text-primary mb-3">
+        <i class="fa fa-question-circle me-1"></i> Queries
+    </h4>
+
+    <!-- ================= FILTERS ================= -->
+    <form method="get" class="filter-card row g-2 mb-4">
+ <div class="col-md-3">
+            <input type="text" name="product"
+                   value="{{ request.GET.product }}"
+                   class="form-control form-control-sm"
+                   placeholder="Product name">
+        </div>
+        <div class="col-md-3">
+            <input type="text"
+                   name="business"
+                   value="{{ filter_business }}"
+                   class="form-control form-control-sm"
+                   placeholder="Business name">
+        </div>
+
+        <div class="col-md-3">
+            <input type="text"
+                   name="contact"
+                   value="{{ filter_contact }}"
+                   class="form-control form-control-sm"
+                   placeholder="Contact number">
+        </div>
+
+        <div class="col-md-3">
+            <input type="text"
+                   name="created_by"
+                   value="{{ filter_created_by }}"
+                   class="form-control form-control-sm"
+                   placeholder="Created by">
+        </div>
+
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-sm btn-primary w-100">Filter</button>
+            <a href="{% url 'query_list' %}"
+               class="btn btn-sm btn-outline-secondary w-100">Reset</a>
+        </div>
+
+    </form>
+
+    <!-- ================= TABLE ================= -->
+    <div class="orders-table">
+        <table class="table table-hover align-middle mb-0">
+
+            <thead>
+                <tr class="text-center">
+                    <th>#</th>
+                    <th>Query No</th>
+                    <th>Date</th>
+                    <th>Business</th>
+                    <th>Items</th>
+                    <th>Pending</th>
+                    <th>Created By</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for query in queries %}
+            <tr
+                onclick="window.location='{% url 'query_items_view' query.id %}'"
+                {% if query.total_pending == 0 and query.total_requested > 0 %}
+                    class="table-success text-dark"
+                {% elif query.total_pending < query.total_requested %}
+                    class="table-warning"
+                {% else %}
+                    class="table-primary text-dark"
+                {% endif %}
+            >
+
+                <td class="text-center">{{ forloop.counter }}</td>
+
+                <td>Q-{{ query.id }}</td>
+
+                <td>{{ query.submitted_at|date:"d M Y, H:i" }}</td>
+
+                <td>{{ query.Business_name|default:"-" }}</td>
+
+                <td class="text-center">
+                    {{ query.total_items|default:0 }}
+                </td>
+
+                <td class="text-center">
+                    {% if query.total_pending > 0 %}
+                        <strong class="text-danger">
+                            {{ query.total_pending }}
+                        </strong>
+                    {% else %}
+                        <span class="text-success">0</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if query.created_by %}
+                        {{ query.created_by.get_full_name|default:query.created_by.email }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <td class="text-center">
+                    {% if query.total_pending == 0 and query.total_requested > 0 %}
+                        <span class="badge badge-status bg-success">
+                            Completed
+                        </span>
+                    {% elif query.total_pending < query.total_requested %}
+                        <span class="badge badge-status bg-warning text-dark">
+                            Partial
+                        </span>
+                    {% else %}
+                        <span class="badge badge-status bg-primary">
+                            Pending
+                        </span>
+                    {% endif %}
+                </td>
+
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    No queries found
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
 {% endblock %}

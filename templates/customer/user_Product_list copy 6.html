@@ -336,13 +336,11 @@ th.col-stock, td.col-stock {
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="flex-grow-1 me-2">
                                             <div class="form-check mb-1">
-                                               <input class="form-check-input query-select"
-       type="checkbox"
-       name="selected_queries"
-       value="{{ qi.id }}"
-       id="query_item_{{ qi.id }}"
-       checked>
-
+                                                <input class="form-check-input query-select"
+                                                       type="checkbox"
+                                                       name="query_item_selected_{{ qi.id }}"
+                                                       id="query_item_{{ qi.id }}"
+                                                       checked>
                                                 <label class="form-check-label" for="query_item_{{ qi.id }}">
                                                     <strong>{{ qi.product_name }}</strong>
                                                 </label>
@@ -556,12 +554,10 @@ $(document).ready(function() {
                         <div class="flex-grow-1 me-2">
                             <div class="form-check mb-1">
                                 <input class="form-check-input query-select"
-       type="checkbox"
-       name="selected_queries"
-       value="${q.id}"
-       id="query_item_${q.id}"
-       checked>
-
+                                       type="checkbox"
+                                       name="query_item_selected_${q.id}"
+                                       id="query_item_${q.id}"
+                                       checked>
                                 <label class="form-check-label" for="query_item_${q.id}">
                                     <strong>${q.product_name}</strong>
                                 </label>
