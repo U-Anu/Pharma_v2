@@ -553,9 +553,9 @@ def user_product_list(request):
         Product.objects
         .exclude(form__isnull=True)
         .exclude(form__exact='')
-        .values_list('form', flat=True)
+        .values_list('category', flat=True)
         .distinct()
-        .order_by('form')
+        .order_by('category')
     )
     print("categories", categories)
     # markup logic (unchanged)

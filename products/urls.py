@@ -22,6 +22,7 @@ urlpatterns = [
     # path('products1/', product_list1, name='product_list1'),
     # path('user_products/', user_product_list, name='user_product_list'),
     path('admin_products/', admin_product_list, name='admin_product_list'),
+    path("ajax-update/<int:pk>/", ajax_update_product, name="ajax_update_product"),
 
     path('products/create/', product_create, name='product_create'),
     path('products/update/<int:pk>/', product_update, name='product_update'),
