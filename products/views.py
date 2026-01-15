@@ -55,7 +55,7 @@ def upload_products(request):
                 # Required columns check
                 required_columns = [
                     "Product", "Form", "Company", "Batch", "Expiry (MM/YY)", 
-                    "MRP (Rs)", "Price-to_Retailer (Rs)",  "Units per Pack", "No of Packs", "Sale GST %"
+                    "MRP (Rs)", "Price-to_Retailer (Rs)",  "Units per Pack", "No of Packs", "Sale GST %","Category"
                 ]
                 missing_columns = [col for col in required_columns if col not in df.columns]
                 if missing_columns:
@@ -114,6 +114,7 @@ def upload_products(request):
                                 name=row['Product'],
                                 form=row['Form'],
                                 company=row['Company'],
+                                category=row['Category'],
                                 batch=row['Batch'],
                                 expiry_date=row['Expiry (MM/YY)'],
                                 MRP=row['MRP (Rs)'],
@@ -774,7 +775,7 @@ def extract_columns(request):
             # Select specific columns
             selected_columns = [
                 "Product", "Form", "Company", "Batch", "Expiry (MM/YY)", 
-                "MRP (Rs)", "Price-to_Retailer (Rs)", "Units per Pack","No of Packs","Sale GST %"
+                "MRP (Rs)", "Price-to_Retailer (Rs)", "Units per Pack","No of Packs","Sale GST %","Category","Composition"
             ]
 
             # Ensure only existing columns are selected
@@ -929,7 +930,7 @@ def update_all_products(request):
                 # Required columns check
                 required_columns = [
                     "Product", "Form", "Company", "Batch", "Expiry (MM/YY)", 
-                    "MRP (Rs)", "Price-to_Retailer (Rs)",  "Units per Pack", "No of Packs", "Sale GST %"
+                    "MRP (Rs)", "Price-to_Retailer (Rs)",  "Units per Pack", "No of Packs", "Sale GST %","Category","Composition"
                 ]
                 missing_columns = [col for col in required_columns if col not in df.columns]
                 if missing_columns:
@@ -969,8 +970,10 @@ def update_all_products(request):
                         if product:
                             # Update existing product quantity only (overwrite)
                             product.quantity = row['No of Packs']
+                            product.category=row['Category']
+                            product.composition_name=row['Composition']
                             product.updated_by = request.user
-                            
+                            print('---Existing Product Found:', product.category,product.composition_name)
                             # Also update price if different
                             if product.price != row['Price-to_Retailer (Rs)']:
                                 product.price = row['Price-to_Retailer (Rs)']
@@ -997,13 +1000,14 @@ def update_all_products(request):
                                 product_id=new_product_id,
                                 name=row['Product'],
                                 form=row['Form'],
+                                category=row['Category'],
+                                composition_name=row['Composition'] if row['Composition'] else composition_value,
                                 company=row['Company'],
                                 batch=row['Batch'],
                                 expiry_date=row['Expiry (MM/YY)'],
                                 MRP=row['MRP (Rs)'],
                                 price=row['Price-to_Retailer (Rs)'],
                                 quantity=row['No of Packs'],
-                                composition_name=composition_value,
                                 product_type_id=product_type_id,
                                 created_by=request.user,
                                 updated_by=request.user
@@ -1587,113 +1591,68 @@ import re
 #     return render(request, "products/product_list.html", {
 #         "products": products
 #     })
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.db.models import Q
-from .models import Product
-import re
-from django.db.models import Case, When, Value, IntegerField
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.db.models import Q
-from .models import Product
 import re
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
 from django.db.models import Q
+from django.shortcuts import render
 from .models import Product
-import re
 
 @login_required
 def admin_product_list(request):
-    try:
-        # Use a safer approach - get all products and filter in Python
-        query = request.GET.get("q")
-        filter_missing = request.GET.get("filter") == "missing"
-        
-        # Build query safely
-        if query:
-            query = query.lower()
-            tokens = re.findall(r"[a-zA-Z0-9]+", query)
-            
-            # Start with all products
-            products = Product.objects.all().order_by('created_at')
-            
-            # Apply filters safely
-            for token in tokens:
-                products = products.filter(
-                    Q(name__icontains=token) |
-                    Q(composition_name__icontains=token)
-                )
-        else:
-            products = Product.objects.all()
-        
-        # Process products safely
-        product_list = []
-        
-        for product in products:
-            try:
-                # Try to access all needed attributes
-                # This will fail if the product has invalid data
-                product_id = product.id
-                product_name = product.name
-                
-                # Only add to list if we can access basic attributes
-                product_list.append(product)
-                
-            except (ValueError, AttributeError, TypeError) as e:
-                print(f"Skipping invalid product (ID error): {e}")
-                continue
-        
-        # Now process the valid products
-        for product in product_list:
-            try:
-                # Check for missing fields
-                product_type = product.product_type
-                price = product.price
-                pack_size = product.pack_size
-                gst = product.GST
-                
-                has_missing = (
-                    not product_type or 
-                    str(product_type).strip() == '' or
-                    price is None or
-                    pack_size is None or
-                    gst is None
-                )
-                product.has_missing_fields = has_missing
-            except Exception as e:
-                print(f"Error processing product fields: {e}")
-                product.has_missing_fields = False
-        
-        # Filter to show only missing fields if requested
-        if filter_missing:
-            product_list = [p for p in product_list if p.has_missing_fields]
-        
-        # Sort: products with missing fields first, then by name
-        product_list.sort(
-            key=lambda x: (
-                not x.has_missing_fields,
-                (x.name or "").lower()
-            ), 
-            reverse=True
+    query = request.GET.get("q")
+    filter_missing = request.GET.get("filter") == "missing"
+
+    products = Product.objects.all()
+
+    if query:
+        tokens = re.findall(r"[a-zA-Z0-9]+", query.lower())
+        for token in tokens:
+            products = products.filter(
+                Q(name__icontains=token) |
+                Q(composition_name__icontains=token)
+            )
+
+    product_list = []
+    for product in products:
+        has_missing = (
+            not product.product_type or
+            product.price is None or
+            product.pack_size is None or
+            product.GST is None
         )
-        
-        return render(request, "products/product_list.html", {
-            "products": product_list,
-            "filter_missing": filter_missing,
-            "current_query": query or ""
-        })
-        
+        product.has_missing_fields = has_missing
+        product_list.append(product)
+
+    if filter_missing:
+        product_list = [p for p in product_list if p.has_missing_fields]
+
+    return render(request, "products/product_list.html", {
+        "products": product_list,
+        "filter_missing": filter_missing,
+        "current_query": query or ""
+    })
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from decimal import Decimal
+
+@csrf_exempt
+@require_POST
+@login_required
+def ajax_update_product(request, pk):
+    try:
+        product = Product.objects.get(pk=pk)
+
+        product.name = request.POST.get("name")
+        product.composition_name = request.POST.get("composition_name")
+        product.price = Decimal(request.POST.get("price")) if request.POST.get("price") else None
+        product.pack_size = request.POST.get("pack_size") or None
+        product.GST = request.POST.get("GST") or None
+
+        product.updated_by = request.user
+        product.save()
+
+        return JsonResponse({"success": True})
     except Exception as e:
-        import traceback
-        print(f"Unexpected error: {str(e)}")
-        print(traceback.format_exc())
-        
-        return render(request, "products/product_list.html", {
-            "products": [],
-            "filter_missing": False,
-            "current_query": "",
-            "error": "An error occurred while loading products"
-        })
+        return JsonResponse({"success": False, "error": str(e)})

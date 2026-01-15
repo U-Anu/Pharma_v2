@@ -89,64 +89,104 @@
 
       <tbody>
         {% for product in products %}
-        <tr class="{% if product.has_missing_fields %}none-value-row{% endif %}">
-          <td>{{ product.product_id|default:"-" }}</td>
-          <td style="white-space: normal; word-break: break-word;">
-            {{ product.name|default:"-" }}
-          </td>
-          <td style="white-space: normal; word-break: break-word;">
-            {{ product.composition_name|default:"-" }}
-          </td>
-          <td class="{% if not product.product_type or product.product_type == '' %}none-value-cell{% endif %}">
-            {{ product.product_type|default:"None" }}
-          </td>
-          <td class="{% if product.price is None %}none-value-cell{% endif %}">
-            {% if product.price is not None %}
-              {{ product.price }}
-            {% else %}
-              None
-            {% endif %}
-          </td>
-          <td class="{% if product.pack_size is None %}none-value-cell{% endif %}">
-            {% if product.pack_size is not None %}
-              {{ product.pack_size }}
-            {% else %}
-              None
-            {% endif %}
-          </td>
-          <td class="{% if product.GST is None %}none-value-cell{% endif %}">
-            {% if product.GST is not None %}
-              {{ product.GST }}
-            {% else %}
-              None
-            {% endif %}
-          </td>
-          <td>{{ product.quantity|default:"0" }}</td>
-          <td>
-            <a href="{% url 'product_update' product.id %}"
-               class="btn btn-sm btn-primary">
-              <i class="fa fa-edit"></i>
-            </a>
-            <a href="{% url 'product_delete' product.id %}"
+       <tr data-id="{{ product.id }}" class="{% if product.has_missing_fields %}none-value-row{% endif %}">
+  
+  <td>{{ product.product_id }}</td>
+
+  <td data-field="name" style="white-space: normal; word-break: break-word;">{{ product.name }}</td>
+  <td data-field="composition_name" style="white-space: normal; word-break: break-word;">{{ product.composition_name }}</td>
+  <td data-field="product_type">{{ product.product_type }}</td>
+  <td data-field="price">{{ product.price }}</td>
+  <td data-field="pack_size">{{ product.pack_size }}</td>
+  <td data-field="GST">{{ product.GST }}</td>
+
+  <td>{{ product.quantity }}</td>
+
+  <td>
+    <button class="btn btn-sm btn-primary edit-btn">
+      <i class="fa fa-edit"></i>
+    </button>
+
+    <button class="btn btn-sm btn-success save-btn d-none">
+      <i class="fa fa-save"></i>
+    </button>
+
+    <button class="btn btn-sm btn-secondary cancel-btn d-none">
+      <i class="fa fa-times"></i>
+    </button>
+    <a href="{% url 'product_delete' product.id %}"
                class="btn btn-sm btn-danger">
               <i class="fa fa-trash"></i>
             </a>
-            <a href="{% url 'product_markups' product.id %}"
-               class="btn btn-sm btn-secondary">
-              <i class="fa fa-percent"></i>
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="9" class="text-center text-muted">
-            No products found
-          </td>
-        </tr>
+  </td>
+</tr>
+
         {% endfor %}
       </tbody>
     </table>
   </div>
 
 </div>
+<script>
+document.querySelectorAll(".edit-btn").forEach(btn => {
+  btn.addEventListener("click", function () {
+    const row = this.closest("tr");
+    row.querySelectorAll("[data-field]").forEach(td => {
+      const value = td.innerText.trim();
+      td.dataset.original = value;
+      td.innerHTML = `<input class="form-control form-control-sm" value="${value}">`;
+    });
+
+    row.querySelector(".edit-btn").classList.add("d-none");
+    row.querySelector(".save-btn").classList.remove("d-none");
+    row.querySelector(".cancel-btn").classList.remove("d-none");
+  });
+});
+
+document.querySelectorAll(".cancel-btn").forEach(btn => {
+  btn.addEventListener("click", function () {
+    const row = this.closest("tr");
+    row.querySelectorAll("[data-field]").forEach(td => {
+      td.innerText = td.dataset.original;
+    });
+
+    row.querySelector(".edit-btn").classList.remove("d-none");
+    row.querySelector(".save-btn").classList.add("d-none");
+    row.querySelector(".cancel-btn").classList.add("d-none");
+  });
+});
+
+document.querySelectorAll(".save-btn").forEach(btn => {
+  btn.addEventListener("click", function () {
+    const row = this.closest("tr");
+    const productId = row.dataset.id;
+
+    const data = new FormData();
+    row.querySelectorAll("[data-field]").forEach(td => {
+      data.append(td.dataset.field, td.querySelector("input").value);
+    });
+
+    fetch(`/products/ajax-update/${productId}/`, {
+      method: "POST",
+      headers: { "X-CSRFToken": "{{ csrf_token }}" },
+      body: data
+    })
+    .then(res => res.json())
+    .then(resp => {
+      if (resp.success) {
+        row.querySelectorAll("[data-field]").forEach(td => {
+          td.innerText = td.querySelector("input").value;
+        });
+      } else {
+        alert(resp.error);
+      }
+
+      row.querySelector(".edit-btn").classList.remove("d-none");
+      row.querySelector(".save-btn").classList.add("d-none");
+      row.querySelector(".cancel-btn").classList.add("d-none");
+    });
+  });
+});
+</script>
+
 {% endblock %}

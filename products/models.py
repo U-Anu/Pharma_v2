@@ -62,6 +62,7 @@ class Product(models.Model):
     product_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     name = models.CharField(max_length=255)
     form=models.CharField(max_length=255,blank=True, null=True)
+    category=models.CharField(max_length=255,blank=True, null=True)
     company = models.CharField(max_length=100,blank=True, null=True)
     batch=models.CharField(max_length=255,blank=True, null=True)
     product_type = models.ForeignKey(ProductType, on_delete=models.CASCADE,blank=True, null=True)

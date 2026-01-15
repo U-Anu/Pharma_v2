@@ -254,9 +254,20 @@ th.col-stock, td.col-stock {
                                <td data-order="{{ product.name|lower }}"
     style="white-space: normal; word-wrap: break-word; max-width:200px; padding: 2px 4px;">
     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-        <div style="font-size: 0.75em; color: #6c757d;">
-            {{ product.pack_size|default:"" }}'s
+    <div style="display: flex; justify-content: space-between; width: 100%;">
+            <span style="font-style: italic; font-size: 0.75em; color: #6c757d;">
+                {% if product.category %}
+                    {{ product.category }}
+                {% endif %}
+            </span>
+
+            <span style="font-size: 0.75em; color: #6c757d;">
+                {% if product.pack_size %}
+                    {{ product.pack_size }}'s
+                {% endif %}
+            </span>
         </div>
+
 
         <div style="align-self: flex-start; font-size: 1.1em; font-weight: bold; line-height: 1.2;">
             {{ product.name }}
@@ -275,7 +286,11 @@ th.col-stock, td.col-stock {
 
                                    
                                 <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
-                                    {{ product.composition_name }}
+{% if product.composition_name %}
+    {{ product.composition_name}}
+{% else %}
+    {{ product.category }}
+{% endif %}
                                 </td>
  <td style="white-space: normal; word-wrap: break-word; max-width:200px;">
                                     {{ product.batch }}
@@ -491,9 +506,9 @@ $(document).ready(function() {
         if (value) {
             // Search in the category column (adjust column index if needed)
             // You might need to adjust the column index based on your table structure
-            table.column(1).search(value, false, true).draw();
+            table.column(0).search(value, false, true).draw();
         } else {
-            table.column(1).search('').draw();
+            table.column(0).search('').draw();
         }
     });
 
