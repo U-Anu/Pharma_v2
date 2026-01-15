@@ -1,0 +1,175 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body_block %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<style>
+/* ---------- HEADER ---------- */
+.page-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+}
+
+/* ---------- SUMMARY ---------- */
+.summary-bar {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.summary-item {
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.summary-item strong {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* ---------- TABLE ---------- */
+.items-table {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+}
+
+.items-table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.items-table td {
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+.items-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* ---------- ROW STATUS ---------- */
+.row-pending { background-color: #fff8e1; }
+.row-issued { background-color: #e8f5e9; }
+.row-partial { background-color: #e3f2fd; }
+
+/* ---------- PROGRESS ---------- */
+.progress {
+    height: 6px;
+    background-color: #e9ecef;
+}
+
+/* ---------- FLOATING FOOTER ---------- */
+.floating-summary {
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid #dee2e6;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+</style>
+
+<div class="container mt-4">
+
+    <a href="{% url 'query_list' %}" class="text-muted small mb-2 d-inline-block">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+
+    <h4 class="page-title">
+        Query Items
+    </h4>
+
+    <!-- ================= SUMMARY ================= -->
+    <div class="summary-bar">
+        <div class="row">
+            <div class="col summary-item">
+                <strong>{{ total_requested }}</strong>
+                Requested
+            </div>
+            <div class="col summary-item">
+                <strong>{{ total_issued }}</strong>
+                Issued
+            </div>
+            <div class="col summary-item">
+                <strong class="text-danger">{{ total_pending }}</strong>
+                Pending
+            </div>
+            <div class="col summary-item">
+                <strong>{{ items|length }}</strong>
+                Items
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ITEMS TABLE ================= -->
+    <div class="items-table">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th class="text-center">Req</th>
+                    <th class="text-center">Iss</th>
+                    <th class="text-center">Pend</th>
+                    <th class="text-center">Progress</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for item in items %}
+            <tr class="row-{{ item.status }}">
+                <td>{{ forloop.counter }}</td>
+
+                <td>
+                    <strong>{{ item.product_name }}</strong>
+                </td>
+
+                <td class="text-center">{{ item.requested_qty }}</td>
+                <td class="text-center">{{ item.issued_qty }}</td>
+                <td class="text-center">{{ item.pending_qty }}</td>
+
+                <td>
+                    {% if item.requested_qty %}
+                        {% widthratio item.issued_qty item.requested_qty 100 as completion %}
+                        <div class="progress mb-1">
+                            <div class="progress-bar bg-success"
+                                 style="width: {{ completion }}%"></div>
+                        </div>
+                        <small class="text-muted">{{ completion }}%</small>
+                    {% else %}
+                        <small class="text-muted">N/A</small>
+                    {% endif %}
+                </td>
+
+                
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    No items found
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ================= FLOATING SUMMARY ================= -->
+    <div class="floating-summary d-flex justify-content-between">
+        <span>Requested: <strong>{{ total_requested }}</strong></span>
+        <span>Issued: <strong>{{ total_issued }}</strong></span>
+        <span>Pending: <strong class="text-danger">{{ total_pending }}</strong></span>
+    </div>
+
+</div>
+
+
+{% endblock %}

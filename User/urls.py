@@ -44,7 +44,6 @@ urlpatterns = [
 
 
 
-
     path('customer_order/', customer_order_list, name='customer_order_list'),
     # path('customer_order/create/', customer_order_create, name='customer_order_create'),
     path('customer_order/update/<int:pk>/', customer_order_update, name='customer_order_update'),

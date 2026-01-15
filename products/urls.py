@@ -32,7 +32,8 @@ urlpatterns = [
     path("query_create/", query_create, name="query_create"),
     path("query_delete/<pk>", query_delete, name="query_delete"),
     path("query_update/<pk>", query_update, name="query_update"),
- 
+    path('queries/<int:query_id>/items/', query_items_view, name='query_items_view'),
+
     path('extract_columns/', extract_columns, name='extract_columns'),
     path('delete-all-products/', delete_all_products, name='delete_all_products'),
     path('update-all-products/', update_all_products, name='update_all_products'),

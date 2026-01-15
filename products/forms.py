@@ -127,9 +127,8 @@ class ProductMarkupByCategoryForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        exclude = ['created_by', 'updated_by', 'created_at']
+        exclude = ['product_id','created_by', 'updated_by', 'created_at']
         widgets = {
-            'product_id': forms.TextInput(attrs={'type': 'hidden'}),
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter product name'}),
             'form': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter product form'}),
             'company': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter company name'}),

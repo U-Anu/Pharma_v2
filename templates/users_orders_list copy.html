@@ -1,0 +1,185 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body_block %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<div class="container mt-4">
+    <h2 class="text-primary mb-3">Orders List</h2>
+
+    <!-- ================= FILTERS ================= -->
+    <form method="get" class="row g-2 mb-3">
+
+        <!-- Customer Name -->
+        <div class="col-md-3">
+            <label class="form-label mb-0">Customer Name</label>
+            <input type="text"
+                   name="customer"
+                   value="{{ request.GET.customer }}"
+                   class="form-control"
+                   placeholder="Customer name">
+        </div>
+
+        <!-- Product Name -->
+        <div class="col-md-3">
+            <label class="form-label mb-0">Product Name</label>
+            <input type="text"
+                   name="product"
+                   value="{{ request.GET.product }}"
+                   class="form-control"
+                   placeholder="Product name">
+        </div>
+
+        <!-- Start Date -->
+        <div class="col-md-2">
+            <label class="form-label mb-0">Start Date</label>
+            <input type="date"
+                   name="start_date"
+                   value="{{ request.GET.start_date }}"
+                   class="form-control">
+        </div>
+
+        <!-- End Date -->
+        <div class="col-md-2">
+            <label class="form-label mb-0">End Date</label>
+            <input type="date"
+                   name="end_date"
+                   value="{{ request.GET.end_date }}"
+                   class="form-control">
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="fa fa-filter"></i> Filter
+            </button>
+            <a href="{% url 'admin_orders' %}" class="btn btn-secondary">
+                Reset
+            </a>
+        </div>
+
+    </form>
+
+    <!-- ================= TABLE ================= -->
+    <div class="users-table table-wrapper mt-2">
+        <table class="posts-table table table-striped table-bordered align-middle">
+            <thead>
+                <tr class="users-table-info text-center">
+                    <th>S.No</th>
+                    <th>Order No</th>
+                    <th>Date</th>
+                    <th>Business Name</th>
+                    <th>Total Price</th>
+                    <th>Ordered By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for order in orders %}
+                <tr
+                    {% if order.status == "ordered" %}
+                        class="table-warning"
+                    {% elif order.status == "billed" %}
+                        class="table-primary text-dark"
+                    {% elif order.status == "delivered" %}
+                        class="table-success text-dark"
+                    {% elif order.status == "packed" %}
+                        class="table-danger text-dark"
+                    {% else %}
+                        class="table-secondary text-white"
+                    {% endif %}
+                >
+
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ order.order_no }}</td>
+                    <td>{{ order.created_at|date:"d-m-Y H:i" }}</td>
+
+                    <td>
+                        {% if order.queries.first %}
+                            {{ order.queries.first.Business_name|default:"-" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>{{ order.total_price }}</td>
+                    <td>{{ order.created_by }}</td>
+
+                    <!-- STATUS -->
+                    <td class="text-center">
+                        {% if order.status == "ordered" %}
+                            <span class="badge bg-warning text-dark">Ordered</span>
+                        {% elif order.status == "billed" %}
+                            <span class="badge bg-primary">Billed</span>
+                        {% elif order.status == "packed" %}
+                            <span class="badge bg-danger">Packed</span>
+                        {% elif order.status == "delivered" %}
+                            <span class="badge bg-success">Delivered</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ACTIONS -->
+                    <td class="text-center">
+                   {% comment %} {% if order.created_by.memos.exists %}
+    <!-- View Memo -->
+    <a href="{% url 'user_memo_detail' order.created_by.id %}"
+       class="btn btn-sm btn-success mb-1"
+       target="_blank"
+       title="View Memo">
+        <i class="fa-solid fa-clipboard"></i>
+    </a>
+{% else %}
+    <!-- Add Memo -->
+    <a href="{% url 'user_memo_create' order.created_by.id %}"
+       class="btn btn-sm btn-primary mb-1"
+       title="Add Memo">
+        <i class="fa-solid fa-plus"></i>
+    </a>
+{% endif %} {% endcomment %}
+
+
+                        
+                        <a href="{% url 'order_note_slip' order.id %}"
+                           class="btn btn-sm btn-info mb-1"
+                           target="_blank"
+                           title="Note Slip">
+                            <i class="fa fa-sticky-note"></i>
+                        </a>
+
+                        <a href="{% url 'admin_order_issue' order.id %}"
+                           class="btn btn-sm btn-warning mb-1"
+                           title="Issue Stock">
+                            <i class="fa fa-box"></i>
+                        </a>
+
+                        <a href="{% url 'order_update' order.id %}"
+                           class="btn btn-sm btn-primary mb-1"
+                           title="Edit Order">
+                            <i class="fa fa-edit"></i>
+                        </a>
+
+                        <a href="{% url 'order_delete' order.id %}"
+                           class="btn btn-sm btn-danger mb-1"
+                           title="Delete Order">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        No orders found for selected filters.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
