@@ -54,6 +54,14 @@
     font-size: 0.75rem;
     border-radius: 20px;
 }
+.table thead th {
+    border-top: 0;
+    border-bottom-width: 1px;
+    font-family: "ubuntu-medium", sans-serif;
+    font-weight: initial;
+    background: #b66dff;
+    color:#ffffff;
+}
 </style>
 
 <div class="container mt-4">
@@ -104,10 +112,11 @@
 
     <!-- ================= TABLE ================= -->
     <div class="orders-table">
+        <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
 
             <thead>
-                <tr class="text-center">
+                <tr class="text-center" >
                     <th>#</th>
                     <th>Query No</th>
                     <th>Date</th>
@@ -188,7 +197,7 @@
             {% endfor %}
             </tbody>
 
-        </table>
+        </table></div>
     </div>
 
 </div>
