@@ -18,10 +18,67 @@
 }
 #bg-gradient-pink{
   background: linear-gradient(45deg, #BA68C8, #E040FB, #8E24AA);
-
 }
 
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .card-img-absolute {
+    display: none; /* Hide circle image on mobile */
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  .mb-5 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .page-title {
+    font-size: 1.25rem;
+  }
+  
+  .font-weight-normal {
+    font-size: 1rem;
+  }
+  
+  h2.mb-5 {
+    font-size: 1.5rem;
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.25em 0.6em;
+  }
+}
+
+@media (max-width: 576px) {
+  .stretch-card {
+    margin-bottom: 1rem;
+  }
+  
+  .grid-margin {
+    margin-bottom: 0.5rem;
+  }
+  
+  .card {
+    margin-bottom: 0.75rem;
+  }
+  
+  .table td, .table th {
+    padding: 0.5rem;
+  }
+  
+  .doughnutjs-wrapper canvas {
+    max-height: 250px !important;
+  }
+}
 </style>
+
 <div class="content-wrapper">
   <div class="page-header">
     <h3 class="page-title">
@@ -29,192 +86,198 @@
         <i class="mdi mdi-home"></i>
       </span> Admin Dashboard
     </h3>
-    {% comment %} <nav aria-label="breadcrumb">
-      <ul class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">
-          <span></span>Overview <i class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
-        </li>
-      </ul> {% endcomment %}
-    </nav>
   </div>
+  
+  <!-- Stats Cards - Made Responsive -->
   <div class="row">
-    <div class="col-md-4 stretch-card grid-margin">
-      <div class="card bg-gradient-danger card-img-holder text-white">
+    <div class="col-12 col-sm-6 col-md-4 stretch-card grid-margin mb-3">
+      <div class="card bg-gradient-danger card-img-holder text-white h-100">
         <div class="card-body">
           <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
-          <h4 class="font-weight-normal mb-3">No Of Users <i class="mdi mdi-chart-line mdi-24px float-end"></i>
-          </h4>
+          <h4 class="font-weight-normal mb-3">No Of Users <i class="mdi mdi-chart-line mdi-24px float-end"></i></h4>
           <h2 class="mb-5">{{users}}</h2>
           <a href="{% url 'user_list' %}" class="text-white text-decoration-none">Users</a>     
         </div>
       </div>
     </div>
-    <div class="col-md-4 stretch-card grid-margin">
-      <div class="card bg-gradient-warning card-img-holder text-white" >
+    
+    <div class="col-12 col-sm-6 col-md-4 stretch-card grid-margin mb-3">
+      <div class="card bg-gradient-warning card-img-holder text-white h-100" >
         <div class="card-body">
           <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
-          <h4 class="font-weight-normal mb-3">No Of User Registered <i class="mdi mdi-chart-line mdi-24px float-end"></i>
-          </h4>
+          <h4 class="font-weight-normal mb-3">No Of User Registered <i class="mdi mdi-chart-line mdi-24px float-end"></i></h4>
           <h2 class="mb-5">{{pending_users}}</h2>
-          <a href="{% url 'user_pending_list' %}" class="text-white text-decoration-none">Registered Users</a>        </div>
+          <a href="{% url 'user_pending_list' %}" class="text-white text-decoration-none">Registered Users</a>
+        </div>
       </div>
     </div>
-    <div class="col-md-4 stretch-card grid-margin">
-      <div class="card bg-gradient-success card-img-holder text-white">
+    
+    <div class="col-12 col-sm-6 col-md-4 stretch-card grid-margin mb-3">
+      <div class="card bg-gradient-success card-img-holder text-white h-100">
         <div class="card-body">
           <img src="{% static 'assets/images/dashboard/circle.svg'%}" class="card-img-absolute" alt="circle-image" />
-          <h4 class="font-weight-normal mb-3"> Orders <i class="mdi mdi-bookmark-outline mdi-24px float-end"></i>
-          </h4>
+          <h4 class="font-weight-normal mb-3"> Orders <i class="mdi mdi-bookmark-outline mdi-24px float-end"></i></h4>
           <h2 class="mb-5">{{orders}}</h2>
           <a href="{% url 'admin_orders' %}" class="text-white text-decoration-none">Orders</a>     
         </div>
       </div>
     </div>
    
-    <div class="col-md-4 stretch-card grid-margin">
-      <div class="card card-img-holder text-white" id='bg-gradient-warning'>
+    <div class="col-12 col-sm-6 col-md-4 stretch-card grid-margin mb-3">
+      <div class="card card-img-holder text-white h-100" id='bg-gradient-warning'>
         <div class="card-body">
           <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
-          <h4 class="font-weight-normal mb-3">Pending Orders <i class="mdi mdi-chart-line mdi-24px float-end"></i>
-          </h4>
+          <h4 class="font-weight-normal mb-3">Pending Orders <i class="mdi mdi-chart-line mdi-24px float-end"></i></h4>
           <h2 class="mb-5">{{pending_orders}}</h2>
-          <a href="{% url 'admin_orders' %}" class="text-white text-decoration-none">Pending Orders</a>        </div>
+          <a href="{% url 'admin_orders' %}" class="text-white text-decoration-none">Pending Orders</a>
+        </div>
       </div>
     </div>
-    <div class="col-md-4 stretch-card grid-margin" >
-      <div class="card card-img-holder text-white"  id='bg-gradient-purple'>
+    
+    <div class="col-12 col-sm-6 col-md-4 stretch-card grid-margin mb-3">
+      <div class="card card-img-holder text-white h-100" id='bg-gradient-purple'>
         <div class="card-body">
           <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
-          <h4 class="font-weight-normal mb-3">Queries <i class="mdi mdi-chart-line mdi-24px float-end"></i>
-          </h4>
+          <h4 class="font-weight-normal mb-3">Queries <i class="mdi mdi-chart-line mdi-24px float-end"></i></h4>
           <h2 class="mb-5">{{queries}}</h2>
           <a href="{% url 'query_list' %}" class="text-white text-decoration-none">Queries</a>        
         </div>
       </div>
     </div>
     
-    <div class="col-md-4 stretch-card grid-margin">
-      <div class="card card-img-holder text-white" id='bg-gradient-sea'>
+    <div class="col-12 col-sm-6 col-md-4 stretch-card grid-margin mb-3">
+      <div class="card card-img-holder text-white h-100" id='bg-gradient-sea'>
         <div class="card-body">
           <img src="{% static 'assets/images/dashboard/circle.svg' %}" class="card-img-absolute" alt="circle-image" />
-          <h4 class="font-weight-normal mb-3">Products <i class="mdi mdi-diamond mdi-24px float-end"></i>
-          </h4>
+          <h4 class="font-weight-normal mb-3">Products <i class="mdi mdi-diamond mdi-24px float-end"></i></h4>
           <h2 class="mb-5">{{products}}</h2>
-        <a href="{% url 'admin_product_list' %}" class="text-white text-decoration-none">Products</a>
+          <a href="{% url 'admin_product_list' %}" class="text-white text-decoration-none">Products</a>
         </div>
       </div>
     </div>
   </div>
-<div class="row">
-    <div class="col-md-5 grid-margin stretch-card">
-      <div class="card">
-        <div class="card-body">
-         <img src="{% static 'img/meds-dr.gif' %}" width="100%" height="100%">
+  
+  <!-- Image and Chart Section - Made Responsive -->
+  <div class="row">
+  <div class="col-12 col-md-5 grid-margin stretch-card mb-3 d-none d-md-block">
+
+      <div class="card h-100">
+        <div class="card-body p-2 p-md-3">
+          <img src="{% static 'img/meds-dr.gif' %}" class="img-fluid w-100 h-100" style="object-fit: contain;" alt="Medicine Delivery">
         </div>
       </div>
     </div>
-    <div class="col-md-7 grid-margin stretch-card">
-      <div class="card">
+    
+    <div class="col-12 col-md-7 grid-margin stretch-card mb-3">
+      <div class="card h-100">
         <div class="card-body">
           <h4 class="card-title">Order Status Distribution</h4>
           <div class="doughnutjs-wrapper d-flex justify-content-center">
-            <canvas id="order-status-chart"></canvas>
+            <canvas id="order-status-chart" style="max-height: 300px;"></canvas>
           </div>
           <div id="order-status-legend" class="rounded-legend legend-vertical legend-bottom-left pt-4"></div>
         </div>
       </div>
-    </div></div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-          const ctx = document.getElementById('order-status-chart').getContext('2d');
-    
-          // Create pastel pink-to-purple gradient for Pending Orders
-          let gradientPending = ctx.createLinearGradient(0, 0, 0, 400);
-          gradientPending.addColorStop(0, '#F8BBD0');  // Soft Pink
-          gradientPending.addColorStop(1, '#CE93D8');  // Soft Purple
-    
-          // Create pastel mint gradient for Dispatched Orders
-          let gradientDispatched = ctx.createLinearGradient(0, 0, 0, 400);
-          gradientDispatched.addColorStop(0, '#B2DFDB');  // Soft Mint
-          gradientDispatched.addColorStop(1, '#80CBC4');  // Soft Teal
-    
-          const orderStatusChart = new Chart(ctx, {
-              type: 'doughnut',
-              data: {
-                  labels: ['Pending Orders', ' Orders'],
-                  datasets: [{
-                      data: [{{ pending_orders }}, {{ orders }}],
-                      backgroundColor: [gradientPending, gradientDispatched],
-                      borderColor: ['#CE93D8', '#80CBC4'],
-                      borderWidth: 1
-                  }]
-              },
-              options: {
-                  responsive: true,
-                  plugins: {
-                      legend: {
-                          display: true,
-                          position: 'bottom'
-                      },
-                      tooltip: {
-                          enabled: true
-                      }
-                  }
-              }
-          });
-      });
-    </script>
-    
-  
-    <div class="row">
-      <div class="col-12 grid-margin">
-          <div class="card">
-              <div class="card-body">
-                  <h4 class="card-title">Recent Orders</h4>
-                  <div class="table-responsive">
-                      <table class="table">
-                          <thead>
-                              <tr>
-                                  <th> Customer </th>
-                                  <th> Total Quantity </th>
-                                  <th> Status </th>
-                                  <th> Last Update </th>
-                                  <th> Order ID </th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {% for order in top_orders %}
-                              <tr>
-                                  <td>
-                                      {{ order.created_by.first_name }}
-                                  </td>
-                                  <td> {{ order.total_quantity }} </td>
-                                  <td>
-                                      {% if order.status == 'delivered' %}
-                                      <label class="badge badge-gradient-success">DELIVERED</label>
-                                      {% elif order.status == 'approved' %}
-                                      <label class="badge badge-gradient-warning">APPROVED</label>
-                                      {% elif order.status == 'packed' %}
-                                      <label class="badge badge-gradient-info">PACKED</label>
-                                      {% else %}
-                                      <label class="badge badge-gradient-danger">ORDERED</label>
-                                      {% endif %}
-                                  </td>
-                                  <td> {{ order.created_at|date:"M d, Y" }} </td>
-                                  <td> OD-{{ order.id }} </td>
-                              </tr>
-                              {% empty %}
-                              <tr>
-                                  <td colspan="5" class="text-center">No recent orders</td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                      </table>
-                  </div>
-              </div>
-          </div>
-      </div>
+    </div>
   </div>
-   {% endblock %} 
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('order-status-chart').getContext('2d');
+
+        // Create pastel pink-to-purple gradient for Pending Orders
+        let gradientPending = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientPending.addColorStop(0, '#F8BBD0');  // Soft Pink
+        gradientPending.addColorStop(1, '#CE93D8');  // Soft Purple
+
+        // Create pastel mint gradient for Dispatched Orders
+        let gradientDispatched = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientDispatched.addColorStop(0, '#B2DFDB');  // Soft Mint
+        gradientDispatched.addColorStop(1, '#80CBC4');  // Soft Teal
+
+        const orderStatusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending Orders', ' Orders'],
+                datasets: [{
+                    data: [{{ pending_orders }}, {{ orders }}],
+                    backgroundColor: [gradientPending, gradientDispatched],
+                    borderColor: ['#CE93D8', '#80CBC4'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+        
+        // Adjust chart size on window resize
+        window.addEventListener('resize', function() {
+            orderStatusChart.resize();
+        });
+    });
+  </script>
+  
+  <!-- Recent Orders Table - Made Responsive -->
+  <div class="row">
+    <div class="col-12 grid-margin">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Recent Orders</h4>
+          <div class="table-responsive">
+            <table class="table" id="tableID">
+            <thead>
+  <tr>
+    <th class="d-none d-md-table-cell">Customer</th>
+    <th class="d-none d-md-table-cell">Total Quantity</th>
+    <th>Status</th>
+    <th class="d-none d-md-table-cell">Last Update</th>
+    <th>Order ID</th>
+  </tr>
+</thead>
+
+           <tbody>
+  {% for order in top_orders %}
+  <tr>
+    <td class="d-none d-md-table-cell">{{ order.created_by.first_name }}</td>
+    <td class="d-none d-md-table-cell">{{ order.total_quantity }}</td>
+    <td>
+      {% if order.status == 'delivered' %}
+        <label class="badge badge-gradient-success">DELIVERED</label>
+      {% elif order.status == 'approved' %}
+        <label class="badge badge-gradient-warning">APPROVED</label>
+      {% elif order.status == 'packed' %}
+        <label class="badge badge-gradient-info">PACKED</label>
+      {% else %}
+        <label class="badge badge-gradient-danger">ORDERED</label>
+      {% endif %}
+    </td>
+    <td class="d-none d-md-table-cell">{{ order.created_at|date:"M d, Y" }}</td>
+    <td>OD-{{ order.id }}</td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="5" class="text-center">No recent orders</td>
+  </tr>
+  {% endfor %}
+</tbody>
+
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
