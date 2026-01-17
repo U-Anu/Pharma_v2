@@ -198,77 +198,79 @@ th.col-stock, td.col-stock {
     font-weight: bold;
 }
 
-/* ---------- STICKY PAGINATION ---------- */
+/* ---------- BOOTSTRAP PAGINATION ---------- */
+.custom-pagination-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding: 15px 0;
+    background: white;
+    border-top: 2px solid #e0e0e0;
+}
+
+.pagination-info {
+    text-align: left;
+    font-size: 0.95rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.custom-pagination-wrapper {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.custom-pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-pagination .page-item {
+    margin: 0 3px;
+}
+
+.custom-pagination .page-link {
+    color: #b66dff;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.custom-pagination .page-link:hover {
+    background-color: #f8f9fa;
+    border-color: #b66dff;
+    color: #8a2be2;
+}
+
+.custom-pagination .page-item.active .page-link {
+    background-color: #b66dff;
+    border-color: #b66dff;
+    color: white;
+}
+
+.custom-pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+/* ---------- TABLE CONTAINER ---------- */
 .table-responsive {
-    max-height: 500px;
+    max-height: 450px;
     overflow-y: auto;
     position: relative;
-    padding-bottom: 60px; /* Space for sticky pagination */
 }
 
-.dataTables_wrapper {
-    position: relative;
-}
-
-.dataTables_wrapper .bottom {
-    position: sticky;
-    bottom: 0;
-    background: white;
-    z-index: 10;
-    padding: 12px 0;
-    border-top: 2px solid #e0e0e0;
-    margin-top: 0 !important;
-    width: 100%;
-}
-
-/* Fix pagination alignment */
-.dataTables_paginate {
-    margin: 0 !important;
-    padding: 0 !important;
-     background-color: #ffff !important;
-}
-
-.dataTables_paginate .pagination {
-    margin: 0 !important;
-    justify-content: flex-end;
-    background-color: #ffff !important;
-}
-
-.dataTables_paginate .paginate_button {
-    padding: 6px 12px !important;
-    margin: 0 2px !important;
-    border-radius: 6px !important;
-    border: 1px solid #dee2e6 !important;
-    color: #6c757d !important;
-    font-weight: 500;
-}
-
-.dataTables_paginate .paginate_button.current {
-    background: #b66dff !important;
-    color: white !important;
-    border: 1px solid #b66dff !important;
-}
-
-.dataTables_paginate .paginate_button:hover {
-    background: #e9ecef !important;
-    border-color: #dee2e6 !important;
-    color: #495057 !important;
-}
-
-.dataTables_paginate .paginate_button.current:hover {
-    background: #a45cff !important;
-    border-color: #a45cff !important;
-    color: white !important;
-}
-
-.dataTables_info {
-    padding-top: 6px;
-    color: #6c757d;
-    font-size: 0.9rem;
-    background-color: #ffff;
-}
-
-/* Ensure table content doesn't hide behind pagination */
 #productTable {
     margin-bottom: 0 !important;
 }
@@ -334,7 +336,6 @@ th.col-stock, td.col-stock {
     /* Table responsive adjustments */
     .table-responsive {
         max-height: 400px !important;
-        padding-bottom: 70px !important;
     }
     
     #productTable th, #productTable td {
@@ -417,19 +418,37 @@ th.col-stock, td.col-stock {
     }
     
     /* Pagination adjustments for mobile */
-    .dataTables_wrapper .bottom {
-        position: relative !important;
+    .custom-pagination-container {
         padding: 10px 0 !important;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
     }
     
-    .dataTables_paginate .pagination {
-        justify-content: center !important;
-        flex-wrap: wrap;
-    }
-    
-    .dataTables_info {
+    .pagination-info {
         text-align: center;
-        padding-bottom: 10px;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+        width: 100%;
+    }
+    
+    .custom-pagination-wrapper {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .custom-pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .custom-pagination .page-item {
+        margin: 2px;
+    }
+    
+    .custom-pagination .page-link {
+        padding: 6px 12px;
+        font-size: 0.9rem;
     }
 }
 
@@ -470,6 +489,16 @@ th.col-stock, td.col-stock {
     .col-price, .col-stock {
         width: auto !important;
     }
+    
+    /* Pagination for very small screens */
+    .custom-pagination .page-link {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .pagination-info {
+        font-size: 0.8rem;
+    }
 }
 
 /* Small devices (phones 400px-576px) */
@@ -508,7 +537,7 @@ th.col-stock, td.col-stock {
 
 /* Ensure touch-friendly buttons on mobile */
 @media (hover: none) and (pointer: coarse) {
-    .btn, button, .qty-btn, .paginate_button {
+    .btn, button, .qty-btn, .page-link {
         min-height: 44px !important;
         min-width: 44px !important;
         display: flex !important;
@@ -524,21 +553,10 @@ th.col-stock, td.col-stock {
     input, select, textarea {
         font-size: 16px !important; /* Prevents zoom on iOS */
     }
-}
-
-/* Fix DataTables pagination for mobile */
-@media (max-width: 768px) {
-    .dataTables_paginate .paginate_button {
-        padding: 8px 10px !important;
-        margin: 2px !important;
-        font-size: 0.9rem;
-    }
     
-    .dataTables_length label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
+    .custom-pagination .page-link {
+        min-width: 44px !important;
+        min-height: 44px !important;
     }
 }
 
@@ -691,6 +709,20 @@ th.col-stock, td.col-stock {
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Bootstrap Pagination with Info -->
+                <div class="custom-pagination-container">
+                    <div class="pagination-info" id="paginationInfo">
+                        Showing 1 to 10 of {{ products|length }} entries
+                    </div>
+                    <div class="custom-pagination-wrapper">
+                        <nav aria-label="Page navigation">
+                            <ul class="custom-pagination" id="customPagination">
+                                <!-- Pagination will be generated by JavaScript -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -698,7 +730,53 @@ th.col-stock, td.col-stock {
         <div class="col-12 col-lg-4 mt-0 mt-lg-5 pt-0 pt-lg-4">
 
             <!-- 1) MISSED PRODUCTS / QUERIES -->
-            <div class="card shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;">
+       
+
+            <!-- 2) CART -->
+            <div class="cart-card mb-4">
+                <div class="cart-header">
+                    {% if cart_items %}
+                        Cart (<span id="cart-count">{{ cart_item_count }} items ({{ cart_total_qty }} pcs)</span>)
+                    {% else %}
+                        Cart (<span id="cart-count">0 items (0 pcs)</span>)
+                    {% endif %}
+                </div>
+                <div class="cart-body" id="cart-items">
+                    {% if cart_items %}
+                        {% for ci in cart_items %}
+                            <div class="cart-item">
+                                <div class="name">{{ ci.product.name }}</div>
+                                <div class="d-flex align-items-center">
+                                    <div class="qty-controls">
+                                        <button class="btn btn-outline-secondary btn-sm qty-btn decrease-qty"
+                                                data-product-id="{{ ci.product.id }}">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="number" class="form-control qty-input"
+                                               data-product-id="{{ ci.product.id }}"
+                                               value="{{ ci.quantity }}" min="0">
+                                        <button class="btn btn-outline-secondary btn-sm qty-btn increase-qty"
+                                                data-product-id="{{ ci.product.id }}">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                    <span class="price">₹{{ ci.total_price }}</span>
+                                    <button class="btn btn-outline-danger btn-sm remove-item ms-2"
+                                            data-product-id="{{ ci.product.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No items in cart.</p>
+                    {% endif %}
+                </div>
+                <div class="cart-footer">
+                    Subtotal: ₹<span id="cart-subtotal">{{ cart_subtotal|default:"0.00" }}</span>
+                </div>
+            </div>
+     <div class="card shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;">
                 <div class="cart-header">
                     Missed Products / Queries (<span id="query-count">{{ query_items|length }}</span>)
                 </div>
@@ -782,52 +860,6 @@ th.col-stock, td.col-stock {
                     </form>
                 </div>
             </div>
-
-            <!-- 2) CART -->
-            <div class="cart-card mb-4">
-                <div class="cart-header">
-                    {% if cart_items %}
-                        Cart (<span id="cart-count">{{ cart_item_count }} items ({{ cart_total_qty }} pcs)</span>)
-                    {% else %}
-                        Cart (<span id="cart-count">0 items (0 pcs)</span>)
-                    {% endif %}
-                </div>
-                <div class="cart-body" id="cart-items">
-                    {% if cart_items %}
-                        {% for ci in cart_items %}
-                            <div class="cart-item">
-                                <div class="name">{{ ci.product.name }}</div>
-                                <div class="d-flex align-items-center">
-                                    <div class="qty-controls">
-                                        <button class="btn btn-outline-secondary btn-sm qty-btn decrease-qty"
-                                                data-product-id="{{ ci.product.id }}">
-                                            <i class="bi bi-dash"></i>
-                                        </button>
-                                        <input type="number" class="form-control qty-input"
-                                               data-product-id="{{ ci.product.id }}"
-                                               value="{{ ci.quantity }}" min="0">
-                                        <button class="btn btn-outline-secondary btn-sm qty-btn increase-qty"
-                                                data-product-id="{{ ci.product.id }}">
-                                            <i class="bi bi-plus"></i>
-                                        </button>
-                                    </div>
-                                    <span class="price">₹{{ ci.total_price }}</span>
-                                    <button class="btn btn-outline-danger btn-sm remove-item ms-2"
-                                            data-product-id="{{ ci.product.id }}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted text-center">No items in cart.</p>
-                    {% endif %}
-                </div>
-                <div class="cart-footer">
-                    Subtotal: ₹<span id="cart-subtotal">{{ cart_subtotal|default:"0.00" }}</span>
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
@@ -848,22 +880,20 @@ th.col-stock, td.col-stock {
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTables with proper configuration
+    // Initialize DataTables with pagination
     var table = $('#productTable').DataTable({
-        "pageLength": 25,
-        "lengthMenu": [10, 25, 50, 100],
         "ordering": true,
-        "dom": '<"top"l>rt<"bottom"ip><"clear">',
         "searching": true,
         "paging": true,
-        "info": true,
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "info": false, // We'll use our own custom info display
+        "dom": '<"top"l>rt<"clear">',
+        "responsive": true,
         "language": {
-            "paginate": {
-                "previous": "‹",
-                "next": "›"
-            }
-        },
-        "responsive": true
+            "emptyTable": "No data available in table",
+            "lengthMenu": "Show _MENU_ entries"
+        }
     });
 
     // Move length control to header
@@ -888,29 +918,109 @@ $(document).ready(function() {
         }
     });
 
+    // Function to update pagination info
+    function updatePaginationInfo() {
+        var info = table.page.info();
+        var start = info.start + 1;
+        var end = info.end;
+        var total = info.recordsTotal;
+        var filteredTotal = info.recordsDisplay;
+        
+        var infoText = '';
+        
+        if (total === filteredTotal) {
+            infoText = `Showing ${start} to ${end} of ${total} entries`;
+        } else {
+            infoText = `Showing ${start} to ${end} of ${filteredTotal} entries (filtered from ${total} total entries)`;
+        }
+        
+        $('#paginationInfo').text(infoText);
+    }
+    
+    // Function to create Bootstrap pagination
+    function createBootstrapPagination() {
+        var info = table.page.info();
+        var currentPage = info.page + 1;
+        var totalPages = info.pages;
+        
+        var pagination = $('#customPagination');
+        pagination.empty();
+        
+        // Don't show pagination if there's only 1 page
+        if (totalPages <= 1) {
+            return;
+        }
+        
+        // Previous button
+        var prevClass = currentPage === 1 ? 'disabled' : '';
+        pagination.append(
+            `<li class="page-item ${prevClass}">
+                <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>`
+        );
+        
+        // Page numbers
+        var startPage = Math.max(1, currentPage - 2);
+        var endPage = Math.min(totalPages, startPage + 4);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        for (var i = startPage; i <= endPage; i++) {
+            var activeClass = i === currentPage ? 'active' : '';
+            pagination.append(
+                `<li class="page-item ${activeClass}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>`
+            );
+        }
+        
+        // Next button
+        var nextClass = currentPage === totalPages ? 'disabled' : '';
+        pagination.append(
+            `<li class="page-item ${nextClass}">
+                <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>`
+        );
+    }
+    
+    // Initialize pagination and info on first load
+    updatePaginationInfo();
+    createBootstrapPagination();
+    
+    // Update pagination and info on table draw
+    table.on('draw', function() {
+        updatePaginationInfo();
+        createBootstrapPagination();
+    });
+    
+    // Handle pagination clicks
+    $(document).on('click', '#customPagination .page-link', function(e) {
+        e.preventDefault();
+        var page = $(this).data('page');
+        if (!$(this).parent().hasClass('disabled') && page) {
+            table.page(page - 1).draw('page');
+            updatePaginationInfo();
+            createBootstrapPagination();
+        }
+    });
+
     // Mobile-specific adjustments
     function adjustForMobile() {
         if (window.innerWidth <= 992) {
             // Adjust table columns for mobile
             table.columns.adjust().draw();
             
-            // Make sure pagination is properly positioned
-            $('.dataTables_wrapper .bottom').css({
-                'position': 'relative',
-                'bottom': 'auto'
-            });
-            
             // Make table header sticky on mobile
             $('#productTable thead th').css({
                 'position': 'sticky',
                 'top': '0',
                 'z-index': '10'
-            });
-        } else {
-            // Reset for desktop
-            $('.dataTables_wrapper .bottom').css({
-                'position': 'sticky',
-                'bottom': '0'
             });
         }
     }
@@ -923,31 +1033,7 @@ $(document).ready(function() {
     // Initial adjustment
     setTimeout(function() {
         adjustForMobile();
-        $('.dataTables_wrapper .bottom').css({
-            'position': window.innerWidth <= 992 ? 'relative' : 'sticky',
-            'bottom': window.innerWidth <= 992 ? 'auto' : '0',
-            'background': 'white',
-            'z-index': '100',
-            'padding': window.innerWidth <= 992 ? '10px 0' : '12px 0',
-            'border-top': '2px solid #e0e0e0',
-            'margin-top': '0 !important'
-        });
     }, 100);
-
-    // Make pagination sticky on every draw for desktop
-    table.on('draw', function() {
-        if (window.innerWidth > 992) {
-            $('.dataTables_wrapper .bottom').css({
-                'position': 'sticky',
-                'bottom': '0',
-                'background': 'white',
-                'z-index': '100',
-                'padding': '12px 0',
-                'border-top': '2px solid #e0e0e0',
-                'margin-top': '0 !important'
-            });
-        }
-    });
 
     function renderCartAndQueries(data) {
         // CART
