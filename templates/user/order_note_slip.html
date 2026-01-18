@@ -149,9 +149,38 @@
             {% endfor %}
         </tbody>
     </table>
+    <br><br>
+        <div><strong>Queries</strong></div>
+    <br>
 
 
-
+<table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Qty</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in queries %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.requested_qty }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align:center;color:#888;">
+                    No items found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <h3>Remarks:</h3>
+    <p>{{ query.description }}</p>
 </div>
 
 </body>
