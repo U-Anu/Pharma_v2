@@ -25,10 +25,6 @@
     overflow: hidden;
 }
 
-.orders-table thead {
-    background: #f8f9fa;
-}
-
 .orders-table th {
     font-size: 0.8rem;
     text-transform: uppercase;
@@ -41,14 +37,9 @@
 }
 
 .orders-table tbody tr:hover {
-    filter: brightness(0.98);
+    cursor: pointer;
+    filter: brightness(0.97);
 }
-
-/* ---------- STATUS ROW COLORS ---------- */
-.row-ordered     { background-color: #fff8e1; }
-.row-billed      { background-color: #e3f2fd; }
-.row-packed      { background-color: #fdecea; }
-.row-delivered   { background-color: #e8f5e9; }
 
 /* ---------- STATUS BADGE ---------- */
 .badge-status {
@@ -66,14 +57,7 @@
     font-size: 0.85rem;
 }
 
-.action-menu i {
-    width: 16px;
-}
 .table thead th {
-    border-top: 0;
-    border-bottom-width: 1px;
-    font-family: "ubuntu-medium", sans-serif;
-    font-weight: initial;
     background: #b66dff;
     color: #ffffff;
 }
@@ -119,28 +103,12 @@
         </div>
 
     </form>
-<!-- ✅ NOTE SLIP MODAL (PLACE HERE) -->
-<div class="modal fade" id="noteSlipModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
 
-            <div class="modal-header">
-                <h5 class="modal-title">Order Note Slip</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body" id="noteSlipContent">
-                <div class="text-center text-muted">Loading...</div>
-            </div>
-
-        </div>
-    </div>
-</div>
     <!-- ================= TABLE ================= -->
     <div class="orders-table">
         <table class="table table-hover align-middle mb-0">
 
-        <thead class="text-white" style="background-color: #b66dff !important;">
+            <thead>
                 <tr class="text-center">
                     <th>#</th>
                     <th>Order No</th>
@@ -149,27 +117,34 @@
                     <th>Total</th>
                     <th>Ordered By</th>
                     <th>Status</th>
-                    {% comment %} <th></th> {% endcomment %}
+                    <th>Update</th>
                 </tr>
             </thead>
 
             <tbody>
                 {% for order in orders %}
-                 <tr
-                    {% if order.status == "ordered" %}
-                        class="table-light"
-                    {% elif order.status == "billed" %}
-                        class="table-secondary text-dark"
-                    {% elif order.status == "delivered" %}
-                        class="table-success text-dark"
-                    {% elif order.status == "packed" %}
-                        class="table-danger text-dark"
-                    {% else %}
-                        class="table-secondary text-white"
-                    {% endif %}
-                >
+                
+                <tr
+    class="
+        order-row
+        {% if order.status == 'ordered' %}
+            table-warning
+        {% elif order.status == 'billed' %}
+            table-primary text-dark
+        {% elif order.status == 'packed' %}
+            table-danger text-dark
+        {% elif order.status == 'delivered' %}
+            table-success text-dark
+        {% else %}
+            table-secondary text-white
+        {% endif %}
+    "
+    data-url="{% url 'admin_order_issue' order.id %}"
+>
 
-  <td>
+
+                    <!-- ACTION MENU -->
+                    <td>
                         <div class="dropdown">
                             <a class="text-dark dropdown-toggle"
                                href="#"
@@ -178,31 +153,7 @@
                             </a>
 
                             <ul class="dropdown-menu dropdown-menu-end action-menu">
-                                <li>
-                                    {% comment %} <a class="dropdown-item"
-                                       href="{% url 'order_note_slip' order.id %}"
-                                       target="_blank">
-                                        <i class="fa fa-eye"></i> Slip
-                                    </a> {% endcomment %}
-                                    <a class="dropdown-item show-slip"
-   href="#"
-   data-url="{% url 'order_note_slip' order.id %}">
-    <i class="fa fa-eye"></i> Slip
-</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{% url 'admin_order_issue' order.id %}">
-                                        <i class="fa fa-box"></i> Issue Stock
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{% url 'order_update' order.id %}">
-                                        <i class="fa fa-edit"></i> Edit
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
+
                                 <li>
                                     <a class="dropdown-item text-danger"
                                        href="{% url 'order_delete' order.id %}"
@@ -210,9 +161,20 @@
                                         <i class="fa fa-trash"></i> Delete
                                     </a>
                                 </li>
+
                             </ul>
                         </div>
-                    </td>                    <td>{{ order.order_no }}</td>
+                    </td>
+
+                    <!-- ORDER NO -->
+                    <td>
+                        <a href="{% url 'order_note_slip' order.id %}"
+                           target="_blank"
+                           class="fw-semibold text-primary text-decoration-none">
+                            {{ order.order_no }}
+                        </a>
+                    </td>
+
                     <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
 
                     <td>
@@ -225,24 +187,34 @@
                     <td>{{ order.created_by }}</td>
 
                     <!-- STATUS -->
-                    <td>
+                    <td class="text-center">
                         {% if order.status == "ordered" %}
-                            <span class="badge badge-status bg-light text-dark ">Ordered</span>
+                            <span class="badge bg-warning text-dark">Ordered</span>
                         {% elif order.status == "billed" %}
-                            <span class="badge badge-status bg-primary">Billed</span>
+                            <span class="badge bg-primary">Billed</span>
                         {% elif order.status == "packed" %}
-                            <span class="badge badge-status bg-danger">Packed</span>
+                            <span class="badge bg-danger">Packed</span>
                         {% elif order.status == "delivered" %}
-                            <span class="badge badge-status bg-success">Delivered</span>
+                            <span class="badge bg-success">Delivered</span>
                         {% else %}
-                            <span class="badge badge-status bg-secondary">
+                            <span class="badge bg-secondary">
                                 {{ order.get_status_display }}
                             </span>
                         {% endif %}
                     </td>
 
-                    <!-- ACTION DROPDOWN -->
-                  
+                    <!-- ✔ UPDATE ONLY FOR PACKED -->
+                    <td class="text-center">
+                        {% if order.status == "packed" %}
+                            <a href="{% url 'order_update' order.id %}"
+                               class="btn btn-sm btn-outline-success"
+                               title="Update Order">
+                                <i class="fa fa-check"></i>
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
 
                 </tr>
                 {% empty %}
@@ -258,32 +230,24 @@
     </div>
 
 </div>
+
+<!-- ================= ROW CLICK SCRIPT ================= -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    document.querySelectorAll(".show-slip").forEach(btn => {
-        btn.addEventListener("click", function (e) {
-            e.preventDefault();
+    document.querySelectorAll(".order-row").forEach(row => {
+        row.addEventListener("click", function (e) {
 
-            const url = this.dataset.url;
-            const modal = new bootstrap.Modal(document.getElementById("noteSlipModal"));
-            const content = document.getElementById("noteSlipContent");
+            // stop redirect when clicking buttons or links
+            if (
+                e.target.closest("a") ||
+                e.target.closest(".dropdown") ||
+                e.target.closest("button")
+            ) {
+                return;
+            }
 
-            content.innerHTML = "<div class='text-center text-muted'>Loading...</div>";
-
-            fetch(url, {
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            })
-            .then(res => res.text())
-            .then(html => {
-                content.innerHTML = html;
-                modal.show();
-            })
-            .catch(() => {
-                content.innerHTML = "<div class='text-danger text-center'>Failed to load slip</div>";
-            });
+            window.location.href = this.dataset.url;
         });
     });
 

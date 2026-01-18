@@ -541,24 +541,158 @@ from django.shortcuts import render
 #         # 'username':username
 #     })
 
+# @login_required
+# def user_product_list(request):
+#     user = request.user
+#     user_category = getattr(user, 'user_category', None)
+
+#     products = Product.objects.all()
+
+#     # ✅ Category list from Product.form
+#     categories = (
+#         Product.objects
+#         .exclude(form__isnull=True)
+#         .exclude(form__exact='')
+#         .values_list('category', flat=True)
+#         .distinct()
+#         .order_by('category')
+#     )
+#     print("categories", categories)
+#     # markup logic (unchanged)
+#     markups = UserCategoryProductMarkup.objects.filter(
+#         user_category=user_category,
+#         product__in=products
+#     ).select_related('product')
+
+#     product_markup_map = {m.product.id: m for m in markups}
+
+#     for product in products:
+#         markup = product_markup_map.get(product.id)
+#         if markup:
+#             product.display_price = markup.owner_selling_price
+#         else:
+#             product.display_price = None
+
+#     cart_items = TempCartItem.objects.filter(user=user).select_related('product')
+#     query_items = TempQueryItem.objects.filter(user=user).select_related('product')
+#     query_header = TempQueryHeader.objects.filter(user=user).first()
+
+#     return render(request, 'customer/user_Product_list.html', {
+#         'products': products,
+#         'categories': categories,   # 👈 list of forms
+#         'cart_items': cart_items,
+#         'query_items': query_items,
+#         'query_header': query_header,
+#         'cart_subtotal': sum(ci.total_price for ci in cart_items),
+#         'cart_item_count': cart_items.count(),
+#         'cart_total_qty': sum(ci.quantity for ci in cart_items),
+#     })     recent code
+
+# from datetime import date
+# from django.utils import timezone
+# from calendar import monthrange
+
+# @login_required
+# def user_product_list(request):
+#     user = request.user
+#     user_category = getattr(user, 'user_category', None)
+
+#     today = timezone.now().date()
+
+#     # 🔹 Last day of current month
+#     last_day = monthrange(today.year, today.month)[1]
+#     end_of_current_month = date(today.year, today.month, last_day)
+
+#     # ✅ Exclude expired + current month expiry
+#     products = Product.objects.filter(
+#         expiry_date__gt=end_of_current_month
+#     )
+
+#     categories = (
+#         products
+#         .exclude(form__isnull=True)
+#         .exclude(form__exact='')
+#         .values_list('category', flat=True)
+#         .distinct()
+#         .order_by('category')
+#     )
+
+#     # ---- existing logic unchanged ----
+#     markups = UserCategoryProductMarkup.objects.filter(
+#         user_category=user_category,
+#         product__in=products
+#     ).select_related('product')
+
+#     product_markup_map = {m.product.id: m for m in markups}
+
+#     for product in products:
+#         markup = product_markup_map.get(product.id)
+#         product.display_price = markup.owner_selling_price if markup else None
+
+#     cart_items = TempCartItem.objects.filter(user=user).select_related('product')
+#     query_items = TempQueryItem.objects.filter(user=user).select_related('product')
+#     query_header = TempQueryHeader.objects.filter(user=user).first()
+
+#     return render(request, 'customer/user_Product_list.html', {
+#         'products': products,
+#         'categories': categories,
+#         'cart_items': cart_items,
+#         'query_items': query_items,
+#         'query_header': query_header,
+#         'cart_subtotal': sum(ci.total_price for ci in cart_items),
+#         'cart_item_count': cart_items.count(),
+#         'cart_total_qty': sum(ci.quantity for ci in cart_items),
+#     })  recent
+
+from datetime import date
+from calendar import monthrange
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from dateutil.relativedelta import relativedelta
+
 @login_required
 def user_product_list(request):
     user = request.user
     user_category = getattr(user, 'user_category', None)
 
-    products = Product.objects.all()
+    today = timezone.now().date()
 
-    # ✅ Category list from Product.form
+    # 🔹 Start of current month
+    start_of_month = date(today.year, today.month, 1)
+
+    # 🔹 End of 3rd month from now
+    three_months_later = today + relativedelta(months=3)
+    end_of_3rd_month = date(
+        three_months_later.year,
+        three_months_later.month,
+        monthrange(three_months_later.year, three_months_later.month)[1]
+    )
+
+    # ✅ Show:
+    # - Current + next 3 months (red)
+    # - Future months (normal)
+    # ❌ Hide older expired
+    products = Product.objects.filter(
+        expiry_date__gte=start_of_month
+    )
+
     categories = (
-        Product.objects
+        products
         .exclude(form__isnull=True)
         .exclude(form__exact='')
         .values_list('category', flat=True)
         .distinct()
         .order_by('category')
     )
-    print("categories", categories)
-    # markup logic (unchanged)
+    forms = (
+        products
+        .exclude(form__isnull=True)
+        .exclude(form__exact='')
+        .values_list('form', flat=True)
+        .distinct()
+        .order_by('form')
+    )
+    # ---- markup logic (unchanged) ----
     markups = UserCategoryProductMarkup.objects.filter(
         user_category=user_category,
         product__in=products
@@ -568,10 +702,7 @@ def user_product_list(request):
 
     for product in products:
         markup = product_markup_map.get(product.id)
-        if markup:
-            product.display_price = markup.owner_selling_price
-        else:
-            product.display_price = None
+        product.display_price = markup.owner_selling_price if markup else None
 
     cart_items = TempCartItem.objects.filter(user=user).select_related('product')
     query_items = TempQueryItem.objects.filter(user=user).select_related('product')
@@ -579,14 +710,19 @@ def user_product_list(request):
 
     return render(request, 'customer/user_Product_list.html', {
         'products': products,
-        'categories': categories,   # 👈 list of forms
+        'categories': categories,
         'cart_items': cart_items,
         'query_items': query_items,
         'query_header': query_header,
         'cart_subtotal': sum(ci.total_price for ci in cart_items),
         'cart_item_count': cart_items.count(),
         'cart_total_qty': sum(ci.quantity for ci in cart_items),
+        'start_of_month': start_of_month,
+        'end_of_3rd_month': end_of_3rd_month,
+        'forms' : forms,
     })
+
+
 
 def _add_to_temp_query(user, product, requested_qty, reason=None):
     if requested_qty <= 0:
@@ -597,7 +733,7 @@ def _add_to_temp_query(user, product, requested_qty, reason=None):
         defaults={
             'product_name': product.name,
             'requested_qty': 0,
-            'reason': reason or 'OUT_OF_STOCK'
+            'reason': reason or ''
         }
     )
     q_item.requested_qty += requested_qty
@@ -624,7 +760,7 @@ def ajax_add_to_cart(request):
 
     # No stock -> everything to missed products
     if available <= 0:
-        _add_to_temp_query(user, product, qty, reason="OUT_OF_STOCK")
+        _add_to_temp_query(user, product, qty, reason="")
         return _cart_and_query_response(user)
 
     cart_item, created = TempCartItem.objects.get_or_create(
@@ -934,6 +1070,7 @@ from django.views.decorators.csrf import csrf_exempt
 #             return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 #     return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
+
 
 
 from django.http import JsonResponse
@@ -1371,23 +1508,32 @@ def delivered_list(request):
     return render(request, "productss/orders_list.html", {"orders": orders})
 
 
+# def order_update(request,pk):
+#     order = get_object_or_404(Order, pk=pk)
+#     if request.method == 'POST':
+#         form = OrderForm(request.POST, request.FILES, instance=order)
+#         if form.is_valid():
+#             try:
+#                 order = form.save(commit=False)
+#                 order.updated_by = request.user
+#                 order.save()
+#                 messages.success(request, "order updated successfully!")
+#                 return redirect('admin_orders')
+#             except Exception as e:
+#                 messages.error(request, f"Error updating order: {e}")
+#     else:
+#         form = OrderForm(instance=order)
+#     return render(request, 'productss/order_form.html', {'form': form})
+
+
 def order_update(request,pk):
     order = get_object_or_404(Order, pk=pk)
-    if request.method == 'POST':
-        form = OrderForm(request.POST, request.FILES, instance=order)
-        if form.is_valid():
-            try:
-                order = form.save(commit=False)
-                order.updated_by = request.user
-                order.save()
-                messages.success(request, "order updated successfully!")
-                return redirect('admin_orders')
-            except Exception as e:
-                messages.error(request, f"Error updating order: {e}")
-    else:
-        form = OrderForm(instance=order)
-    return render(request, 'productss/order_form.html', {'form': form})
-
+    order.status ="delivered" 
+    order.updated_by = request.user
+    order.save()
+    messages.success(request, "order updated successfully!")
+    return redirect('admin_orders')
+  
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -1923,11 +2069,13 @@ def order_note_slip(request, pk):
 
     # SAFE: returns None if no Query exists
     query = Query.objects.filter(order=order).first()
+    queries=query.items.all()
 
     return render(request, 'user/order_note_slip.html', {
         'order': order,
         'items': order.items.all(),
         'query': query,   
+        'queries': queries,
     })
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -1936,6 +2084,7 @@ def download_note_slip(request, pk):
     order = get_object_or_404(Order, pk=pk)
     items = order.items.all()
     query = Query.objects.filter(order=order).first()
+    queries=query.items.all()
 
     lines = []
 
@@ -1969,12 +2118,24 @@ def download_note_slip(request, pk):
 
     lines.append("-" * 40)
 
+
+    lines.append("QUERIES DETAILS")
+    lines.append("-" * 40)
+    lines.append("No  Product Name                 Qty")
+    lines.append("-" * 40)
+
+    for i, item in enumerate(queries, start=1):
+        name = (item.product_name or "").ljust(28)[:28]
+        qty = str(item.requested_qty).rjust(3)
+
+        lines.append(f"{str(i).ljust(3)} {name} {qty}")
+
+    lines.append("-" * 40)
     # ---------- NOTES ----------
     lines.append("")
-    lines.append("NOTES")
-    lines.append("- Verify quantities and product details.")
-    lines.append("- For internal reference only.")
-    lines.append("- Contact office in case of discrepancy.")
+    lines.append("Remarks:")
+    lines.append(f"{query.description} ")
+
 
     content = "\n".join(lines)
 
