@@ -72,9 +72,12 @@
                   <img src="{% static 'img/user.png' %}" alt="image">
                   <span class="availability-status online"></span>
                 </div>
-                <div class="nav-profile-text">
-                  <p class="mb-1 text-black">{{username}}</p>
-                </div>
+<div class="nav-profile-text">
+  <p class="mb-1 text-black text-nowrap">
+    {{ request.user.first_name }} {{ request.user.last_name }}
+  </p>
+</div>
+
               </a>
               <div class="dropdown-menu " aria-labelledby="profileDropdown">
                 <a class="dropdown-item text-dark" href="#">

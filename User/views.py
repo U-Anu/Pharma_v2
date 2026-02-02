@@ -1442,14 +1442,22 @@ def place_order(request):
 #     return render(request, "productss/orders_list.html", {"orders": orders})
 
 def order_list(request):
+    user = request.user
+    print('---user---', user)
+
     orders = (
         Order.objects
         .select_related('created_by')
         .prefetch_related('items__product', 'queries')
-        .all()
-        .order_by('-created_at')   # newest first
+        .filter(created_by=user)      # 🔥 filter by logged-in user
+        .order_by('-created_at')      # newest first
     )
-    return render(request, "productss/orders_list.html", {"orders": orders})
+
+    return render(
+        request,
+        "productss/orders_list.html",
+        {"orders": orders}
+    )
 
 # products/views.py
 
