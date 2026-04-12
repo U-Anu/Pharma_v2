@@ -14,17 +14,20 @@ class AuthenticationForm(forms.Form):
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User  # Link to your custom User model
-        fields = ('first_name','last_name','address', 'phone_number','alternate_phone_number', 'dob', 'profile_image', 'email', 'gender')
+        fields = ('shop_name','drug_license','GST_number','license_expiry_date','address', 'phone_number','alternate_phone_number',  'profile_image', 'drug_license_image', 'email', )
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your first name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your last name'}), 
+            'shop_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter shop name'}),
+            'drug_license': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter drug license number'}),
+            'GST_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter GST number'}),
+            'license_expiry_date': forms.DateInput(attrs={'class': 'form-control', 'placeholder': 'Select license expiry date', 'type': 'date'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your address', 'rows': 3}),
             'phone_number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter your phone number'}),
             'alternate_phone_number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter your alternate_phone_number'}),
-            'dob': forms.DateInput(attrs={'class': 'form-control', 'placeholder': 'Select your date of birth', 'type': 'date'}),
+            # 'dob': forms.DateInput(attrs={'class': 'form-control', 'placeholder': 'Select your date of birth', 'type': 'date'}),
             'profile_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'drug_license_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email address'}),
-            'gender': forms.Select(attrs={'class': 'form-control'}),
+            # 'gender': forms.Select(attrs={'class': 'form-control'}),
            'password1' : forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
