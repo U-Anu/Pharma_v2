@@ -54,7 +54,7 @@ def upload_products(request):
 
                 # Required columns check
                 required_columns = [
-                    "Product", "Form", "Company", "Batch", "Expiry (MM/YY)", 
+                    "Product", "Form", "Company", "Batch", "Expiry (MM/YY)", "Composition",
                     "MRP (Rs)", "Price-to_Retailer (Rs)",  "Units per Pack", "No of Packs", "Sale GST %","Category"
                 ]
                 missing_columns = [col for col in required_columns if col not in df.columns]
@@ -81,17 +81,17 @@ def upload_products(request):
                 with transaction.atomic():
                     for _, row in df.iterrows():
                         # Get composition for product if exists
-                        composition = Composition.objects.filter(product_name=row['Product']).first()
-                        composition_value = composition.composition_name if composition else None
+                        # composition = Composition.objects.filter(product_name=row['Product']).first()
+                        # composition_value = composition.composition_name if composition else None
 
-                        if composition:
-                            product_type_name = composition.product_type
-                            product_type_obj = ProductType.objects.filter(name=product_type_name).first()
-                            if not product_type_obj:
-                                raise Exception(f"Product type '{product_type_name}' not found in ProductType table.")
-                            product_type_id = product_type_obj.pk
-                        else:
-                            product_type_id = None
+                        # if composition:
+                        #     product_type_name = composition.product_type
+                        #     product_type_obj = ProductType.objects.filter(name=product_type_name).first()
+                        #     if not product_type_obj:
+                        #         raise Exception(f"Product type '{product_type_name}' not found in ProductType table.")
+                        #     product_type_id = product_type_obj.pk
+                        # else:
+                        #     product_type_id = None
 
                         # Check if product exists
                         product = Product.objects.filter(
@@ -120,12 +120,13 @@ def upload_products(request):
                                 MRP=row['MRP (Rs)'],
                                 price=row['Price-to_Retailer (Rs)'],
                                 quantity=row['No of Packs'],
-                                composition_name=composition_value,
+                                # composition_name=composition_value,
                                 pack_size=row['Units per Pack'],
                                 GST=row['GST %'],
-                                product_type_id=product_type_id,
+                                # product_type_id=product_type_id,
                                 created_by=request.user,
-                                updated_by=request.user
+                                updated_by=request.user,
+                                composition_name=row['Composition'] if row['Composition'] else row['Product'] # Assuming composition is directly from the Excel column
                             )
                             created_count += 1
 
