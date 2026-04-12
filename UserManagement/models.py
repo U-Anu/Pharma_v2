@@ -100,6 +100,7 @@ class Usergroupmaster(models.Model):
 class TempUser(models.Model):
     shop_name = models.CharField(max_length=100)
     drug_license = models.CharField(max_length=100)
+    GST_number = models.CharField(max_length=100,null=True, blank=True)
     license_expiry_date = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=False)
     phone_number = models.IntegerField(null=True, blank=True)

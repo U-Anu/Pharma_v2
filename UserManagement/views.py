@@ -100,15 +100,15 @@ def approve_user(request, temp_user_id):
 
         # Create and save the user
         user = User.objects.create(
-            first_name=temp_user.first_name,
-            last_name=temp_user.last_name,
-            dob=temp_user.dob,
+            shop_name=temp_user.shop_name,
+            drug_license=temp_user.drug_license,
+            license_expiry_date=temp_user.license_expiry_date,
             address=temp_user.address,
             phone_number=temp_user.phone_number,
             alternate_phone_number=temp_user.alternate_phone_number,
             email=temp_user.email,
-            gender=temp_user.gender,
-            profile_image=temp_user.profile_image,
+            # gender=temp_user.gender,
+            drug_license_image=temp_user.license_image,
             is_admin=False,
             is_customer=True,
             user_category=user_category  # ✅ assign selected category
@@ -138,6 +138,7 @@ def customer_signup(request):
                 shop_name=form.cleaned_data['shop_name'],
                 drug_license=form.cleaned_data['drug_license'],
                 license_expiry_date=form.cleaned_data['license_expiry_date'],
+                GST_number=form.cleaned_data['GST_number'],
                 address=form.cleaned_data['address'],
                 phone_number=form.cleaned_data['phone_number'],
                 alternate_phone_number=form.cleaned_data['alternate_phone_number'],
