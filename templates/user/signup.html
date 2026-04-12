@@ -39,20 +39,20 @@
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="first_name">First Name *</label>
+                        <label for="shop_name">Shop Name *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fa fa-user"></i></span>
-                            {{ form.first_name }}
+                            {{ form.shop_name }}
                         </div>
-                        <div class="text-danger">{{ form.first_name.errors }}</div>
+                        <div class="text-danger">{{ form.shop_name.errors }}</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="last_name">Last Name *</label>
+                        <label for="drug_license">Drug License *</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="fa fa-user"></i></span>
-                            {{ form.last_name }}
+                            <span class="input-group-text"><i class="fa fa-id-card"></i></span>
+                            {{ form.drug_license }}
                         </div>
-                        <div class="text-danger">{{ form.last_name.errors }}</div>
+                        <div class="text-danger">{{ form.drug_license.errors }}</div>
                     </div>
                 </div>
                 <div class="row">
@@ -83,20 +83,20 @@
                         <div class="text-danger">{{ form.alternate_phone_number.errors }}</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="dob">Date of Birth *</label>
-                        {{ form.dob }}
-                        <div class="text-danger">{{ form.dob.errors }}</div>
+                        <label for="license_expiry_date">License Expiry Date *</label>
+                        {{ form.license_expiry_date }}
+                        <div class="text-danger">{{ form.license_expiry_date.errors }}</div>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="gender">Gender *</label>
-                    {{ form.gender }}
-                    <div class="text-danger">{{ form.gender.errors }}</div>
+                    <label for="drug_license_image">Drug License Image</label>
+                    {{ form.drug_license_image }}
+                    <div class="text-danger">{{ form.drug_license_image.errors }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="profile_image">Profile Image</label>
-                    {{ form.profile_image }}
-                    <div class="text-danger">{{ form.profile_image.errors }}</div>
+                    <label for="gst">GST Number</label>
+                    {{ form.GST_number }}
+                    <div class="text-danger">{{ form.GST_number.errors }}</div>
                 </div>
                 <div class="mb-3">
                     <label for="address">Address *</label>

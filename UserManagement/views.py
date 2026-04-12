@@ -48,8 +48,8 @@ def login(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user_name=User.objects.get(email=username)
-            request.session['first_name']=user_name.first_name
-            request.session['last_name']=user_name.last_name
+            request.session['shop_name']=user_name.shop_name
+            # request.session['last_name']=user_name.last_name
             user = authenticate(request, username=username, password=password)
             print("user===========",user)
             if user is not None:
@@ -135,15 +135,15 @@ def customer_signup(request):
         form = CustomUserCreationForm(request.POST, request.FILES)
         if form.is_valid():
             temp_user = TempUser.objects.create(
-                first_name=form.cleaned_data['first_name'],
-                last_name=form.cleaned_data['last_name'],
-                dob=form.cleaned_data['dob'],
+                shop_name=form.cleaned_data['shop_name'],
+                drug_license=form.cleaned_data['drug_license'],
+                license_expiry_date=form.cleaned_data['license_expiry_date'],
                 address=form.cleaned_data['address'],
                 phone_number=form.cleaned_data['phone_number'],
                 alternate_phone_number=form.cleaned_data['alternate_phone_number'],
                 email=form.cleaned_data['email'],
-                gender=form.cleaned_data['gender'],
-                profile_image=form.cleaned_data['profile_image'],
+                # gender=form.cleaned_data['gender'],
+                license_image=form.cleaned_data['drug_license_image'],
                 password=form.cleaned_data['password1'],
                 is_approved=False  # Not approved yet
             )

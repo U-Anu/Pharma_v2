@@ -98,20 +98,15 @@ class Usergroupmaster(models.Model):
         return self.group_name
 
 class TempUser(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    dob = models.DateField(null=True, blank=True)
+    shop_name = models.CharField(max_length=100)
+    drug_license = models.CharField(max_length=100)
+    license_expiry_date = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=False)
     phone_number = models.IntegerField(null=True, blank=True)
     alternate_phone_number = models.IntegerField(null=True, blank=True)
     email = models.EmailField("email address", unique=True)
-    GENDER_CHOICES = (
-        ('male', 'Male'),
-        ('female', 'Female'),
-        ('other', 'Other')
-    )
-    gender = models.CharField(max_length=30, choices=GENDER_CHOICES, null=True, blank=True)
-    profile_image = models.ImageField(upload_to='temp_user_profile/', null=True, blank=True)
+    # gender = models.CharField(max_length=30, choices=GENDER_CHOICES, null=True, blank=True)
+    license_image = models.ImageField(upload_to='temp_license_profile/', null=True, blank=True)
     password = models.CharField(max_length=128)  
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -123,20 +118,22 @@ class TempUser(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.CharField(max_length=10, null=True, blank=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    dob = models.DateField(null=True, blank=True)
+    shop_name = models.CharField(max_length=100)
+    drug_license = models.CharField(max_length=100)
+    GST_number = models.CharField(max_length=100, null=True, blank=True)
+    license_expiry_date = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=False)
     phone_number = models.IntegerField(null=True, blank=True)
     alternate_phone_number = models.IntegerField(null=True, blank=True)
     email = models.EmailField("email address", unique=True)
-    GENDER_CHOICES = (
-        ('male', 'Male'),
-        ('female', 'Female'),
-        ('other', 'Other')
-    )
-    gender = models.CharField(max_length=30, choices=GENDER_CHOICES, null=True, blank=True)
+    # GENDER_CHOICES = (
+    #     ('male', 'Male'),
+    #     ('female', 'Female'),
+    #     ('other', 'Other')
+    # )
+    # gender = models.CharField(max_length=30, choices=GENDER_CHOICES, null=True, blank=True)
     profile_image = models.ImageField(upload_to='user_profile/', null=True, blank=True)
+    drug_license_image = models.ImageField(upload_to='drug_license/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_admin = models.BooleanField(default=False)
@@ -158,11 +155,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    REQUIRED_FIELDS = ["first_name"]
+    REQUIRED_FIELDS = ["shop_name"]
     USERNAME_FIELD = "email"
 
     def __str__(self):
-        return self.first_name
+        return self.shop_name
 
 
 
