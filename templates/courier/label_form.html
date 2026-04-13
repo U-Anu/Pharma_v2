@@ -1,0 +1,231 @@
+{% extends "courier/base.html" %}
+
+{% block title %}Create Courier Label{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4">
+                    <i class="fas fa-truck"></i> Create Courier Label
+                </h2>
+                
+                <div class="text-center mb-4">
+                    <a href="/courier/add-company/" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-plus"></i> Add Company
+                    </a>
+                </div>
+                
+                <form method="POST" id="labelForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-building"></i> From (Sender)
+                        </label>
+                        <select name="from_company" class="form-select" required>
+                            <option value="">Select Company</option>
+                            {% for c in companies %}
+                            <option value="{{c.id}}">{{c.name}} - {{c.city}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-user"></i> To (Receiver)
+                        </label>
+                        <select name="to_customer" id="customerSelect" class="form-select" required style="width: 100%;">
+                            <option value="">Select or search customer...</option>
+                            {% for c in customers %}
+                            <option value="{{c.id}}">{{c.name}} - {{c.city}} ({{c.phone}})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-print"></i> Generate & Print Label
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for adding new customer -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Add New Customer
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickAddCustomerForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Name *</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address *</label>
+                        <textarea name="address" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">City *</label>
+                            <input type="text" name="city" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">State *</label>
+                            <input type="text" name="state" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Pincode *</label>
+                            <input type="text" name="pincode" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone *</label>
+                        <input type="tel" name="phone" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">
+                    <i class="fas fa-save"></i> Save Customer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize Select2 with search and option for adding new customer
+    $('#customerSelect').select2({
+        placeholder: "Search customer by name, city, or phone...",
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return 'No customer found. <button type="button" class="btn btn-sm btn-primary mt-2" onclick="openAddCustomerModal()">➕ Add New Customer</button>';
+            }
+        },
+        escapeMarkup: function(markup) {
+            return markup;
+        }
+    });
+    
+    // Handle the case when user presses Enter in search box
+    $('#customerSelect').on('select2:open', function() {
+        setTimeout(function() {
+            const searchField = document.querySelector('.select2-search__field');
+            if (searchField) {
+                searchField.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && searchField.value.trim() !== '') {
+                        e.preventDefault();
+                        // Search for customer - if not found, show modal
+                        const searchTerm = searchField.value;
+                        const exists = checkIfCustomerExists(searchTerm);
+                        if (!exists) {
+                            openAddCustomerModalWithName(searchTerm);
+                        }
+                    }
+                });
+            }
+        }, 100);
+    });
+});
+
+// Function to check if customer exists
+function checkIfCustomerExists(searchTerm) {
+    const select = document.getElementById('customerSelect');
+    const options = select.options;
+    const termLower = searchTerm.toLowerCase();
+    
+    for (let i = 0; i < options.length; i++) {
+        const text = options[i].text.toLowerCase();
+        if (text.includes(termLower)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to open modal with pre-filled name
+function openAddCustomerModalWithName(name) {
+    $('#addCustomerModal').modal('show');
+    $('#quickAddCustomerForm input[name="name"]').val(name);
+}
+
+// Function to open modal
+function openAddCustomerModal() {
+    $('#addCustomerModal').modal('show');
+}
+
+// Save customer via AJAX
+$('#saveCustomerBtn').click(function() {
+    const formData = $('#quickAddCustomerForm').serialize();
+    
+    $.ajax({
+        url: '/courier/api/add-customer/',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                // Add new option to select
+                const newOption = new Option(
+                    response.customer.name + ' - ' + response.customer.city + ' (' + response.customer.phone + ')',
+                    response.customer.id,
+                    true,
+                    true
+                );
+                $('#customerSelect').append(newOption).trigger('change');
+                
+                // Close modal and show success message
+                $('#addCustomerModal').modal('hide');
+                $('#quickAddCustomerForm')[0].reset();
+                
+                // Show success toast or alert
+                showNotification('Customer added successfully!', 'success');
+            } else {
+                showNotification('Error: ' + response.error, 'danger');
+            }
+        },
+        error: function(xhr) {
+            showNotification('Error adding customer. Please try again.', 'danger');
+        }
+    });
+});
+
+// Reset modal when closed
+$('#addCustomerModal').on('hidden.bs.modal', function() {
+    $('#quickAddCustomerForm')[0].reset();
+});
+
+// Show notification
+function showNotification(message, type) {
+    const alertDiv = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+        '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '"></i> ' +
+        message +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+        '</div>');
+    
+    $('.container-main').prepend(alertDiv);
+    
+    setTimeout(function() {
+        alertDiv.alert('close');
+    }, 3000);
+}
+</script>
+{% endblock %}

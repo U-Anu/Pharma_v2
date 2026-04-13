@@ -30,6 +30,8 @@ urlpatterns = [
     path('product/', include('ProductManagement.urls')),
     path('products/', include('products.urls')),
     path('user/', include('User.urls')),
+    path('courier/', include('courier.urls')),
+
 
 ]
 

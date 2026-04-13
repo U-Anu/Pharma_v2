@@ -210,7 +210,7 @@
           <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
             <span class="mdi mdi-menu"></span>
           </button>
-          <div class="search-field d-none d-md-block">
+          {% comment %} <div class="search-field d-none d-md-block">
             <form class="d-flex align-items-center h-100" action="#">
               <div class="input-group">
                 <div class="input-group-prepend bg-transparent">
@@ -219,7 +219,7 @@
                 <input type="text" class="form-control bg-transparent border-0" placeholder="Search projects">
               </div>
             </form>
-          </div>
+          </div> {% endcomment %}
           <ul class="navbar-nav navbar-nav-right">
             
             <li class="nav-item d-none d-lg-block full-screen-link">
@@ -227,11 +227,13 @@
                 <i class="mdi mdi-fullscreen" id="fullscreen-button"></i>
               </a>
             </li>
-            
-            <li class="nav-item dropdown">
+          <a href="/courier/" class="btn btn-outline-dark me-2">
+                     Courier
+                </a>
+        {% comment %}    <li class="nav-item dropdown">
               <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="mdi mdi-email-outline"></i>
-                {% comment %} <span class="count-symbol bg-warning"></span> {% endcomment %}
+                 <span class="count-symbol bg-warning"></span> 
               </a>
               <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list" aria-labelledby="messageDropdown">
                 <h6 class="p-3 mb-0">Messages</h6>
@@ -273,7 +275,7 @@
             <li class="nav-item dropdown">
               <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-bs-toggle="dropdown">
                 <i class="mdi mdi-bell-outline"></i>
-                {% comment %} <span class="count-symbol bg-danger"></span> {% endcomment %}
+                <span class="count-symbol bg-danger"></span> 
               </a>
               <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list" aria-labelledby="notificationDropdown">
                 <h6 class="p-3 mb-0">Notifications</h6>
@@ -315,7 +317,7 @@
                 </a>
                 <div class="dropdown-divider"></div>
                 <h6 class="p-3 mb-0 text-center">See all notifications</h6>
-              </div>
+              </div>{% endcomment %}
             </li>
             
             <li class="nav-item nav-profile dropdown">
@@ -323,7 +325,7 @@
                 <div class="nav-profile-img">
                   <img src="{% static 'assets/images/faces/face1.jpg' %}" alt="image">
                   <span class="availability-status online"></span>
-                </div>
+                </div> 
                 <div class="nav-profile-text">
                   <p class="mb-1 text-black">Admin</p>
                 </div>
