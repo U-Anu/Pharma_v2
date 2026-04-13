@@ -249,7 +249,85 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey('UserManagement.User', related_name='orders_created_by', null=True, on_delete=models.SET_NULL)
     updated_by = models.ForeignKey('UserManagement.User', related_name='orders_updated_by', null=True, on_delete=models.SET_NULL)
-
+    DELIVERY_TYPE_CHOICES = [
+        ('logistics', 'Logistics'),
+        ('pickup', 'Pickup'),
+        ('staff', 'Staff Delivery'),
+    ]
+    
+    LOGISTICS_MODE_CHOICES = [
+        ('standard', 'Standard'),
+        ('express', 'Express'),
+        ('same_day', 'Same Day'),
+        ('overnight', 'Overnight'),
+    ]
+    
+    delivery_type = models.CharField(
+        max_length=20, 
+        choices=DELIVERY_TYPE_CHOICES, 
+        null=True, 
+        blank=True
+    )
+    
+    # Logistics fields
+    logistics_mode = models.CharField(
+        max_length=20, 
+        choices=LOGISTICS_MODE_CHOICES, 
+        null=True, 
+        blank=True
+    )
+    logistics_name = models.CharField(max_length=100, null=True, blank=True)
+    logistics_charges = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True
+    )
+    tracking_number = models.CharField(max_length=100, null=True, blank=True)
+    
+    # Staff delivery fields
+    staff_name = models.CharField(max_length=100, null=True, blank=True)
+    staff_delivery_charge = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True
+    )
+    
+    # Delivery information
+    delivery_address = models.TextField(null=True, blank=True)
+    delivery_contact = models.CharField(max_length=20, null=True, blank=True)
+    delivery_date = models.DateTimeField(null=True, blank=True)
+    delivered_by = models.ForeignKey(
+        'UserManagement.User', 
+        related_name='delivered_orders', 
+        null=True, 
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+    delivery_notes = models.TextField(null=True, blank=True)
+    
+    # Delivery status
+    DELIVERY_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('assigned', 'Assigned'),
+        ('picked_up', 'Picked Up'),
+        ('in_transit', 'In Transit'),
+        ('out_for_delivery', 'Out for Delivery'),
+        ('delivered', 'Delivered'),
+        ('failed', 'Failed'),
+        ('returned', 'Returned'),
+    ]
+    delivery_status = models.CharField(
+        max_length=20, 
+        choices=DELIVERY_STATUS_CHOICES, 
+        default='pending',
+        null=True,
+        blank=True
+    )
+    
+    # For delivered orders - link to delivery info page
+    delivery_slip_url = models.URLField(max_length=500, null=True, blank=True)
     def save(self, *args, **kwargs):
         if not self.order_no:
             today = timezone.now().date()
@@ -465,3 +543,19 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.variant_name}"
 
+
+# models.py - Add this for delivery tracking history
+
+class OrderDeliveryTracking(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='delivery_tracking')
+    status = models.CharField(max_length=30, choices=Order.DELIVERY_STATUS_CHOICES)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    remarks = models.TextField(null=True, blank=True)
+    updated_by = models.ForeignKey('UserManagement.User', on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.order.order_no} - {self.status} at {self.created_at}"

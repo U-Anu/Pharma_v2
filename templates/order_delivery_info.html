@@ -1,0 +1,274 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body_block %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<style>
+.delivery-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #b66dff;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #b66dff;
+}
+
+.timeline-item .time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.timeline-item .status {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+</style>
+
+<div class="container mt-3">
+
+    <div class="d-flex justify-content-between mb-3">
+        <h4 class="text-primary">Delivery Info - {{ order.order_no }}</h4>
+        <a href="{% url 'admin_delivery_list' %}" class="btn btn-sm btn-secondary">← Back to List</a>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="delivery-card">
+        <div class="row">
+            <div class="col-md-3">
+                <small class="text-muted">Customer</small>
+                <div><strong>{{ order.created_by.get_full_name|default:order.created_by }}</strong></div>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Total Amount</small>
+                <div><strong>₹{{ order.total_price }}</strong></div>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Order Date</small>
+                <div>{{ order.created_at|date:"d M Y" }}</div>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Current Status</small>
+                <div>
+                    <span class="badge {% if order.delivery_status == 'delivered' %}bg-success{% elif order.delivery_status == 'in_transit' %}bg-primary{% else %}bg-warning{% endif %}">
+                        {{ order.get_delivery_status_display|default:"Pending" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Form -->
+    <form method="post" class="delivery-card">
+        {% csrf_token %}
+        
+        <h6 class="section-title">Delivery Options</h6>
+        
+        <div class="mb-3">
+            <label class="form-label">Delivery Type</label>
+            <select name="delivery_type" id="deliveryType" class="form-select" required>
+                <option value="">Select Type</option>
+                <option value="logistics" {% if order.delivery_type == 'logistics' %}selected{% endif %}>Logistics</option>
+                <option value="staff" {% if order.delivery_type == 'staff' %}selected{% endif %}>Staff Delivery</option>
+                <option value="pickup" {% if order.delivery_type == 'pickup' %}selected{% endif %}>Customer Pickup</option>
+            </select>
+        </div>
+
+        <!-- Logistics Fields -->
+        <div id="logisticsFields" style="display: none;">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Logistics Name</label>
+                    <input type="text" name="logistics_name" class="form-control" 
+                           value="{{ order.logistics_name|default:'' }}" placeholder="e.g., Blue Dart, DTDC">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tracking Number</label>
+                    <input type="text" name="tracking_number" class="form-control" 
+                           value="{{ order.tracking_number|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Charges (₹)</label>
+                    <input type="number" step="0.01" name="logistics_charges" class="form-control" 
+                           value="{{ order.logistics_charges|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Fields -->
+        <div id="staffFields" style="display: none;">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Staff Name</label>
+                    <input type="text" name="staff_name" class="form-control" 
+                           value="{{ order.staff_name|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Delivery Charge (₹)</label>
+                    <input type="number" step="0.01" name="staff_delivery_charge" class="form-control" 
+                           value="{{ order.staff_delivery_charge|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Delivery Address</label>
+            <textarea name="delivery_address" rows="2" class="form-control">{{ order.delivery_address|default:'' }}</textarea>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Contact Number</label>
+                <input type="text" name="delivery_contact" class="form-control" 
+                       value="{{ order.delivery_contact|default:'' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Delivery Status</label>
+                <select name="delivery_status" id="deliveryStatus" class="form-select">
+                    <option value="pending" {% if order.delivery_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="assigned" {% if order.delivery_status == 'assigned' %}selected{% endif %}>Assigned</option>
+                    <option value="in_transit" {% if order.delivery_status == 'in_transit' %}selected{% endif %}>In Transit</option>
+                    <option value="delivered" {% if order.delivery_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Delivery Slip URL - Shows only when delivered -->
+        <div id="slipUrlField" style="display: none;">
+            <div class="mb-3">
+                <label class="form-label">Delivery Slip / Invoice URL</label>
+                <input type="url" name="delivery_slip_url" class="form-control" 
+                       value="{{ order.delivery_slip_url|default:'' }}"
+                       placeholder="https://example.com/invoice.pdf">
+                <small class="text-muted">Link to delivery slip, invoice, or proof of delivery (PDF, image, or any URL)</small>
+            </div>
+        </div>
+
+        <!-- Show existing slip link if available -->
+        {% if order.delivery_slip_url %}
+        <div class="mb-3">
+            <label class="form-label">Current Slip/Invoice:</label>
+            <div>
+                <a href="{{ order.delivery_slip_url }}" target="_blank" class="btn btn-sm btn-success">
+                    <i class="fa fa-external-link"></i> View Current Slip
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <textarea name="delivery_notes" rows="2" class="form-control">{{ order.delivery_notes|default:'' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save"></i> Save Changes
+            
+        </button>
+         {% if order.tracking_number %}
+            <a href="https://www.google.com/search?q={{ order.logistics_name }}%20tracking" 
+               target="_blank" class="btn btn-info">
+                <i class="fa fa-search"></i> Track Order
+            </a>
+            {% endif %}
+    </form>
+ {% if order.delivery_tracking.all %}
+    <div class="delivery-card">
+        <h6 class="section-title">Delivery Timeline</h6>
+        <div class="timeline">
+            {% for tracking in order.delivery_tracking.all %}
+            <div class="timeline-item">
+                <div class="time">{{ tracking.created_at|date:"d M Y, H:i" }}</div>
+                <div class="status">{{ tracking.get_status_display }}</div>
+                {% if tracking.location %}
+                <div class="small text-muted"><i class="fa fa-map-marker-alt"></i> {{ tracking.location }}</div>
+                {% endif %}
+                {% if tracking.remarks %}
+                <div class="small">{{ tracking.remarks }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Toggle delivery type fields
+document.getElementById('deliveryType').addEventListener('change', function() {
+    const logistics = document.getElementById('logisticsFields');
+    const staff = document.getElementById('staffFields');
+    
+    if (this.value === 'logistics') {
+        logistics.style.display = 'block';
+        staff.style.display = 'none';
+    } else if (this.value === 'staff') {
+        logistics.style.display = 'none';
+        staff.style.display = 'block';
+    } else {
+        logistics.style.display = 'none';
+        staff.style.display = 'none';
+    }
+});
+
+// Show/hide delivery slip URL field based on delivery status
+const deliveryStatus = document.getElementById('deliveryStatus');
+const slipUrlField = document.getElementById('slipUrlField');
+
+if (deliveryStatus) {
+    deliveryStatus.addEventListener('change', function() {
+        if (this.value === 'delivered') {
+            slipUrlField.style.display = 'block';
+        } else {
+            slipUrlField.style.display = 'none';
+        }
+    });
+}
+
+// Trigger on load
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('deliveryType').dispatchEvent(new Event('change'));
+    if (deliveryStatus) {
+        deliveryStatus.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+
+{% endblock %}

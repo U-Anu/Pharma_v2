@@ -8,6 +8,11 @@ urlpatterns = [
     path("admin/orders/<int:order_id>/issue/", admin_order_issue, name="admin_order_issue"),
     # path('orders/', user_order_list, name='user_order_list'),
     path('admin_orders/', admin_order_list, name='admin_orders'),
+    path('admin_delivery_list/', admin_delivery_list, name='admin_delivery_list'),
+    path('admin/deliveries/', admin_delivery_list, name='admin_delivery_list'),
+    path('order/<int:order_id>/delivery-info/', order_delivery_info, name='order_delivery_info'),
+    path('api/order/<int:order_id>/update-status/', update_delivery_status, name='update_delivery_status'),
+   
     path('order/<int:order_id>/', order_detail, name='order_detail'),
     path("user-query-list/", user_query_list, name="user_query_list"),
     path('user_products/', user_product_list, name='user_product_list'),

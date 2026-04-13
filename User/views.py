@@ -125,7 +125,7 @@ from django.utils.dateparse import parse_date
 
 def admin_order_list(request):
     orders = (
-        Order.objects
+        Order.objects.exclude(status="delivered")
         .select_related("created_by")
         .prefetch_related(
             "items__product",
@@ -164,6 +164,174 @@ def admin_order_list(request):
     orders = orders.distinct().order_by("-created_at")
 
     return render(request, "users_orders_list.html", {"orders": orders})
+
+
+# views.py - Update your admin_delivery_list view
+
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.core.paginator import Paginator
+import json
+
+def admin_delivery_list(request):
+    # Add delivery_type filter
+    delivery_type = request.GET.get("delivery_type", "")
+    delivery_status = request.GET.get("delivery_status", "")
+    
+    orders = (
+        Order.objects.filter(status="delivered")
+        .select_related("created_by", "delivered_by")
+        .prefetch_related(
+            "items__product",
+            "queries__items__product",
+            "queries",
+            "delivery_tracking"
+        )
+        .all()
+    )
+    
+    customer = request.GET.get("customer", "").strip()
+    product = request.GET.get("product", "").strip()
+    start_date = request.GET.get("start_date", "")
+    end_date = request.GET.get("end_date", "")
+    
+    if customer:
+        orders = orders.filter(
+            Q(created_by__first_name__icontains=customer) |
+            Q(created_by__last_name__icontains=customer)
+        )
+    
+    if product:
+        orders = orders.filter(
+            Q(items__product_name__icontains=product) |
+            Q(items__product__name__icontains=product) |
+            Q(queries__items__product_name__icontains=product) |
+            Q(queries__items__product__name__icontains=product)
+        )
+    
+    if delivery_type:
+        orders = orders.filter(delivery_type=delivery_type)
+    
+    if delivery_status:
+        orders = orders.filter(delivery_status=delivery_status)
+    
+    if start_date:
+        orders = orders.filter(created_at__date__gte=parse_date(start_date))
+    
+    if end_date:
+        orders = orders.filter(created_at__date__lte=parse_date(end_date))
+    
+    orders = orders.distinct().order_by("-created_at")
+    
+    # Add pagination
+    paginator = Paginator(orders, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        "orders": page_obj,
+        "delivery_type_choices": Order.DELIVERY_TYPE_CHOICES,
+        "delivery_status_choices": Order.DELIVERY_STATUS_CHOICES,
+    }
+    
+    return render(request, "order_delivery_list.html", context)
+
+# New view for delivery info page
+def order_delivery_info(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    
+    if request.method == 'POST':
+        # Update delivery information
+        order.delivery_type = request.POST.get('delivery_type')
+        
+        if order.delivery_type == 'logistics':
+            order.logistics_mode = request.POST.get('logistics_mode')
+            order.logistics_name = request.POST.get('logistics_name')
+            order.logistics_charges = request.POST.get('logistics_charges') or None
+            order.tracking_number = request.POST.get('tracking_number')
+            # Clear staff fields
+            order.staff_name = None
+            order.staff_delivery_charge = None
+            
+        elif order.delivery_type == 'staff':
+            order.staff_name = request.POST.get('staff_name')
+            order.staff_delivery_charge = request.POST.get('staff_delivery_charge') or None
+            # Clear logistics fields
+            order.logistics_mode = None
+            order.logistics_name = None
+            order.logistics_charges = None
+            order.tracking_number = None
+            
+        elif order.delivery_type == 'pickup':
+            # Clear both logistics and staff fields
+            order.logistics_mode = None
+            order.logistics_name = None
+            order.logistics_charges = None
+            order.tracking_number = None
+            order.staff_name = None
+            order.staff_delivery_charge = None
+        
+        order.delivery_address = request.POST.get('delivery_address')
+        order.delivery_contact = request.POST.get('delivery_contact')
+        order.delivery_notes = request.POST.get('delivery_notes')
+        order.delivery_status = request.POST.get('delivery_status')
+        order.delivery_slip_url = request.POST.get('delivery_slip_url')
+
+        # If status changed to delivered, update main order status
+        if order.delivery_status == 'delivered' and order.status != 'delivered':
+            order.status = 'delivered'
+        
+        order.save()
+        
+        # Add tracking entry
+        OrderDeliveryTracking.objects.create(
+            order=order,
+            status=order.delivery_status,
+            remarks=f"Delivery info updated: {order.delivery_type}",
+            updated_by=request.user
+        )
+        
+        messages.success(request, "Delivery information updated successfully!")
+        return redirect('admin_delivery_list')
+    
+    context = {
+        'order': order,
+        'delivery_type_choices': Order.DELIVERY_TYPE_CHOICES,
+        'logistics_mode_choices': Order.LOGISTICS_MODE_CHOICES,
+        'delivery_status_choices': Order.DELIVERY_STATUS_CHOICES,
+    }
+    
+    return render(request, "order_delivery_info.html", context)
+
+# API endpoint for updating delivery status (AJAX)
+@require_http_methods(["POST"])
+def update_delivery_status(request, order_id):
+    try:
+        data = json.loads(request.body)
+        order = get_object_or_404(Order, id=order_id)
+        
+        order.delivery_status = data.get('delivery_status')
+        order.delivery_date = timezone.now() if data.get('delivery_status') == 'delivered' else order.delivery_date
+        
+        if data.get('tracking_number'):
+            order.tracking_number = data.get('tracking_number')
+        
+        order.save()
+        
+        # Add tracking entry
+        OrderDeliveryTracking.objects.create(
+            order=order,
+            status=order.delivery_status,
+            location=data.get('location', ''),
+            remarks=data.get('remarks', ''),
+            updated_by=request.user
+        )
+        
+        return JsonResponse({'success': True, 'message': 'Status updated successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
 
 
 def admin_order_issue(request, order_id):
