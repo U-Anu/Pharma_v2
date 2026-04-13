@@ -1,0 +1,260 @@
+<!-- templates/order_delivery_info.html -->
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body_block %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<style>
+.delivery-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #b66dff;
+    display: inline-block;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #b66dff;
+}
+
+.timeline-item .time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.timeline-item .status {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-primary">Delivery Information - Order #{{ order.order_no }}</h4>
+        <a href="{% url 'admin_delivery_list' %}" class="btn btn-outline-secondary">
+            <i class="fa fa-arrow-left"></i> Back to Orders
+        </a>
+    </div>
+
+    <!-- Order Summary Card -->
+    <div class="delivery-card">
+        <h6 class="section-title">Order Summary</h6>
+        <div class="row">
+            <div class="col-md-3">
+                <small class="text-muted">Order Date</small>
+                <div>{{ order.created_at|date:"d M Y, H:i" }}</div>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Customer</small>
+                <div>{{ order.created_by.get_full_name|default:order.created_by }}</div>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Total Amount</small>
+                <div class="fw-bold">₹{{ order.total_price }}</div>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Current Status</small>
+                <div>
+                    {% if order.delivery_status == 'delivered' %}
+                        <span class="badge bg-success">Delivered</span>
+                    {% elif order.delivery_status == 'in_transit' %}
+                        <span class="badge bg-primary">In Transit</span>
+                    {% elif order.delivery_status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ order.get_delivery_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Form -->
+    <form method="post" class="delivery-card">
+        {% csrf_token %}
+        
+        <!-- Delivery Type Selection -->
+        <h6 class="section-title">Delivery Options</h6>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Delivery Type *</label>
+            <select name="delivery_type" id="deliveryType" class="form-select" required>
+                <option value="">Select Delivery Type</option>
+                {% for value, label in delivery_type_choices %}
+                <option value="{{ value }}" {% if order.delivery_type == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Logistics Fields -->
+        <div id="logisticsFields" style="display: none;">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Logistics Mode</label>
+                    <select name="logistics_mode" class="form-select">
+                        <option value="">Select Mode</option>
+                        {% for value, label in logistics_mode_choices %}
+                        <option value="{{ value }}" {% if order.logistics_mode == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Logistics Name</label>
+                    <input type="text" name="logistics_name" class="form-control" 
+                           value="{{ order.logistics_name|default:'' }}" placeholder="e.g., Blue Dart, DTDC">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Charges (₹)</label>
+                    <input type="number" step="0.01" name="logistics_charges" class="form-control" 
+                           value="{{ order.logistics_charges|default:'' }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tracking Number</label>
+                <input type="text" name="tracking_number" class="form-control" 
+                       value="{{ order.tracking_number|default:'' }}" 
+                       placeholder="Enter tracking number">
+            </div>
+        </div>
+
+        <!-- Staff Fields -->
+        <div id="staffFields" style="display: none;">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Staff Name</label>
+                    <input type="text" name="staff_name" class="form-control" 
+                           value="{{ order.staff_name|default:'' }}" placeholder="Staff name">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Delivery Charge (₹)</label>
+                    <input type="number" step="0.01" name="staff_delivery_charge" class="form-control" 
+                           value="{{ order.staff_delivery_charge|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Common Delivery Fields -->
+        <h6 class="section-title mt-3">Delivery Details</h6>
+        <div class="mb-3">
+            <label class="form-label">Delivery Address</label>
+            <textarea name="delivery_address" rows="2" class="form-control" 
+                      placeholder="Full delivery address">{{ order.delivery_address|default:'' }}</textarea>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Contact Number</label>
+                <input type="text" name="delivery_contact" class="form-control" 
+                       value="{{ order.delivery_contact|default:'' }}" placeholder="Phone number">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Delivery Status</label>
+                <select name="delivery_status" class="form-select">
+                    {% for value, label in delivery_status_choices %}
+                    <option value="{{ value }}" {% if order.delivery_status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Delivery Notes</label>
+            <textarea name="delivery_notes" rows="2" class="form-control" 
+                      placeholder="Special instructions, landmarks, etc.">{{ order.delivery_notes|default:'' }}</textarea>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-save"></i> Save Delivery Information
+            </button>
+            {% if order.tracking_number %}
+            <a href="https://www.google.com/search?q={{ order.logistics_name }}%20tracking" 
+               target="_blank" class="btn btn-info">
+                <i class="fa fa-search"></i> Track Order
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Delivery Timeline -->
+    {% if order.delivery_tracking.all %}
+    <div class="delivery-card">
+        <h6 class="section-title">Delivery Timeline</h6>
+        <div class="timeline">
+            {% for tracking in order.delivery_tracking.all %}
+            <div class="timeline-item">
+                <div class="time">{{ tracking.created_at|date:"d M Y, H:i" }}</div>
+                <div class="status">{{ tracking.get_status_display }}</div>
+                {% if tracking.location %}
+                <div class="small text-muted"><i class="fa fa-map-marker-alt"></i> {{ tracking.location }}</div>
+                {% endif %}
+                {% if tracking.remarks %}
+                <div class="small">{{ tracking.remarks }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('deliveryType').addEventListener('change', function() {
+    const logisticsFields = document.getElementById('logisticsFields');
+    const staffFields = document.getElementById('staffFields');
+    
+    if (this.value === 'logistics') {
+        logisticsFields.style.display = 'block';
+        staffFields.style.display = 'none';
+    } else if (this.value === 'staff') {
+        logisticsFields.style.display = 'none';
+        staffFields.style.display = 'block';
+    } else {
+        logisticsFields.style.display = 'none';
+        staffFields.style.display = 'none';
+    }
+});
+
+// Trigger on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const event = new Event('change');
+    document.getElementById('deliveryType').dispatchEvent(event);
+});
+</script>
+
+{% endblock %}

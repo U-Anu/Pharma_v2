@@ -1,0 +1,228 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block body_block %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<style>
+.page-title {
+    font-weight: 600;
+}
+
+.filter-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.orders-table {
+    background: #ffffff;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.orders-table th {
+    background: #b66dff;
+    color: #ffffff;
+    font-size: 0.85rem;
+    padding: 12px;
+    white-space: nowrap;
+}
+
+.orders-table td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    font-size: 0.85rem;
+}
+
+.orders-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+}
+
+.action-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+.slip-link {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #28a745;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.75rem;
+}
+
+.slip-link:hover {
+    background: #218838;
+    color: white;
+}
+</style>
+
+<div class="container-fluid mt-3">
+
+    <h4 class="page-title text-primary mb-3">
+        <i class="fa fa-truck"></i> Delivery Orders
+    </h4>
+
+    <!-- FILTERS -->
+    <form method="get" class="filter-card row g-2">
+        <div class="col-md-3">
+            <input type="text" name="customer" value="{{ request.GET.customer }}" 
+                   class="form-control form-control-sm" placeholder="Customer name">
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="product" value="{{ request.GET.product }}" 
+                   class="form-control form-control-sm" placeholder="Product name">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="start_date" value="{{ request.GET.start_date }}" 
+                   class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="end_date" value="{{ request.GET.end_date }}" 
+                   class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2">
+            <select name="delivery_type" class="form-select form-select-sm">
+                <option value="">All Types</option>
+                <option value="logistics" {% if request.GET.delivery_type == 'logistics' %}selected{% endif %}>Logistics</option>
+                <option value="staff" {% if request.GET.delivery_type == 'staff' %}selected{% endif %}>Staff</option>
+                <option value="pickup" {% if request.GET.delivery_type == 'pickup' %}selected{% endif %}>Pickup</option>
+            </select>
+        </div>
+        <div class="col-md-12">
+            <button class="btn btn-sm btn-primary">Filter</button>
+            <a href="{% url 'admin_delivery_list' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+
+    <!-- TABLE -->
+    <div class="orders-table">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Order No</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Delivery Type</th>
+                    <th>Details</th>
+                    <th>Status</th>
+                    <th>Slip/Invoice</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>
+                        <a href="{% url 'order_note_slip' order.id %}" target="_blank">
+                            {{ order.order_no }}
+                        </a>
+                    </td>
+                    <td>{{ order.created_at|date:"d M Y" }}</td>
+                    <td>{{ order.created_by.get_full_name|default:order.created_by }}</td>
+                    <td>₹{{ order.total_price }}</td>
+                    
+                    <td>
+                        {% if order.delivery_type == 'logistics' %}
+                            <span class="badge bg-info">Logistics</span>
+                        {% elif order.delivery_type == 'staff' %}
+                            <span class="badge bg-warning">Staff</span>
+                        {% elif order.delivery_type == 'pickup' %}
+                            <span class="badge bg-success">Pickup</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Not set</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        {% if order.delivery_type == 'logistics' %}
+                            {{ order.logistics_name|default:"-" }}<br>
+                            <small>Track: {{ order.tracking_number|default:"-" }}</small>
+                        {% elif order.delivery_type == 'staff' %}
+                            Staff: {{ order.staff_name|default:"-" }}<br>
+                            <small>Charge: ₹{{ order.staff_delivery_charge|default:"0" }}</small>
+                        {% elif order.delivery_type == 'pickup' %}
+                            Pickup by customer
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        <span class="badge {% if order.delivery_status == 'delivered' %}bg-success{% elif order.delivery_status == 'in_transit' %}bg-primary{% else %}bg-warning{% endif %}">
+                            {{ order.get_delivery_status_display|default:"Pending" }}
+                        </span>
+                    </td>
+                    
+                    <td class="text-center">
+                        {% if order.delivery_slip_url %}
+                            <a href="{{ order.delivery_slip_url }}" target="_blank" class="slip-link">
+                                <i class="fa fa-file-pdf-o"></i> View
+                            </a>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        <a href="{% url 'order_delivery_info' order.id %}" class="btn btn-sm btn-outline-primary action-btn">
+                            <i class="fa fa-edit"></i> Update
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        No delivery orders found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    {% if orders.has_other_pages %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% if orders.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ orders.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in orders.paginator.page_range %}
+            <li class="page-item {% if orders.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endfor %}
+            
+            {% if orders.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ orders.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+{% endblock %}
