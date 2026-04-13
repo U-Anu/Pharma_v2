@@ -1,0 +1,158 @@
+{% extends "courier/base.html" %}
+
+{% block title %}Create Courier Label{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4">
+                    <i class="fas fa-truck"></i> Create Courier Label
+                </h2>
+                
+                <div class="text-center mb-4">
+                    <a href="/courier/add-company/" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-plus"></i> Add Company
+                    </a>
+                </div>
+                
+                <form method="POST" id="mainForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-building"></i> From (Sender)
+                        </label>
+                        <select name="from_company" class="form-select" required>
+                            <option value="">Select Company</option>
+                            {% for c in companies %}
+                            <option value="{{c.id}}">{{c.name}} - {{c.city}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-user"></i> To (Receiver)
+                        </label>
+                        
+                        <!-- Search Box -->
+                        <div class="input-group mb-2">
+                            <input type="text" 
+                                   name="search" 
+                                   id="customerSearch" 
+                                   class="form-control" 
+                                   placeholder="Search customer by name, city, or phone..."
+                                   value="{{ search_query }}">
+                            <button type="submit" class="btn btn-outline-secondary" name="search_btn">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="showAddCustomerForm()">
+                                <i class="fas fa-plus"></i> Add New
+                            </button>
+                        </div>
+                        
+                        <!-- Customer Select -->
+                        <select name="to_customer" class="form-select" required>
+                            <option value="">Select Customer</option>
+                            {% for c in customers %}
+                            <option value="{{c.id}}">{{c.name}} - {{c.city}} ({{c.phone}})</option>
+                            {% endfor %}
+                        </select>
+                        
+                        {% if search_query and not customers %}
+                        <div class="alert alert-info mt-2">
+                            No customers found. <a href="#" onclick="showAddCustomerForm()">Click here to add new customer</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-print"></i> Generate & Print Label
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for adding new customer -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Add New Customer
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickAddCustomerForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_customer">
+                    <div class="mb-3">
+                        <label class="form-label">Name *</label>
+                        <input type="text" name="new_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address *</label>
+                        <textarea name="new_address" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">City *</label>
+                            <input type="text" name="new_city" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">State *</label>
+                            <input type="text" name="new_state" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Pincode *</label>
+                            <input type="text" name="new_pincode" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone *</label>
+                        <input type="tel" name="new_phone" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitNewCustomer">
+                    <i class="fas fa-save"></i> Save & Use
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAddCustomerForm() {
+    $('#addCustomerModal').modal('show');
+}
+
+$('#submitNewCustomer').click(function() {
+    // Submit the form with the new customer data
+    const formData = $('#quickAddCustomerForm').serialize();
+    
+    // Create a hidden form to submit
+    $('<form method="POST">' + formData + '</form>')
+        .appendTo('body')
+        .submit();
+});
+
+// Optional: Show add form when search returns no results
+{% if search_query and not customers %}
+$(document).ready(function() {
+    setTimeout(function() {
+        showAddCustomerForm();
+    }, 500);
+});
+{% endif %}
+</script>
+{% endblock %}

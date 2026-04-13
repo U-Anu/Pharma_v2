@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'ProductManagement',
     'news',
     'products',
-   'User'
+   'User',
+   'courier',
 ]
 
 MIDDLEWARE = [
