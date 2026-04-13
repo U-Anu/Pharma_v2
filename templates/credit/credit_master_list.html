@@ -1,0 +1,75 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+
+<div class="container mt-4">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-primary">Credit Master List</h2>
+
+    <a href="{% url 'credit_master_create' %}" class="btn btn-success">
+      <i class="fa fa-plus"></i> Create Credit Master
+    </a>
+  </div>
+
+  <!-- SEARCH -->
+  <form method="get" class="mb-3">
+    <div class="input-group">
+      <input type="text" name="q" class="form-control"
+             placeholder="Search name..."
+             value="{{ current_query }}">
+      <button class="btn btn-primary">
+        <i class="fa fa-search"></i>
+      </button>
+    </div>
+  </form>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped text-center align-middle">
+
+      <thead>
+        <tr>
+          <th class="bg-primary text-white">ID</th>
+          <th class="bg-primary text-white">Name</th>
+          <th class="bg-primary text-white">Credit Amount (₹)</th>
+          <th class="bg-primary text-white">Days</th>
+          <th class="bg-primary text-white">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for m in masters %}
+        <tr>
+          <td>{{ m.id }}</td>
+          <td>{{ m.name }}</td>
+          <td>₹ {{ m.credit_amount }}</td>
+          <td>{{ m.credit_days }} days</td>
+
+          <td>
+            <!-- EDIT -->
+            <a href="{% url 'credit_master_update' m.id %}" class="btn btn-sm btn-primary">
+              <i class="fa fa-edit"></i>
+            </a>
+
+            <!-- DELETE -->
+            <a href="{% url 'credit_master_delete' m.id %}"
+               class="btn btn-sm btn-danger"
+               onclick="return confirm('Are you sure to delete?')">
+              <i class="fa fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">No Credit Masters Found</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+  </div>
+
+</div>
+
+{% endblock %}

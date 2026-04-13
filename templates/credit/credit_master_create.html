@@ -1,0 +1,52 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+
+<div class="container mt-4">
+
+  <div class="card shadow-lg">
+    <div class="card-header bg-success text-white">
+      <h4><i class="fa fa-plus"></i> Create Credit Master</h4>
+    </div>
+
+    <div class="card-body">
+
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- NAME -->
+        <div class="mb-3">
+          <label class="form-label">Master Name</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Enter the name e.g A,B,C" required>
+        </div>
+
+        <!-- AMOUNT -->
+        <div class="mb-3">
+          <label class="form-label">Credit Amount (₹)</label>
+          <input type="number" step="0.01" name="credit_amount" class="form-control" placeholder="e.g. 5000" required>
+        </div>
+
+        <!-- DAYS -->
+        <div class="mb-3">
+          <label class="form-label">Credit Days</label>
+          <input type="number" name="credit_days" class="form-control" placeholder="e.g. 10 days" required>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'credit_master_list' %}" class="btn btn-secondary">
+            <i class="fa fa-arrow-left"></i> Back
+          </a>
+
+          <button type="submit" class="btn btn-success">
+            <i class="fa fa-save"></i> Save Credit Master
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

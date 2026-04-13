@@ -55,6 +55,13 @@ urlpatterns = [
     path("products/<int:product_id>/markups/",product_markups, name="product_markups"),
     path('user-category/<int:pk>/margin/create/', user_category_margin_create_or_update, name='user_category_margin_create_or_update'),
 
+
+
+    path('credit-masters/', credit_master_list, name='credit_master_list'),
+    path('credit-master/create/', credit_master_create, name='credit_master_create'),
+    path('credit-master/delete/<int:id>/', credit_master_delete, name='credit_master_delete'),
+    path('credit-master/update/<int:id>/', credit_master_update, name='credit_master_update'),
+
 ]
 
 

@@ -115,7 +115,17 @@ class TempUser(models.Model):
 
     def __str__(self):
         return self.first_name
+    
+class CreditLimitMaster(models.Model):
+    name = models.CharField(max_length=100)
+    credit_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    credit_days = models.IntegerField()  # validity (e.g. 10 days)
 
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.credit_amount} / {self.credit_days} days"
 
 class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.CharField(max_length=10, null=True, blank=True)
@@ -153,6 +163,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name='custom_user_permissions_set',  # Custom related_name to avoid conflict
         blank=True
     )
+    
+    #new manifields
+    
+    credit_master = models.ForeignKey(CreditLimitMaster, null=True, on_delete=models.SET_NULL)
+    credit_limit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    used_credit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    available_credit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     objects = CustomUserManager()
 

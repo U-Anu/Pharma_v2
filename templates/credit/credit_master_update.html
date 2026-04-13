@@ -1,0 +1,59 @@
+{% extends 'admin_base.html' %}
+{% block body_block %}
+
+<div class="container mt-4">
+
+  <div class="card shadow-lg">
+    <div class="card-header bg-primary text-white">
+      <h4><i class="fa fa-edit"></i> Update Credit Master</h4>
+    </div>
+
+    <div class="card-body">
+
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- NAME -->
+        <div class="mb-3">
+          <label class="form-label">Master Name</label>
+          <input type="text" name="name" value="{{ master.name }}" class="form-control" required>
+        </div>
+
+        <!-- AMOUNT -->
+        <div class="mb-3">
+          <label class="form-label">Credit Amount (₹)</label>
+          <input type="number" step="0.01" name="credit_amount" value="{{ master.credit_amount }}" class="form-control" required>
+        </div>
+
+        <!-- DAYS -->
+        <div class="mb-3">
+          <label class="form-label">Credit Days</label>
+          <input type="number" name="credit_days" value="{{ master.credit_days }}" class="form-control" required>
+        </div>
+
+        <!-- PREVIEW BOX 🔥 -->
+        <div class="alert alert-info">
+          <strong>Preview:</strong>
+          This plan gives <b>₹{{ master.credit_amount }}</b>   Or credit for 
+          <b>{{ master.credit_days }} days</b>.
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'credit_master_list' %}" class="btn btn-secondary">
+            <i class="fa fa-arrow-left"></i> Back
+          </a>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save"></i> Update
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
