@@ -43,6 +43,28 @@
                     {% endfor %}
                 </select>
             </div>
+
+
+            <div class="form-group mt-3">
+                <label><strong>Select Credit Plan:</strong></label>
+                <select name="credit_master" id="credit_master" class="form-control" required>
+                    <option value="">-- Select Credit Plan --</option>
+                    {% for cm in credit_masters %}
+                        <option value="{{ cm.id }}" 
+                                data-amount="{{ cm.credit_amount }}" 
+                                data-days="{{ cm.credit_days }}">
+                            {{ cm.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="alert alert-info mt-3" id="credit_preview" style="display:none;">
+            <strong>Credit Details:</strong><br>
+            Amount: ₹<span id="preview_amount"></span><br>
+            Validity: <span id="preview_days"></span> days
+        </div>
+
             <button type="submit" class="btn btn-success mt-3 w-100">Approve User</button>
         </form>
     </div>
@@ -62,4 +84,23 @@
         </div>
     </div>
 </div>
+
+
+
+<script>
+document.getElementById("credit_master").addEventListener("change", function() {
+    const selected = this.options[this.selectedIndex];
+
+    const amount = selected.getAttribute("data-amount");
+    const days = selected.getAttribute("data-days");
+
+    if (amount && days) {
+        document.getElementById("credit_preview").style.display = "block";
+        document.getElementById("preview_amount").innerText = amount;
+        document.getElementById("preview_days").innerText = days;
+    } else {
+        document.getElementById("credit_preview").style.display = "none";
+    }
+});
+</script>
 {% endblock %}

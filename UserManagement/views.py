@@ -83,22 +83,77 @@ def login(request):
 
 User = get_user_model()
 
+
+#working old code before credit master
+# def approve_user(request, temp_user_id):
+#     temp_user = get_object_or_404(TempUser, id=temp_user_id)
+#     user_categories = UserCategory.objects.all()  # Fetch all user categories
+
+#     if request.method == "POST":
+#         user_category_id = request.POST.get("user_category")
+#         if not user_category_id:
+#             return render(request, "user/approve_user.html", {
+#                 "temp_user": temp_user,
+#                 "user_categories": user_categories,
+#                 "error": "Please select a user category."
+#             })
+
+#         user_category = get_object_or_404(UserCategory, id=user_category_id)
+
+#         # Create and save the user
+#         user = User.objects.create(
+#             shop_name=temp_user.shop_name,
+#             drug_license=temp_user.drug_license,
+#             license_expiry_date=temp_user.license_expiry_date,
+#             address=temp_user.address,
+#             phone_number=temp_user.phone_number,
+#             alternate_phone_number=temp_user.alternate_phone_number,
+#             email=temp_user.email,
+#             # gender=temp_user.gender,
+#             drug_license_image=temp_user.license_image,
+#             is_admin=False,
+#             is_customer=True,
+#             user_category=user_category  # ✅ assign selected category
+#         )
+#         user.set_password(temp_user.password)
+#         user.save()
+
+#         temp_user.delete()  # Remove temp record
+
+#         return redirect("admin_dash")
+
+#     return render(request, "user/approve_user.html", {
+#         "temp_user": temp_user,
+#         "user_categories": user_categories
+#     })
+
+
+
+#new credit master logics code
+
 def approve_user(request, temp_user_id):
     temp_user = get_object_or_404(TempUser, id=temp_user_id)
-    user_categories = UserCategory.objects.all()  # Fetch all user categories
+    user_categories = UserCategory.objects.all()
+    credit_masters = CreditLimitMaster.objects.filter(is_active=True)
 
     if request.method == "POST":
         user_category_id = request.POST.get("user_category")
-        if not user_category_id:
+        credit_master_id = request.POST.get("credit_master")
+
+        if not user_category_id or not credit_master_id:
             return render(request, "user/approve_user.html", {
                 "temp_user": temp_user,
                 "user_categories": user_categories,
-                "error": "Please select a user category."
+                "credit_masters": credit_masters,
+                "error": "Please select category and credit master."
             })
 
         user_category = get_object_or_404(UserCategory, id=user_category_id)
+        credit_master = get_object_or_404(CreditLimitMaster, id=credit_master_id)
 
-        # Create and save the user
+        # 🔥 Snapshot values
+        credit_limit = credit_master.credit_amount
+
         user = User.objects.create(
             shop_name=temp_user.shop_name,
             drug_license=temp_user.drug_license,
@@ -107,23 +162,32 @@ def approve_user(request, temp_user_id):
             phone_number=temp_user.phone_number,
             alternate_phone_number=temp_user.alternate_phone_number,
             email=temp_user.email,
-            # gender=temp_user.gender,
             drug_license_image=temp_user.license_image,
             is_admin=False,
             is_customer=True,
-            user_category=user_category  # ✅ assign selected category
+
+            user_category=user_category,
+
+            # 🔥 CREDIT PART
+            credit_master=credit_master,
+            credit_limit=credit_limit,
+            used_credit=0,
+            available_credit=credit_limit
         )
+
         user.set_password(temp_user.password)
         user.save()
 
-        temp_user.delete()  # Remove temp record
+        temp_user.delete()
 
         return redirect("admin_dash")
 
     return render(request, "user/approve_user.html", {
         "temp_user": temp_user,
-        "user_categories": user_categories
+        "user_categories": user_categories,
+        "credit_masters": credit_masters
     })
+
 
 def pending_users(request):
     users = TempUser.objects.filter(is_approved=False)

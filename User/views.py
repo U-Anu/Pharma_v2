@@ -818,6 +818,90 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from dateutil.relativedelta import relativedelta
 
+# @login_required
+# def user_product_list(request):
+#     user = request.user
+#     user_category = getattr(user, 'user_category', None)
+
+#     today = timezone.now().date()
+
+#     # 🔹 Start of current month
+#     start_of_month = date(today.year, today.month, 1)
+
+#     # 🔹 End of 3rd month from now
+#     three_months_later = today + relativedelta(months=3)
+#     end_of_3rd_month = date(
+#         three_months_later.year,
+#         three_months_later.month,
+#         monthrange(three_months_later.year, three_months_later.month)[1]
+#     )
+
+#     # ✅ Show:
+#     # - Current + next 3 months (red)
+#     # - Future months (normal)
+#     # ❌ Hide older expired
+#     products = Product.objects.filter(
+#         expiry_date__gte=start_of_month
+#     )
+
+#     categories = (
+#         products
+#         .exclude(form__isnull=True)
+#         .exclude(form__exact='')
+#         .values_list('category', flat=True)
+#         .distinct()
+#         .order_by('category')
+#     )
+#     forms = (
+#         products
+#         .exclude(form__isnull=True)
+#         .exclude(form__exact='')
+#         .values_list('form', flat=True)
+#         .distinct()
+#         .order_by('form')
+#     )
+#     # ---- markup logic (unchanged) ----
+#     markups = UserCategoryProductMarkup.objects.filter(
+#         user_category=user_category,
+#         product__in=products
+#     ).select_related('product')
+
+#     product_markup_map = {m.product.id: m for m in markups}
+
+#     for product in products:
+#         markup = product_markup_map.get(product.id)
+#         product.display_price = markup.owner_selling_price if markup else None
+
+#     cart_items = TempCartItem.objects.filter(user=user).select_related('product')
+#     query_items = TempQueryItem.objects.filter(user=user).select_related('product')
+#     query_header = TempQueryHeader.objects.filter(user=user).first()
+
+
+
+
+
+#     return render(request, 'customer/user_Product_list.html', {
+#         'products': products,
+#         'categories': categories,
+#         'cart_items': cart_items,
+#         'query_items': query_items,
+#         'query_header': query_header,
+#         'cart_subtotal': sum(ci.total_price for ci in cart_items),
+#         'cart_item_count': cart_items.count(),
+#         'cart_total_qty': sum(ci.quantity for ci in cart_items),
+#         'start_of_month': start_of_month,
+#         'end_of_3rd_month': end_of_3rd_month,
+#         'forms' : forms,
+#     })
+
+
+
+#neww maniii
+
+from django.db.models import Sum
+from django.utils import timezone
+from datetime import timedelta
+
 @login_required
 def user_product_list(request):
     user = request.user
@@ -876,6 +960,60 @@ def user_product_list(request):
     query_items = TempQueryItem.objects.filter(user=user).select_related('product')
     query_header = TempQueryHeader.objects.filter(user=user).first()
 
+    # ✅ Used credit
+
+    used_credit = OrderBilling.objects.filter(
+        created_by=user,
+        is_paid=False
+    ).aggregate(total=Sum('outstanding_amount'))['total'] or 0
+
+    # ✅ Available credit
+    available_credit = user.credit_limit - used_credit
+
+    # ✅ Overdue check
+    today = timezone.now().date()
+
+    overdue_exists = OrderBilling.objects.filter(
+        created_by=user,
+        is_paid=False,
+        credit_due_date__lt=today
+    ).exists()
+    oldest_unpaid = OrderBilling.objects.filter(
+        created_by=request.user,
+        is_paid=False
+    ).order_by("created_at").first()
+
+    credit_expiry_date = None
+    days_left = None
+    is_expired = False
+
+    if oldest_unpaid:
+        credit_days = request.user.credit_master.credit_days if request.user.credit_master else 0
+
+        start_date = oldest_unpaid.created_at.date()
+        credit_expiry_date = start_date + timedelta(days=credit_days)
+
+        today = timezone.now().date()
+        days_left = (credit_expiry_date - today).days
+
+        if days_left < 0:
+            is_expired = True
+
+    # 🔥 THEN popup logic (IMPORTANT)
+    show_credit_popup = False
+    popup_message = ""
+
+    if is_expired:
+        show_credit_popup = True
+        popup_message = f"Your credit expired {abs(days_left)} days ago!"
+
+    elif overdue_exists:
+        show_credit_popup = True
+        popup_message = "You have overdue payments. Please clear dues."
+
+    elif available_credit <= 0:
+        show_credit_popup = True
+        popup_message = "Your credit limit is fully used! So kindly Clear the pending invoice"
     return render(request, 'customer/user_Product_list.html', {
         'products': products,
         'categories': categories,
@@ -888,7 +1026,18 @@ def user_product_list(request):
         'start_of_month': start_of_month,
         'end_of_3rd_month': end_of_3rd_month,
         'forms' : forms,
+        
+        # 🔥 ADD THESE
+        'show_credit_popup': show_credit_popup,
+        'popup_message': popup_message,
+        'used_credit': used_credit,
+        'available_credit': available_credit,
+        'has_overdue': overdue_exists,
+        'credit_expiry_date': credit_expiry_date,
+        'days_left': days_left,
+        'is_credit_expired': is_expired,
     })
+
 
 
 
@@ -1246,123 +1395,124 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 
-@csrf_exempt
-@login_required
-def checkout_and_query(request):
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
+# @csrf_exempt
+# @login_required
+# def checkout_and_query(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'error': 'Invalid request'}, status=405)
 
-    user = request.user
+#     user = request.user
+    
 
-    try:
-        with transaction.atomic():
+#     try:
+#         with transaction.atomic():
 
-            # -------------------------------
-            # 1. TEMP CART → ORDER
-            # -------------------------------
-            temp_cart = TempCartItem.objects.filter(user=user).select_related('product')
+#             # -------------------------------
+#             # 1. TEMP CART → ORDER
+#             # -------------------------------
+#             temp_cart = TempCartItem.objects.filter(user=user).select_related('product')
 
-            order = None
-            if temp_cart.exists():
-                total_price = sum(ci.total_price for ci in temp_cart)
-                total_quantity = sum(ci.quantity for ci in temp_cart)
+#             order = None
+#             if temp_cart.exists():
+#                 total_price = sum(ci.total_price for ci in temp_cart)
+#                 total_quantity = sum(ci.quantity for ci in temp_cart)
 
-                order = Order.objects.create(
-                    total_price=total_price,
-                    total_amount=total_price,
-                    total_quantity=total_quantity,
-                    status='ordered',
-                    created_by=user,
-                    updated_by=user
-                )
+#                 order = Order.objects.create(
+#                     total_price=total_price,
+#                     total_amount=total_price,
+#                     total_quantity=total_quantity,
+#                     status='ordered',
+#                     created_by=user,
+#                     updated_by=user
+#                 )
 
-                for ci in temp_cart:
-                    product = ci.product
+#                 for ci in temp_cart:
+#                     product = ci.product
 
-                    OrderItem.objects.create(
-                        order=order,
-                        product=product,
-                        product_name=product.name,
-                        product_no=product.product_id,
-                        quantity=ci.quantity,
-                        total_price=ci.total_price,
-                        created_by=user,
-                        updated_by=user,
-                        MRP=product.MRP,
-                        user_price=product.price,
-                        discount=product.discount,
-                        GST=product.GST,
-                        batch=product.batch,
-                        expiry_date=product.expiry_date,
-                    )
+#                     OrderItem.objects.create(
+#                         order=order,
+#                         product=product,
+#                         product_name=product.name,
+#                         product_no=product.product_id,
+#                         quantity=ci.quantity,
+#                         total_price=ci.total_price,
+#                         created_by=user,
+#                         updated_by=user,
+#                         MRP=product.MRP,
+#                         user_price=product.price,
+#                         discount=product.discount,
+#                         GST=product.GST,
+#                         batch=product.batch,
+#                         expiry_date=product.expiry_date,
+#                     )
 
-                    # Reduce stock safely
-                    if hasattr(product, 'quantity') and product.quantity is not None:
-                        product.quantity = max(0, product.quantity - ci.quantity)
-                        product.save()
+#                     # Reduce stock safely
+#                     if hasattr(product, 'quantity') and product.quantity is not None:
+#                         product.quantity = max(0, product.quantity - ci.quantity)
+#                         product.save()
 
-                temp_cart.delete()
+#                 temp_cart.delete()
 
-            # -------------------------------
-            # 2. TEMP QUERY → QUERY
-            # -------------------------------
-            temp_queries = TempQueryItem.objects.filter(user=user)
+#             # -------------------------------
+#             # 2. TEMP QUERY → QUERY
+#             # -------------------------------
+#             temp_queries = TempQueryItem.objects.filter(user=user)
 
-            business_name = request.POST.get('business_name', '').strip()
-            contact_number = request.POST.get('contact_number', '').strip()
-            description = request.POST.get(
-                'missed_description',
-                'Missed products / queries from checkout'
-            ).strip()
+#             business_name = request.POST.get('business_name', '').strip()
+#             contact_number = request.POST.get('contact_number', '').strip()
+#             description = request.POST.get(
+#                 'missed_description',
+#                 'Missed products / queries from checkout'
+#             ).strip()
 
-            # Save temp header (optional but OK)
-            header, _ = TempQueryHeader.objects.get_or_create(user=user)
-            header.business_name = business_name
-            header.contact_number = contact_number
-            header.description = description
-            header.save()
+#             # Save temp header (optional but OK)
+#             header, _ = TempQueryHeader.objects.get_or_create(user=user)
+#             header.business_name = business_name
+#             header.contact_number = contact_number
+#             header.description = description
+#             header.save()
 
-            # ✅ BEST PRACTICE checkbox handling
-            selected_ids = request.POST.getlist('selected_queries')
-            selected_temp_queries = temp_queries.filter(id__in=selected_ids)
+#             # ✅ BEST PRACTICE checkbox handling
+#             selected_ids = request.POST.getlist('selected_queries')
+#             selected_temp_queries = temp_queries.filter(id__in=selected_ids)
 
-            # ✅ ALWAYS create Query header
-            query_header = Query.objects.create(
-                order=order,
-                created_by=user,
-                updated_by=user,
-                Business_name=business_name,
-                contact_number=contact_number,
-                description=description,
-            )
+#             # ✅ ALWAYS create Query header
+#             query_header = Query.objects.create(
+#                 order=order,
+#                 created_by=user,
+#                 updated_by=user,
+#                 Business_name=business_name,
+#                 contact_number=contact_number,
+#                 description=description,
+#             )
 
-            # Create QueryItems ONLY if selected
-            for tq in selected_temp_queries:
-                QueryItem.objects.create(
-                    query=query_header,
-                    product=tq.product,
-                    product_name=tq.product_name,
-                    requested_qty=tq.requested_qty,
-                    issued_qty=0,
-                    status='pending',
-                )
+#             # Create QueryItems ONLY if selected
+#             for tq in selected_temp_queries:
+#                 QueryItem.objects.create(
+#                     query=query_header,
+#                     product=tq.product,
+#                     product_name=tq.product_name,
+#                     requested_qty=tq.requested_qty,
+#                     issued_qty=0,
+#                     status='pending',
+#                 )
 
-            # -------------------------------
-            # 3. CLEANUP
-            # -------------------------------
-            TempQueryHeader.objects.filter(user=user).delete()
-            temp_queries.delete()
+#             # -------------------------------
+#             # 3. CLEANUP
+#             # -------------------------------
+#             TempQueryHeader.objects.filter(user=user).delete()
+#             temp_queries.delete()
 
-        return JsonResponse({
-            'success': True,
-            'order_id': order.id if order else None,
-            'query_id': query_header.id,
-            'message': 'Order and query submitted successfully.'
-        })
+#         return JsonResponse({
+#             'success': True,
+#             'order_id': order.id if order else None,
+#             'query_id': query_header.id,
+#             'message': 'Order and query submitted successfully.'
+#         })
 
-    except Exception as e:
-        print("CHECKOUT ERROR:", e)
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+#     except Exception as e:
+#         print("CHECKOUT ERROR:", e)
+#         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
 # @csrf_exempt  -----------RECENT

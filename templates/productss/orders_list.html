@@ -34,7 +34,7 @@
         <th>Business Name</th>
         <th>Contact</th>
         <th>Total Items</th>
-        <th>Total Price</th>
+    
         <th>Ordered By</th>
         <th>Status</th>
         <th>Actions</th>
@@ -66,18 +66,21 @@
             </td>
 
             <td>{{ order.total_quantity }}</td>
-            <td>{{ order.total_price }}</td>
+        
 
             <td>{{ order.created_by }}</td>
 
             <td>{{ order.get_status_display }}</td>
 
+  
+
           <td class="text-center">
+            {% if order.Status == "delivered" %}
     <a href="{% url 'order_invoice' order.id %}"
        class="btn btn-sm btn-secondary mb-1">
         <i class="fa fa-file-invoice"></i> Invoice
     </a>
-
+{% endif %}
      <a href="{% url 'order_note_slip' order.id %}"
        class="btn btn-sm btn-info mb-1" target="_blank">
         <i class="fa fa-sticky-note"></i> Note Slip

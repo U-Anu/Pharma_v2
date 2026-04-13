@@ -1633,6 +1633,8 @@ def admin_product_list(request):
         "current_query": query or ""
     })
 
+
+
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -1657,3 +1659,64 @@ def ajax_update_product(request, pk):
         return JsonResponse({"success": True})
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)})
+
+
+
+
+
+#maniii
+
+
+def credit_master_list(request):
+    query = request.GET.get("q")
+
+    masters = CreditLimitMaster.objects.all()
+
+    if query:
+        masters = masters.filter(
+            Q(name__icontains=query)
+        )
+
+    return render(request, "credit/credit_master_list.html", {
+        "masters": masters,
+        "current_query": query or ""
+    })
+    
+    
+def credit_master_create(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        amount = request.POST.get("credit_amount")
+        days = request.POST.get("credit_days")
+
+        CreditLimitMaster.objects.create(
+            name=name,
+            credit_amount=amount,
+            credit_days=days
+        )
+
+        return redirect("credit_master_list")
+
+    return render(request, "credit/credit_master_create.html")
+
+
+def credit_master_delete(request, id):
+    master = get_object_or_404(CreditLimitMaster, id=id)
+    master.delete()
+    return redirect("credit_master_list")
+
+
+def credit_master_update(request, id):
+    master = get_object_or_404(CreditLimitMaster, id=id)
+
+    if request.method == "POST":
+        master.name = request.POST.get("name")
+        master.credit_amount = request.POST.get("credit_amount")
+        master.credit_days = request.POST.get("credit_days")
+        master.save()
+
+        return redirect("credit_master_list")
+
+    return render(request, "credit/credit_master_update.html", {
+        "master": master
+    })

@@ -351,6 +351,8 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.order_no} - {self.total_amount}"
 
+
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
@@ -387,6 +389,10 @@ class OrderBilling(models.Model):
 
     admin_profit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     outstanding_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    # 🔥 NEW (IMPORTANT)
+    credit_due_date = models.DateField(null=True, blank=True)
+    is_paid = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey('UserManagement.User', null=True, on_delete=models.SET_NULL, related_name='billings_created')
