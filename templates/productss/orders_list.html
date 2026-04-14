@@ -2,96 +2,265 @@
 {% load static %}
 {% block body_block %}
 
-<style>
-  .query-image {
-      width: 400px;
-      height: 400px;
-      transition: transform 0.3s ease-in-out;
-  }
-  .query-image:hover {
-      transform: scale(8);
-  }
-</style>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
 <div class="container">
-    <!-- Top Section with Create Button -->
     <div class="d-flex justify-content-between align-items-center mt-4">
         <h2 class="text-primary mb-0">Orders List</h2>
-        {% comment %} {# <a href="{% url 'product_order' %}" class="btn btn-primary">
-          <i class="fa fa-plus"></i> To Order
-        </a> #} {% endcomment %}
     </div>
 
     <div class="users-table table-wrapper mt-4">
         <table class="posts-table table table-striped table-bordered">
-    <thead>
-    <tr class="users-table-info text-center">
-        <th>S.No</th>
-        <th>Order No</th>
-        <th>Date</th>
-        <th>Business Name</th>
-        <th>Contact</th>
-        <th>Total Items</th>
-    
-        <th>Ordered By</th>
-        <th>Status</th>
-        <th>Actions</th>
-    </tr>
-</thead>
-
-<tbody>
-    {% for order in orders %}
-        <tr>
-            <td>{{ forloop.counter }}</td>
-            <td>{{ order.order_no }}</td>
-            <td>{{ order.created_at|date:"d-m-Y H:i" }}</td>
-
-            {# Business name & contact come from Query model #}
-            <td>
-                {% if order.queries.first %}
-                    {{ order.queries.first.Business_name|default:"-" }}
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-
-            <td>
-                {% if order.queries.first %}
-                    {{ order.queries.first.contact_number|default:"-" }}
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-
-            <td>{{ order.total_quantity }}</td>
-        
-
-            <td>{{ order.created_by }}</td>
-
-            <td>{{ order.get_status_display }}</td>
-
-  
-
-          <td class="text-center">
-            {% if order.Status == "delivered" %}
-    <a href="{% url 'order_invoice' order.id %}"
-       class="btn btn-sm btn-secondary mb-1">
-        <i class="fa fa-file-invoice"></i> Invoice
-    </a>
-{% endif %}
-     <a href="{% url 'order_note_slip' order.id %}"
-       class="btn btn-sm btn-info mb-1" target="_blank">
-        <i class="fa fa-sticky-note"></i> Note Slip
-    </a>
-</td>
-
-        </tr>
-    {% endfor %}
-</tbody>
+            <thead>
+                <tr class="users-table-info text-center">
+                    <th>S.No</th>
+                    <th>Order No</th>
+                    <th>Date</th>
+                    <th>Business Name</th>
+                    <th>Contact</th>
+                    <th>Total Items</th>
+                    <th>Ordered By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td>{{ order.order_no }}</td>
+                        <td>{{ order.created_at|date:"d-m-Y H:i" }}</td>
+                        <td>
+                            {% if order.queries.first %}
+                                {{ order.queries.first.Business_name|default:"-" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.queries.first %}
+                                {{ order.queries.first.contact_number|default:"-" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ order.total_quantity }}</td>
+                        <td>{{ order.created_by }}</td>
+                        <td>
+                            <span class="badge {% if order.status == 'delivered' %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <!-- Note Slip Button -->
+                            <a href="{% url 'order_note_slip' order.id %}" 
+                               class="btn btn-sm btn-info" target="_blank">
+                                <i class="fa fa-sticky-note"></i> 
+                            </a>
+                            
+                            <!-- Delivered Order Actions -->
+                            {% if order.status == "delivered" %}
+                                                              
+                                <!-- Track Order Button with Logistics Name -->
+                                <button type="button" 
+                                        class="btn btn-sm btn-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#trackModal{{ order.id }}">
+                                    <i class="fa fa-truck"></i> 
+                                </button>
+                                
+                                <!-- Tracking Modal -->
+                                <div class="modal fade" id="trackModal{{ order.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-primary text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fa fa-truck"></i> Track Order - {{ order.order_no }}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <!-- Delivery Slip -->
+                                                {% if order.delivery_slip_url %}
+                                                    <div class="mb-3">
+                                                        <a href="{{ order.delivery_slip_url }}" 
+                                                           class="btn btn-sm btn-success w-100" target="_blank">
+                                                            <i class="fa fa-file-pdf"></i> View Delivery Slip
+                                                        </a>
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                <!-- Logistics Info -->
+                                                <div class="card mb-3">
+                                                    <div class="card-header bg-light">
+                                                        <strong><i class="fa fa-shipping-fast"></i> Logistics Details</strong>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <table class="table table-sm table-borderless mb-0">
+                                                            {% if order.logistics_name %}
+                                                            <tr>
+                                                                <td width="40%"><strong>Logistics Partner:</strong></td>
+                                                                <td>{{ order.logistics_name }}</td>
+                                                            </tr>
+                                                            {% endif %}
+                                                            {% if order.tracking_number %}
+                                                            <tr>
+                                                                <td><strong>Tracking Number:</strong></td>
+                                                                <td>
+                                                                    <code>{{ order.tracking_number }}</code>
+                                                                    {% if order.logistics_name == 'DTDC' %}
+                                                                        <a href="https://www.dtdc.in/tracking.asp" target="_blank" class="ms-2">
+                                                                            <i class="fa fa-external-link"></i> Track
+                                                                        </a>
+                                                                    
+                                                                    {% elif order.logistics_name == 'ST courier' %}
+                                                                        <a href="https://stcourier.com/track/shipment" target="_blank" class="ms-2">
+                                                                            <i class="fa fa-external-link"></i> Track
+                                                                        </a>
+                                                                    {% elif order.logistics_name == 'Delhivery' %}
+                                                                        <a href="https://www.delhivery.com/tracking" target="_blank" class="ms-2">
+                                                                            <i class="fa fa-external-link"></i> Track
+                                                                        </a>
+                                                                    {% elif order.logistics_name == 'Blue Dart' %}
+                                                                        <a href="https://www.bluedart.com/tracking" target="_blank" class="ms-2">
+                                                                            <i class="fa fa-external-link"></i> Track
+                                                                        </a>
+                                                                    {% elif order.logistics_name == 'Amazon Shipping' %}
+                                                                        <a href="https://track.amazon.in/" target="_blank" class="ms-2">
+                                                                            <i class="fa fa-external-link"></i> Track
+                                                                        </a>
+                                                                    {% else %}
+                                                                        <a href="#" class="ms-2 text-muted">
+                                                                            <i class="fa fa-external-link"></i> Track
+                                                                        </a>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            {% endif %}
+                                                            {% if order.logistics_mode %}
+                                                            <tr>
+                                                                <td><strong>Delivery Mode:</strong></td>
+                                                                <td>{{ order.get_logistics_mode_display }}</td>
+                                                            </tr>
+                                                            {% endif %}
+                                                            {% if order.logistics_charges %}
+                                                            <tr>
+                                                                <td><strong>Shipping Charges:</strong></td>
+                                                                <td>₹{{ order.logistics_charges }}</td>
+                                                            </tr>
+                                                            {% endif %}
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Delivery Info -->
+                                                <div class="card">
+                                                    <div class="card-header bg-light">
+                                                        <strong><i class="fa fa-info-circle"></i> Delivery Information</strong>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <table class="table table-sm table-borderless mb-0">
+                                                            {% if order.delivery_status %}
+                                                            <tr>
+                                                                <td width="40%"><strong>Status:</strong></td>
+                                                                <td>
+                                                                    <span class="badge bg-success">
+                                                                        {{ order.get_delivery_status_display }}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                            {% endif %}
+                                                            {% if order.delivery_date %}
+                                                            <tr>
+                                                                <td><strong>Delivered On:</strong></td>
+                                                                <td>{{ order.delivery_date|date:"d-m-Y H:i" }}</td>
+                                                            </tr>
+                                                            {% endif %}
+                                                            {% if order.delivered_by %}
+                                                            <tr>
+                                                                <td><strong>Delivered By:</strong></td>
+                                                                <td>{{ order.delivered_by }}</td>
+                                                            </tr>
+                                                            {% endif %}
+                                                            {% if order.delivery_address %}
+                                                            <tr>
+                                                                <td><strong>Address:</strong></td>
+                                                                <td>{{ order.delivery_address|truncatewords:20 }}</td>
+                                                            </tr>
+                                                            {% endif %}
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Tracking History -->
+                                                {% with tracking_history=order.delivery_tracking.all %}
+                                                    {% if tracking_history %}
+                                                        <div class="card mt-3">
+                                                            <div class="card-header bg-light">
+                                                                <strong><i class="fa fa-history"></i> Tracking History</strong>
+                                                            </div>
+                                                            <div class="card-body p-0">
+                                                                <div class="timeline p-3" style="max-height: 300px; overflow-y: auto;">
+                                                                    {% for tracking in tracking_history %}
+                                                                        <div class="d-flex mb-3">
+                                                                            <div class="me-3">
+                                                                                <i class="fa fa-circle text-primary" style="font-size: 12px;"></i>
+                                                                            </div>
+                                                                            <div>
+                                                                                <strong>{{ tracking.get_status_display }}</strong>
+                                                                                <br>
+                                                                                <small class="text-muted">
+                                                                                    <i class="fa fa-clock"></i> {{ tracking.created_at|date:"d-m-Y H:i" }}
+                                                                                </small>
+                                                                                {% if tracking.location %}
+                                                                                    <br>
+                                                                                    <small><i class="fa fa-map-marker-alt"></i> {{ tracking.location }}</small>
+                                                                                {% endif %}
+                                                                                {% if tracking.remarks %}
+                                                                                    <br>
+                                                                                    <small class="text-secondary">{{ tracking.remarks }}</small>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                        {% if not forloop.last %}
+                                                                            <hr class="my-2">
+                                                                        {% endif %}
+                                                                    {% endfor %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
 </div>
+
+<style>
+    .timeline::-webkit-scrollbar {
+        width: 6px;
+    }
+    .timeline::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    .timeline::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+    .btn-sm {
+        margin: 2px;
+    }
+</style>
 
 {% endblock %}
