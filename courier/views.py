@@ -22,7 +22,7 @@ def create_label(request):
             from_company_id=from_company_id,
             to_customer_id=to_customer_id
         )
-        return redirect(f"/print/{label.id}/")
+        return redirect(f"/courier/print/{label.id}/")
 
     return render(request, "courier/label_form.html", {
         "companies": companies,
