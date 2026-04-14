@@ -13,7 +13,7 @@ def create_label(request):
         
         if not from_company_id or not to_customer_id:
             messages.error(request, "Please select both company and customer")
-            return render(request, "label_form_alternative.html", {
+            return render(request, "courier/label_form_alternative.html", {
                 "companies": companies,
                 "customers": customers
             })
