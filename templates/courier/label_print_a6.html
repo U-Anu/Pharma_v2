@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    {% comment %} <title>Courier Label - {{ label.from_company.name }} to {{ label.to_customer.name }}</title> {% endcomment %}
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Courier New', monospace;
             background: #e0e0e0;
@@ -19,124 +19,105 @@
             min-height: 100vh;
             padding: 20px;
         }
-        
+
+        /* LABEL SIZE = ONE SIDE OF A5 (HALF A5) */
         .label {
             width: 148mm;
-            min-height: 105mm;
+            height: 105mm;   /* FIXED HEIGHT */
             background: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             position: relative;
             overflow: hidden;
         }
-        
+
         .label-content {
             padding: 15px;
             position: relative;
             z-index: 1;
         }
-        
-        .label::before {
-            {% comment %} content: "✈️ 📦 🚚"; {% endcomment %}
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            font-size: 40px;
-            opacity: 0.1;
-            pointer-events: none;
-        }
-        
+
         .header {
             text-align: center;
-            {% comment %} border-bottom: 2px dashed #333; {% endcomment %}
             padding-bottom: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
-        
+
         .header h2 {
             font-size: 18px;
             letter-spacing: 2px;
         }
-        
+
         .section {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
-        
+
         .section-title {
             font-weight: bold;
             font-size: 14px;
-            {% comment %} background: #f0f0f0; {% endcomment %}
-            {% comment %} display: inline-block; {% endcomment %}
             padding: 3px 10px;
             margin-bottom: 8px;
-            {% comment %} border-left: 4px solid #ff6b6b; {% endcomment %}
-            
         }
-        
+
         .address {
-            font-size: 12px;
-            line-height: 1.6;
+            font-size: 18px;
+            line-height: 1.5;
             margin-left: 10px;
         }
-        
-        .address strong {
-            font-size: 13px;
-        }
-        
-        .separator {
-            border-top: 1px solid #ccc;
-            margin: 15px 0;
-        }
-        
-        .barcode {
-            text-align: center;
-            margin-top: 15px;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
-            font-size: 11px;
-        }
-        .end{
-            border-bottom: 2px dashed #333;
 
+        .address strong {
+            font-size: 18px;
         }
-        .barcode span {
-            display: inline-block;
-            background: #000;
-            color: white;
-            padding: 5px 10px;
-            font-weight: bold;
+        .address-to {
+            font-size: 12px;
+            line-height: 1.5;
+            margin-left: 10px;
         }
-        
+
+        .address-to strong {
+            font-size: 12px;
+        }
+
         .footer {
             font-size: 12px;
-            text-align: center;
-            margin-top: 15px;
+            text-align: left;
+            margin-right: 10px;
             color: #666;
-            
         }
-        
+
         @media print {
+
+            @page {
+                size: A5;
+                margin: 0;
+            }
+
             body {
                 background: white;
                 padding: 0;
                 margin: 0;
+                display: flex;
+                justify-content: flex-start;
+                align-items: flex-start;
             }
-            
+
             .label {
+                width: 148mm;
+                height: 105mm;
                 box-shadow: none;
                 page-break-after: avoid;
                 break-inside: avoid;
             }
-            
+
             .no-print {
                 display: none;
             }
         }
-        
+
         .no-print {
             text-align: center;
             margin-top: 20px;
         }
-        
+
         .no-print button {
             padding: 10px 20px;
             margin: 0 5px;
@@ -147,61 +128,55 @@
             border-radius: 5px;
             font-size: 14px;
         }
-        
+
         .no-print button:hover {
             background: #45a049;
         }
     </style>
 </head>
+
 <body>
     <div>
         <div class="label">
             <div class="label-content">
+
                 <div class="header">
-                    {% comment %} <h2>📦 COURIER SHIPPING LABEL 📦</h2> {% endcomment %}
+                    <!-- <h2>📦 COURIER SHIPPING LABEL 📦</h2> -->
                 </div>
-                
-               
-                
-                
+
                 <div class="section">
                     <div class="section-title"> TO </div>
                     <div class="address">
-                        <strong>{{ label.to_customer.name }}</strong><br>
+                        <strong>{{ label.to_customer.name }}<br>
                         {{ label.to_customer.address }}<br>
                         {{ label.to_customer.city }}, {{ label.to_customer.state }} - {{ label.to_customer.pincode }}<br>
-                      Mob :  {{ label.to_customer.phone }}
-                    </div><br><br>
-                    {% comment %} <div class="end"></div> {% endcomment %}
-                </div>
-                {% comment %} <div class="separator"></div> {% endcomment %}
-
-
-                 <div class="section">
-                    <div class="section-title"> FROM </div>
-                    <div class="address">
-                        <strong>{{ label.from_company.name }}</strong><br>
-                        {{ label.from_company.address }}<br>
-                        {{ label.from_company.city }}, {{ label.from_company.state }} - {{ label.from_company.pincode }}<br>
-                         Mob : {{ label.from_company.phone }}
+                        Mob : {{ label.to_customer.phone }}</strong>
                     </div>
                 </div>
-                {% comment %} <div class="barcode">
-                    <span>#{{ label.id }} | {{ label.created_at|date:"Y-m-d H:i" }}</span>
-                </div> {% endcomment %}
-                
-                <div class="footer">
-                    Handle with care • Thank you for choosing us 
+
+                <div class="section">
+                    <div class="section-title"> FROM </div>
+                    <div class="address-to">
+                        <strong>{{ label.from_company.name }}<br>
+                        {{ label.from_company.address }}<br>
+                        {{ label.from_company.city }}, {{ label.from_company.state }} - {{ label.from_company.pincode }}<br>
+                        Mob : {{ label.from_company.phone }}</strong>
+                    </div>
                 </div>
+
+                <div class="footer">
+                    Handle with care • Thank you for choosing us
+                </div>
+
             </div>
         </div>
-        
+
         <div class="no-print">
-            <button onclick="window.print()"> Print Label</button>
-            <button onclick="window.location.href='/courier/'"> Back to Home</button>
+            <button onclick="window.print()">Print Label</button>
+            <button onclick="window.location.href='/courier/'">Back to Home</button>
         </div>
     </div>
-    
+
     <script>
         // Auto print when page loads
         window.onload = function() {
@@ -210,5 +185,6 @@
             }, 500);
         }
     </script>
+
 </body>
 </html>

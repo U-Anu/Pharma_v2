@@ -254,7 +254,7 @@ const slipUrlField = document.getElementById('slipUrlField');
 
 if (deliveryStatus) {
     deliveryStatus.addEventListener('change', function() {
-        if (this.value === 'delivered') {
+        if (this.value === 'assigned' || this.value === 'in_transit' || this.value === 'delivered') {
             slipUrlField.style.display = 'block';
         } else {
             slipUrlField.style.display = 'none';
