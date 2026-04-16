@@ -30,6 +30,16 @@ def create_label(request):
     })
 
 
+def print_label_a5(request, id):
+    label = get_object_or_404(CourierLabel, id=id)
+    return render(request, "courier/label_print_a5.html", {"label": label})
+
+
+def print_label_a6(request, id):
+    label = get_object_or_404(CourierLabel, id=id)
+    return render(request, "courier/label_print_a6.html", {"label": label})
+    
+
 def print_label(request, id):
     label = get_object_or_404(CourierLabel, id=id)
     return render(request, "courier/label_print.html", {"label": label})

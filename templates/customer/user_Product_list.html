@@ -274,14 +274,14 @@ th.col-stock, td.col-stock {
     </span>
 </div>
 {% endif %}
-<div class="custom-alert alert-info-custom mb-3">
+{% comment %} <div class="custom-alert alert-info-custom mb-3">
     <span class="alert-icon">💳</span>
     <span>
         Credit Limit: ₹{{ request.user.credit_limit }} |
         Used: ₹{{ used_credit }} |
         Available: ₹{{ available_credit }}
     </span>
-</div>
+</div> {% endcomment %}
 {% if has_overdue %}
 <div class="custom-alert alert-warning-custom mb-3">
     <span class="alert-icon">⚠️</span>

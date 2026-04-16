@@ -14,4 +14,7 @@ urlpatterns = [
     path('customers/', views.customer_list, name='customer_list'),
     path('api/add-customer/', views.api_add_customer, name='api_add_customer'),
     path('api/search-customers/', views.api_search_customers, name='api_search_customers'),
+    path('print/a5/<int:id>/', views.print_label_a5, name='print_label_a5'),
+    path('print/a6/<int:id>/', views.print_label_a6, name='print_label_a6'),
+
 ]
